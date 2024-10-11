@@ -1,0 +1,10 @@
+.DS_Store
+.vscode
+.angular
+
+/dist
+/node_modules
+build/
+dist/
+node_modules/
+test*

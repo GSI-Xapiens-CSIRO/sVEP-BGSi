@@ -1,0 +1,11 @@
+.svep-header-wrapper {
+  overflow: hidden;
+  background: url(/assets/images/header.jpg) no-repeat;
+  background-size: contain;
+
+  @apply bg-right;
+}
+
+:host {
+  display: block;
+}

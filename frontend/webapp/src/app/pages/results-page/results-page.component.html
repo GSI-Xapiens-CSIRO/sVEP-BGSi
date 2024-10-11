@@ -1,0 +1,30 @@
+<div class="mx-1 lg:mx-[20px]">
+  <h2 class="text-left">View Example</h2>
+  <a
+    class="text-cyan-700 decoration-transparent"
+    [routerLink]="['/results', '377bc6ee-20c1-4ba3-8efe-0bdcf6865c9f']"
+    >Click here to try an example!</a
+  >
+  <h2 class="text-left">View Results</h2>
+  <mat-form-field appearance="outline" class="w-full">
+    <mat-label>Paste your results Job Id</mat-label>
+    <input
+      type="text"
+      matInput
+      [formControl]="requestIdFormControl"
+      placeholder="377bc6ee-20c1-4ba3-8efe-0bdcf6865c9f"
+    />
+  </mat-form-field>
+  <a
+    [disabled]="requestIdFormControl.invalid"
+    class="w-[110px] mr-1"
+    mat-raised-button
+    color="primary"
+    [routerLink]="['/results', requestIdFormControl.value]"
+    >Load</a
+  >
+
+  @if (results) {
+  <app-results-viewer [results]="results" />
+  }
+</div>

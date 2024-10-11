@@ -1,0 +1,46 @@
+<div class="svep-header-wrapper h-[100px] md:h-[250px]">
+  <h1 class="text-white mt-2 md:mt-[50px] ml-1 md:ml-[50px] font-bold"><a href="/" class="decoration-transparent text-white">Serverless VEP</a></h1>
+</div>
+<div class="-mt-[60px] md:-mt-[125px]">
+  <nav class="flex flex-col md:flex-row mx-0 md:mx-[50px]">
+    <div
+      class="flex md:hidden bg-white backdrop-blur-sm bg-opacity-10 mt-4 border-solid border-0 border-y-[1px] border-b-[#000]">
+      <button type="button" mat-button (click)="isCollapsed=!isCollapsed">
+        @if (isCollapsed) {
+        <mat-icon class="text-white">menu</mat-icon>
+        } @else {
+        <mat-icon class="text-white">close</mat-icon>
+        }
+      </button>
+    </div>
+    <ul [@collapse]="isCollapsed ? 'closed' : 'open'"
+      class="flex flex-col md:flex-row md:space-x-[50px] bg-white mt-0 md:rounded-md md:py-2 px-0  md:px-[50px] overflow-x-hidden [&>li]:hover:scale-100 backdrop-blur-sm bg-opacity-25">
+      <li
+        class="py-1 md:py-0 inline-block text-base font-semibold decoration-transparent hover:!scale-110 transition ease-in-out text-center border-solid border-0 border-y-[1px] border-y-[#000] md:border-y-[0px]"
+        routerLinkActive="scale-110"><a class="decoration-transparent text-white" [routerLink]="['home']">Home</a></li>
+      <li
+        class="py-1 md:py-0 inline-block text-base font-semibold decoration-transparent hover:!scale-110 transition ease-in-out text-center border-solid border-0 border-y-[1px] border-y-[#000] md:border-y-[0px]"
+        routerLinkActive="scale-110"><a class="decoration-transparent text-white" [routerLink]="['submit']">Submit</a>
+      </li>
+      <li
+        class="py-1 md:py-0 inline-block text-base font-semibold decoration-transparent hover:!scale-110 transition ease-in-out text-center border-solid border-0 border-y-[1px] border-y-[#000] md:border-y-[0px]"
+        routerLinkActive="scale-110"><a class="decoration-transparent text-white" [routerLink]="['results']">Results</a>
+      </li>
+      <li
+        class="py-1 md:py-0 inline-block text-base font-semibold decoration-transparent hover:!scale-110 transition ease-in-out text-center border-solid border-0 border-y-[1px] border-y-[#000] md:border-y-[0px]"
+        routerLinkActive="scale-110"><a class="decoration-transparent text-white" [routerLink]="['about']">About</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+<mat-card class="m-1 md:m-[50px] !mb-0 p-[10px]">
+  <app-full-page-loader />
+  <router-outlet></router-outlet>
+</mat-card>
+<div class="mx-1 md:mx-[50px] p-[10px] text-center">
+  <p class="font-extralight [&>*]:text-white text-white">
+    The sVEP UI is implemented by the Transformational Bioinformatics group at CSIRO <br>
+    <a href="https://twitter.com/TBioinf" target="_blank"><mat-icon>alternate_email</mat-icon></a><a
+      href="https://bioinformatics.csiro.au/" target="_blank"><mat-icon>language</mat-icon></a>
+  </p>
+</div>

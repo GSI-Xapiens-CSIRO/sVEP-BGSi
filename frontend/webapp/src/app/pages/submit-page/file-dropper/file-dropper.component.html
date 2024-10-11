@@ -1,0 +1,20 @@
+<div
+    class="border-dashed border-[1px] p-10 rounded-md bg-gray-200 font-light max-w-[100%] mx-auto text-center cursor-pointer"
+    #dropzone (dragenter)="preventDefaults($event); highlight($event)"
+    (dragover)="preventDefaults($event); highlight($event)" (dragleave)="preventDefaults($event); unhighlight($event)"
+    (drop)="preventDefaults($event); unhighlight($event); handleDrop($event)" (click)="!disabled && input.click()"
+    [class]="disabled? 'text-gray-400': ''">
+    Drop your vcf (*.VCF.GZ) and index (*.TBI/*.CSI) files here...
+    <br>
+    Click to open a file picker
+    <br>
+    @if (vcfFile) {
+    <br>
+    {{ vcfFile.name }}
+    }
+    @if (indexFile) {
+    <br>
+    {{ indexFile.name }}
+    }
+    <input type="file" accept=".gz,.csi,.tbi" multiple (change)="handlePick($event)" hidden #input>
+  </div>
