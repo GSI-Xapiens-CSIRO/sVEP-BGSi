@@ -29,7 +29,7 @@ export class ResultsViewerComponent implements OnChanges, AfterViewInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    const results: string = changes['results'].currentValue.body;
+    const results: string = changes['results'].currentValue;
 
     if (results) {
       const lines = results.split('\n');
