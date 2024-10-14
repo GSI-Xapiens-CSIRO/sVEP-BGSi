@@ -1,6 +1,6 @@
 # bucket definition
 resource "aws_s3_bucket" "svep_hosted_bucket" {
-  bucket_prefix = "svep-data-bucket"
+  bucket_prefix = "svep-frontend-bucket-"
 
   tags = var.common-tags
 }
@@ -9,7 +9,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "svep_hosted_bucket_cycle" {
   bucket = aws_s3_bucket.svep_hosted_bucket.id
 
   rule {
-    id     = "svep-data-bucket-delete-old"
+    id     = "svep-frontend-data-bucket-delete-old"
     status = "Enabled"
 
     filter {

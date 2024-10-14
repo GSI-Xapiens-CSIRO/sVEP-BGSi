@@ -1,5 +1,5 @@
 resource "aws_sns_topic" "queryVCF" {
-  name = "queryVCF"
+  name = "svep-backend-queryVCF"
 }
 
 resource "aws_sns_topic_subscription" "queryVCF" {
@@ -8,7 +8,7 @@ resource "aws_sns_topic_subscription" "queryVCF" {
   endpoint = module.lambda-queryVCF.function_arn
 }
 resource "aws_sns_topic" "queryVCFsubmit" {
-  name = "queryVCFsubmit"
+  name = "svep-backend-queryVCFsubmit"
 }
 
 resource "aws_sns_topic_subscription" "queryVCFsubmit" {
@@ -18,7 +18,7 @@ resource "aws_sns_topic_subscription" "queryVCFsubmit" {
 }
 
 resource "aws_sns_topic" "queryGTF" {
-  name = "queryGTF"
+  name = "svep-backend-queryGTF"
 }
 
 resource "aws_sns_topic_subscription" "queryGTF" {
@@ -28,7 +28,7 @@ resource "aws_sns_topic_subscription" "queryGTF" {
 }
 
 resource "aws_sns_topic" "pluginConsequence" {
-  name = "pluginConsequence"
+  name = "svep-backend-pluginConsequence"
 }
 
 resource "aws_sns_topic_subscription" "pluginConsequence" {
@@ -39,7 +39,7 @@ resource "aws_sns_topic_subscription" "pluginConsequence" {
 }
 
 resource "aws_sns_topic" "pluginUpdownstream" {
-  name = "pluginUpdownstream"
+  name = "svep-backend-pluginUpdownstream"
 }
 
 resource "aws_sns_topic_subscription" "pluginUpdownstream" {
@@ -49,7 +49,7 @@ resource "aws_sns_topic_subscription" "pluginUpdownstream" {
 }
 
 resource "aws_sns_topic" "concat" {
-  name = "concat"
+  name = "svep-backend-concat"
 }
 
 resource "aws_sns_topic_subscription" "concat" {
@@ -59,7 +59,7 @@ resource "aws_sns_topic_subscription" "concat" {
 }
 
 resource "aws_sns_topic" "concatStarter" {
-  name = "concatStarter"
+  name = "svep-backend-concatStarter"
 }
 
 resource "aws_sns_topic_subscription" "concatStarter" {
@@ -69,7 +69,7 @@ resource "aws_sns_topic_subscription" "concatStarter" {
 }
 
 resource "aws_sns_topic" "createPages" {
-  name = "createPages"
+  name = "svep-backend-createPages"
 }
 
 resource "aws_sns_topic_subscription" "createPages" {
@@ -79,7 +79,7 @@ resource "aws_sns_topic_subscription" "createPages" {
 }
 
 resource "aws_sns_topic" "concatPages" {
-  name = "concatPages"
+  name = "svep-backend-concatPages"
 }
 
 resource "aws_sns_topic_subscription" "concatPages" {

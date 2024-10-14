@@ -2,7 +2,7 @@
 # API Gateway
 #
 resource "aws_api_gateway_rest_api" "svep_ui" {
-  name        = "svep-ui"
+  name        = "svep-frontend-api"
   description = "sVEP UI API"
 }
 
@@ -36,7 +36,7 @@ resource "aws_api_gateway_deployment" "svep_ui" {
 resource "aws_api_gateway_stage" "svep_ui" {
   deployment_id = aws_api_gateway_deployment.svep_ui.id
   rest_api_id   = aws_api_gateway_rest_api.svep_ui.id
-  stage_name    = "svep-ui-stage"
+  stage_name    = "svep-frontend-api-stage"
 }
 
 #

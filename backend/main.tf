@@ -13,7 +13,7 @@ locals {
 module "lambda-initQuery" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "initQuery"
+  function_name = "svep-backend-initQuery"
   description = "Invokes queryVCF with the calculated regions"
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -23,7 +23,7 @@ module "lambda-initQuery" {
     json = data.aws_iam_policy_document.lambda-initQuery.json
   }
   source_path = "${path.module}/lambda/initQuery"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {
@@ -44,7 +44,7 @@ module "lambda-initQuery" {
 module "lambda-queryVCF" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "queryVCF"
+  function_name = "svep-backend-queryVCF"
   description = "Invokes queryGTF for each region."
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -54,7 +54,7 @@ module "lambda-queryVCF" {
     json = data.aws_iam_policy_document.lambda-queryVCF.json
   }
   source_path = "${path.module}/lambda/queryVCF"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {
@@ -73,7 +73,7 @@ module "lambda-queryVCF" {
 module "lambda-queryVCFsubmit" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "queryVCFsubmit"
+  function_name = "svep-backend-queryVCFsubmit"
   description = "This lambda will be called if there are too many batchids to be processed within"
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -83,7 +83,7 @@ module "lambda-queryVCFsubmit" {
     json = data.aws_iam_policy_document.lambda-queryVCFsubmit.json
   }
   source_path = "${path.module}/lambda/queryVCFsubmit"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {
@@ -99,7 +99,7 @@ module "lambda-queryVCFsubmit" {
 #
 module "lambda-queryGTF" {
   source = "github.com/bhosking/terraform-aws-lambda"
-  function_name = "queryGTF"
+  function_name = "svep-backend-queryGTF"
   description = "Queries GTF for a specified VCF regions."
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -109,7 +109,7 @@ module "lambda-queryGTF" {
     json = data.aws_iam_policy_document.lambda-queryGTF.json
   }
   source_path = "${path.module}/lambda/queryGTF"
-  #tags = var.common-tags
+  tags = var.common-tags
   environment ={
     variables = {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
@@ -128,7 +128,7 @@ module "lambda-queryGTF" {
 module "lambda-pluginConsequence" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name      = "pluginConsequence"
+  function_name      = "svep-backend-pluginConsequence"
   description = "Queries VCF for a specified variant."
   create_package = false
   image_uri = module.docker_image_pluginConsequence_lambda.image_uri
@@ -141,7 +141,7 @@ module "lambda-pluginConsequence" {
   ]
   number_of_policy_jsons = 1
   source_path = "${path.module}/lambda/pluginConsequence"
-  #tags = var.common-tags
+  tags = var.common-tags
   environment_variables = {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
@@ -156,7 +156,7 @@ module "lambda-pluginConsequence" {
 #
 module "lambda-pluginUpdownstream" {
   source = "github.com/bhosking/terraform-aws-lambda"
-  function_name = "pluginUpdownstream"
+  function_name = "svep-backend-pluginUpdownstream"
   description = "Write upstream and downstream gene variant to temp bucket."
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -166,7 +166,7 @@ module "lambda-pluginUpdownstream" {
     json = data.aws_iam_policy_document.lambda-pluginUpdownstream.json
   }
   source_path = "${path.module}/lambda/pluginUpdownstream"
-  #tags = var.common-tags
+  tags = var.common-tags
   environment ={
     variables = {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
@@ -182,7 +182,7 @@ module "lambda-pluginUpdownstream" {
 module "lambda-concat" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "concat"
+  function_name = "svep-backend-concat"
   description = "Triggers createPages."
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -192,7 +192,7 @@ module "lambda-concat" {
     json = data.aws_iam_policy_document.lambda-concat.json
   }
   source_path = "${path.module}/lambda/concat"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {
@@ -208,7 +208,7 @@ module "lambda-concat" {
 module "lambda-concatStarter" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "concatStarter"
+  function_name = "svep-backend-concatStarter"
   description = "Validates all processing is done and triggers concat"
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -218,7 +218,7 @@ module "lambda-concatStarter" {
     json = data.aws_iam_policy_document.lambda-concatStarter.json
   }
   source_path = "${path.module}/lambda/concatStarter"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {
@@ -236,7 +236,7 @@ module "lambda-concatStarter" {
 module "lambda-createPages" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "createPages"
+  function_name = "svep-backend-createPages"
   description = "concatenates individual page with 700 entries, received from concat lambda"
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -246,7 +246,7 @@ module "lambda-createPages" {
     json = data.aws_iam_policy_document.lambda-createPages.json
   }
   source_path = "${path.module}/lambda/createPages"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {
@@ -264,7 +264,7 @@ module "lambda-createPages" {
 module "lambda-concatPages" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "concatPages"
+  function_name = "svep-backend-concatPages"
   description = "concatenates all the page files created by createPages lambda."
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -274,7 +274,7 @@ module "lambda-concatPages" {
     json = data.aws_iam_policy_document.lambda-concatPages.json
   }
   source_path = "${path.module}/lambda/concatPages"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {
@@ -292,7 +292,7 @@ module "lambda-concatPages" {
 module "lambda-getResultsURL" {
   source = "github.com/bhosking/terraform-aws-lambda"
 
-  function_name = "getResultsURL"
+  function_name = "svep-backend-getResultsURL"
   description = "Returns the presigned results URL for results"
   handler = "lambda_function.lambda_handler"
   runtime = "python3.9"
@@ -302,7 +302,7 @@ module "lambda-getResultsURL" {
     json = data.aws_iam_policy_document.lambda-getResultsURL.json
   }
   source_path = "${path.module}/lambda/getResultsURL"
-  #tags = var.common-tags
+  tags = var.common-tags
 
   environment ={
     variables = {

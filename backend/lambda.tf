@@ -2,7 +2,7 @@
 # initQuery Lambda Function
 #
 resource "aws_lambda_permission" "APIinitQuery" {
-  statement_id = "AllowinitQueryInvoke"
+  statement_id = "SVEPBackendAllowinitQueryInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-initQuery.function_name
   principal = "apigateway.amazonaws.com"
@@ -17,7 +17,7 @@ resource "aws_lambda_function_recursion_config" "APIinitQuery" {
 # getResultsURL Lambda Function
 #
 resource "aws_lambda_permission" "APIgetResultsURL" {
-  statement_id = "AllowgetResultsURLInvoke"
+  statement_id = "SVEPBackendAllowgetResultsURLInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-getResultsURL.function_name
   principal = "apigateway.amazonaws.com"
@@ -28,7 +28,7 @@ resource "aws_lambda_permission" "APIgetResultsURL" {
 # queryVCF Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdaqueryVCF" {
-  statement_id = "SNSLambdaqueryVCF"
+  statement_id = "SVEPBackendSNSLambdaqueryVCF"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-queryVCF.function_name
   principal = "sns.amazonaws.com"
@@ -43,7 +43,7 @@ resource "aws_lambda_function_recursion_config" "SNSLambdaqueryVCF" {
 # queryVCFsubmit Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdaqueryVCFsubmit" {
-  statement_id = "SNSLambdaqueryVCFsubmit"
+  statement_id = "SVEPBackendSNSLambdaqueryVCFsubmit"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-queryVCFsubmit.function_name
   principal = "sns.amazonaws.com"
@@ -54,7 +54,7 @@ resource "aws_lambda_permission" "SNSLambdaqueryVCFsubmit" {
 # queryGTF Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdaqueryGTF" {
-  statement_id = "SNSLambdaqueryGTF"
+  statement_id = "SVEPBackendSNSLambdaqueryGTF"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-queryGTF.function_name
   principal = "sns.amazonaws.com"
@@ -70,7 +70,7 @@ resource "aws_lambda_function_recursion_config" "SNSLambdaqueryGTF" {
 # pluginConsequence Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdapluginConsequence" {
-  statement_id = "SNSLambdapluginConsequence"
+  statement_id = "SVEPBackendSNSLambdapluginConsequence"
   action = "lambda:InvokeFunction"
   # TODO: Update to reference function_name once terraform-aws-lambda is updated
   function_name = module.lambda-pluginConsequence.lambda_function_name
@@ -88,7 +88,7 @@ resource "aws_lambda_function_recursion_config" "SNSLambdapluginConsequence" {
 # pluginUpdownstream Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdapluginUpdownstream" {
-  statement_id = "SNSLambdapluginUpdownstream"
+  statement_id = "SVEPBackendSNSLambdapluginUpdownstream"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-pluginUpdownstream.function_name
   principal = "sns.amazonaws.com"
@@ -99,7 +99,7 @@ resource "aws_lambda_permission" "SNSLambdapluginUpdownstream" {
 # concat Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdaconcat" {
-  statement_id = "SNSLambdaconcat"
+  statement_id = "SVEPBackendSNSLambdaconcat"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-concat.function_name
   principal = "sns.amazonaws.com"
@@ -110,7 +110,7 @@ resource "aws_lambda_permission" "SNSLambdaconcat" {
 # concatStarter Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdaconcatStarter" {
-  statement_id = "SNSLambdaconcatStarter"
+  statement_id = "SVEPBackendSNSLambdaconcatStarter"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-concatStarter.function_name
   principal = "sns.amazonaws.com"
@@ -125,7 +125,7 @@ resource "aws_lambda_function_recursion_config" "SNSLambdaconcatStarter" {
 # createPages Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdacreatePages" {
-  statement_id = "SNSLambdacreatePages"
+  statement_id = "SVEPBackendSNSLambdacreatePages"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-createPages.function_name
   principal = "sns.amazonaws.com"
@@ -140,7 +140,7 @@ resource "aws_lambda_function_recursion_config" "SNSLambdacreatePages" {
 # concatPages Lambda Function
 #
 resource "aws_lambda_permission" "SNSLambdaconcatPages" {
-  statement_id = "SNSLambdaconcatPages"
+  statement_id = "SVEPBackendSNSLambdaconcatPages"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-concatPages.function_name
   principal = "sns.amazonaws.com"

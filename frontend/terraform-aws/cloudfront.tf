@@ -11,7 +11,7 @@ data "aws_cloudfront_cache_policy" "svep-s3-distribution-cache-policy" {
 }
 
 resource "aws_cloudfront_cache_policy" "svep_cache_policy" {
-  name = "SVEPCachePolicy"
+  name = "svep-cache-policy"
   comment = "Policy for SVEP with presigned URLs"
   default_ttl = 50
   max_ttl = 100

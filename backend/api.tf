@@ -2,7 +2,7 @@
 # API Gateway
 #
 resource "aws_api_gateway_rest_api" "VPApi" {
-  name = "VPApi"
+  name = "svep-backend-api"
   description = "API That implements the Variant Prioritization specification"
 }
 

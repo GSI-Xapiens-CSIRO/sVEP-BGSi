@@ -1,7 +1,7 @@
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name       = "svep-ui-url-generator"
+  function_name       = "svep-frontend-url-generator"
   description         = "Functions to generate signed URLs for uploads"
   handler             = "handler.lambda_handler"
   runtime             = "nodejs18.x"
