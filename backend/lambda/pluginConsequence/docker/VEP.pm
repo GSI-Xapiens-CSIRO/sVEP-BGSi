@@ -75,7 +75,7 @@ use consequence::TranscriptVariation;
 use consequence::TranscriptVariationAllele;
 
 my $config = {};
-my $fastaLocation =  $ENV{'REFERENCE_LOCATION'};
+my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
 my $spliceFile =  $ENV{'SPLICE_REFERENCE'};
 my $mirnaFile =  $ENV{'MIRNA_REFERENCE'};
 my $outputLocation =  $ENV{'SVEP_REGIONS'};

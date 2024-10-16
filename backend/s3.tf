@@ -15,6 +15,12 @@ resource "aws_s3_bucket" "svep-results" {
   tags          = var.common-tags
 }
 
+resource "aws_s3_bucket" "svep-references" {
+  bucket_prefix = "svep-backend-references-"
+  force_destroy = false
+  tags          = var.common-tags
+}
+
 resource "aws_s3_bucket_cors_configuration" "svep-results-cors" {
   bucket = aws_s3_bucket.svep-results.id
 

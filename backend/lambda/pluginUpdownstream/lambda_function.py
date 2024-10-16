@@ -7,11 +7,11 @@ from lambda_utils import download_vcf, Orchestrator, s3
 
 
 # Environment variables
+BUCKET_NAME = os.environ['REFERENCE_LOCATION']
 REFERENCE_GENOME = os.environ['REFERENCE_GENOME']
 SVEP_REGIONS = os.environ['SVEP_REGIONS']
 os.environ['PATH'] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
-BUCKET_NAME = 'svep'
 TRANSCRIPT_ID_PATTERN = re.compile('transcript_id\\s\\\"(\\w+)\\\";',
                                    re.IGNORECASE)
 
