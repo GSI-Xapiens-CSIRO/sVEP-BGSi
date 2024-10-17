@@ -278,7 +278,7 @@ resource "aws_api_gateway_integration_response" "results-url-get" {
 #
 resource "aws_api_gateway_deployment" "VPApi" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
-  stage_name  = "dev"
+  stage_name  = "prod"
   # taint deployment if any api resources change
   stage_description = md5(join("", [
     md5(file("${path.module}/api.tf")),
