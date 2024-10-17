@@ -11,6 +11,7 @@ resource "aws_api_gateway_rest_api" "svep_ui" {
 #
 resource "aws_api_gateway_deployment" "svep_ui" {
   rest_api_id = aws_api_gateway_rest_api.svep_ui.id
+  stage_name    = "prod"
 
   lifecycle {
     create_before_destroy = true
@@ -30,13 +31,6 @@ resource "aws_api_gateway_deployment" "svep_ui" {
   depends_on = [
     aws_api_gateway_integration.any_svep_ui_proxy
   ]
-}
-
-# stage
-resource "aws_api_gateway_stage" "svep_ui" {
-  deployment_id = aws_api_gateway_deployment.svep_ui.id
-  rest_api_id   = aws_api_gateway_rest_api.svep_ui.id
-  stage_name    = "svep-frontend-api-stage"
 }
 
 #
