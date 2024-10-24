@@ -1,7 +1,7 @@
 # sVEP Infrastructure
 
 <div align="center">
-    <img src="./backend/assets/svep-logo-white.png" width="800px">
+    <img src="./backend/assets/svep-logo-black.png" width="800px">
 </div>
 
 ## Prerequisites
