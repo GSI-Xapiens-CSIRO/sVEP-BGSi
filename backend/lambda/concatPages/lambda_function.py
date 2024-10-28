@@ -19,6 +19,16 @@ CONCATPAGES_SNS_TOPIC_ARN = os.environ['CONCATPAGES_SNS_TOPIC_ARN']
 os.environ['PATH'] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 
+def clean_regions(api_id):
+    response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=api_id)
+    if 'Contents' in response:
+        paths = [
+            f'{SVEP_REGIONS}/{d["Key"]}'
+            for d in response['Contents']
+        ]
+        fs.bulk_delete(pathlist=paths)
+
+
 def publish_result(api_id, all_keys, last_file, page_num, prefix):
     start_time = time.time()
     filename = f'{api_id}{RESULT_SUFFIX}'
@@ -32,6 +42,7 @@ def publish_result(api_id, all_keys, last_file, page_num, prefix):
         fs.merge(path=file_path, filelist=paths)
         print(f"time taken = {(time.time()-start_time) * 1000}")
         print("Done concatenating")
+        clean_regions(api_id)
     else:
         print("createPages failed to create one of the page")
         sns_publish(CONCATPAGES_SNS_TOPIC_ARN, {
