@@ -32,7 +32,6 @@ module "lambda-initQuery" {
       RESULT_DURATION = local.result_duration
       RESULT_SUFFIX = local.result_suffix
       SLICE_SIZE_MBP = local.slice_size_mbp
-      SVEP_RESULTS = aws_s3_bucket.svep-results.bucket
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
     }
   }

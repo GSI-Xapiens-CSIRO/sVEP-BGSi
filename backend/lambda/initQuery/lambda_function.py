@@ -9,7 +9,6 @@ from lambda_utils import print_event, sns_publish, start_function
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ['CONCAT_STARTER_SNS_TOPIC_ARN']
 QUERY_VCF_SNS_TOPIC_ARN = os.environ['QUERY_VCF_SNS_TOPIC_ARN']
-RESULT_BUCKET = os.environ['SVEP_RESULTS']
 RESULT_DURATION = int(os.environ['RESULT_DURATION'])
 RESULT_SUFFIX = os.environ['RESULT_SUFFIX']
 SLICE_SIZE_MBP = int(os.environ['SLICE_SIZE_MBP'])
