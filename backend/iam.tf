@@ -27,6 +27,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       aws_sns_topic.queryVCF.arn,
     ]
   }
+
   statement {
     actions = [
       "s3:PutObject",
@@ -35,11 +36,23 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       "${aws_s3_bucket.svep-temp.arn}/*",
     ]
   }
+
   statement {
     actions = [
       "s3:GetObject",
     ]
-    resources = ["*"]
+    resources = [
+      "${aws_s3_bucket.svep-inputs.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-inputs.arn}",
+    ]
   }
 }
 
@@ -57,6 +70,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       aws_sns_topic.queryVCFsubmit.arn,
     ]
   }
+
   statement {
     actions = [
       "s3:PutObject",
@@ -66,12 +80,23 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "${aws_s3_bucket.svep-temp.arn}/*",
     ]
   }
+
   statement {
     actions = [
       "s3:GetObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-inputs.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
       "s3:ListBucket",
     ]
-    resources = ["*"]
+    resources = [
+      "${aws_s3_bucket.svep-inputs.arn}",
+    ]
   }
 }
 
@@ -87,6 +112,7 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
       aws_sns_topic.queryGTF.arn,
     ]
   }
+
   statement {
     actions = [
       "s3:PutObject",
@@ -113,6 +139,7 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
       aws_sns_topic.queryGTF.arn,
     ]
   }
+
   statement {
     actions = [
       "s3:PutObject",
@@ -122,46 +149,105 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
       "${aws_s3_bucket.svep-temp.arn}/*",
     ]
   }
+
   statement {
     actions = [
       "s3:GetObject",
-      "s3:ListBucket",
     ]
-    resources = ["*"]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}/*",
+    ]
   }
 
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}",
+    ]
+  }
 }
 
 #
 # pluginConsequence Lambda Function
 #
 data "aws_iam_policy_document" "lambda-pluginConsequence" {
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
 
   statement {
     actions = [
       "s3:GetObject",
-      "s3:ListBucket",
-      "s3:PutObject",
-      "s3:DeleteObject",
     ]
-    resources = ["*"]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}/*",
+    ]
   }
 
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}",
+    ]
+  }
 }
 
 #
 # pluginUpdownstream Lambda Function
 #
 data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
 
   statement {
     actions = [
       "s3:GetObject",
-      "s3:ListBucket",
-      "s3:PutObject",
-      "s3:DeleteObject",
     ]
-    resources = ["*"]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}",
+    ]
   }
 }
 
@@ -171,18 +257,19 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
 data "aws_iam_policy_document" "lambda-concat" {
   statement {
     actions = [
-      "s3:ListBucket",
-    ]
-    resources = [
-      aws_s3_bucket.svep-regions.arn,
-    ]
-  }
-  statement {
-    actions = [
       "SNS:Publish",
     ]
     resources = [
       aws_sns_topic.createPages.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.svep-regions.arn,
     ]
   }
 }
@@ -193,20 +280,21 @@ data "aws_iam_policy_document" "lambda-concat" {
 data "aws_iam_policy_document" "lambda-concatStarter" {
   statement {
     actions = [
-      "s3:ListBucket",
-    ]
-    resources = [
-      aws_s3_bucket.svep-regions.arn,
-      aws_s3_bucket.svep-temp.arn,
-    ]
-  }
-  statement {
-    actions = [
       "SNS:Publish",
     ]
     resources = [
       aws_sns_topic.concat.arn,
       aws_sns_topic.concatStarter.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.svep-regions.arn,
+      aws_s3_bucket.svep-temp.arn,
     ]
   }
 }
@@ -217,20 +305,40 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
 data "aws_iam_policy_document" "lambda-createPages" {
   statement {
     actions = [
-      "s3:GetObject",
-      "s3:ListBucket",
-      "s3:PutObject",
-      "s3:DeleteObject",
-    ]
-    resources = ["*"]
-  }
-  statement {
-    actions = [
       "SNS:Publish",
     ]
     resources = [
       aws_sns_topic.concatPages.arn,
       aws_sns_topic.createPages.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+      "${aws_s3_bucket.svep-results.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.svep-regions.arn,
     ]
   }
 }
@@ -241,19 +349,38 @@ data "aws_iam_policy_document" "lambda-createPages" {
 data "aws_iam_policy_document" "lambda-concatPages" {
   statement {
     actions = [
-      "s3:GetObject",
-      "s3:ListBucket",
-      "s3:PutObject",
-      "s3:DeleteObject",
-    ]
-    resources = ["*"]
-  }
-  statement {
-    actions = [
       "SNS:Publish",
     ]
     resources = [
       aws_sns_topic.concatPages.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-results.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.svep-regions.arn,
     ]
   }
 }
@@ -264,9 +391,19 @@ data "aws_iam_policy_document" "lambda-concatPages" {
 data "aws_iam_policy_document" "lambda-getResultsURL" {
   statement {
     actions = [
-      "s3:ListBucket",
       "s3:GetObject",
     ]
-    resources = ["*"]
+    resources = [
+      "${aws_s3_bucket.svep-results.arn}/*"
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      aws_s3_bucket.svep-results.arn
+    ]
   }
 }
