@@ -4,18 +4,37 @@ set -euo pipefail
 
 while true
 do
-  HEADERS="$(mktemp)"
+  TEMP_DIR="/tmp/bootstrap"
+  mkdir -p "$TEMP_DIR"
+  HEADERS=$(mktemp "$TEMP_DIR/headers.XXXXXX")
+  RESPONSE_FILE=$(mktemp "$TEMP_DIR/response.XXXXXX")
+
+  echo "Fetching next invocation event..." >&2
   EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
   REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
+  
+  echo "Event Received: $REQUEST_ID" >&2
 
-  # Execute the handler function using perl
-  RESPONSE=$(perl -e '
+  # Run Perl and write response to a file
+  perl -e '
     use VEP;
     use JSON;
+
     my $event_data = do { local $/; <STDIN> };
-    print VEP::handle($event_data);
-  ' <<< "$EVENT_DATA")
+    my $result = eval { VEP::handle($event_data) };
+
+    if ($@) {
+      print STDERR "Perl error: $@\n";
+      $result = encode_json({ error => $@ });
+    }
+
+    open(my $fh, ">", $ENV{RESPONSE_FILE}) or die "Cannot open response file: $!";
+    print $fh $result;
+    close($fh);
+  ' RESPONSE_FILE="$RESPONSE_FILE" <<< "$EVENT_DATA"
+
+  rm -rf "/tmp/*"
 
   # Send the response
-  curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response" -d "$RESPONSE"
+  curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response"
 done
