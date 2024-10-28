@@ -1,7 +1,7 @@
 # bucket definition
 resource "aws_s3_bucket" "svep_hosted_bucket" {
   bucket_prefix = "svep-frontend-bucket-"
-
+  force_destroy = true
   tags = var.common-tags
 }
 
