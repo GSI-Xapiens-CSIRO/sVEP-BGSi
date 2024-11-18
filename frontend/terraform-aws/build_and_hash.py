@@ -5,9 +5,25 @@ import subprocess
 import json
 
 ENVIRONMENT = """export const environment = {{
+  production: {production},
   backendApiUrl: '{backend_api_url}',
   frontendApiUrl: '{frontend_api_url}',
   svepUrl: '{cloudfront_url}',
+  auth: {{
+    region: '{region}',
+    userPoolId: '{user_pool_id}',
+    userPoolWebClientId: '{user_pool_web_client_id}',
+    identityPoolId: '{identity_pool_id}',
+    authenticationFlowType: 'USER_PASSWORD_AUTH',
+  }},
+  storage: {{
+    dataPortalBucket: '{data_portal_bucket}',
+  }},
+  api_endpoint_sbeacon: {{
+    name: 'sbeacon',
+    endpoint: '{api_endpoint_sbeacon}',
+    region: '{region}',
+  }},
 }};"""
 
 
@@ -58,16 +74,46 @@ def setup_env(
     backend_api_url: str,
     frontend_api_url: str,
     cloudfront_url: str,
+    region: str,
+    user_pool_id: str,
+    identity_pool_id: str,
+    user_pool_web_client_id: str,
+    data_portal_bucket: str,
+    api_endpoint_sbeacon: str,
     dir: str
 ):
+    with open(
+        os.path.join(dir, "src/environments/environment.development.ts"), "w"
+    ) as f:
+        f.write(
+            ENVIRONMENT.format(
+                production="false",
+                backend_api_url=backend_api_url,
+                frontend_api_url=frontend_api_url,
+                cloudfront_url=cloudfront_url,
+                region=region,
+                user_pool_id=user_pool_id,
+                identity_pool_id=identity_pool_id,
+                data_portal_bucket=data_portal_bucket,
+                user_pool_web_client_id=user_pool_web_client_id,
+                api_endpoint_sbeacon=api_endpoint_sbeacon,
+            )
+        )
     with open(
         os.path.join(dir, "src/environments/environment.ts"), "w"
     ) as f:
         f.write(
             ENVIRONMENT.format(
+                production="true",
                 backend_api_url=backend_api_url,
                 frontend_api_url=frontend_api_url,
-                cloudfront_url=cloudfront_url
+                cloudfront_url=cloudfront_url,
+                region=region,
+                user_pool_id=user_pool_id,
+                identity_pool_id=identity_pool_id,
+                data_portal_bucket=data_portal_bucket,
+                user_pool_web_client_id=user_pool_web_client_id,
+                api_endpoint_sbeacon=api_endpoint_sbeacon,
             )
         )
 
@@ -80,11 +126,24 @@ if __name__ == "__main__":
     backend_api_url = args["backend_api_url"]
     frontend_api_url = args["frontend_api_url"]
     cloudfront_url = args["cloudfront_url"]
+    region = args["region"]
+    user_pool_id = args["user_pool_id"]
+    identity_pool_id = args["identity_pool_id"]
+    user_pool_web_client_id = args["user_pool_web_client_id"]
+    api_endpoint_sbeacon = args["api_endpoint_sbeacon"]
+    data_portal_bucket = args["data_portal_bucket"]
+
 
     setup_env(
         backend_api_url,
         frontend_api_url,
         cloudfront_url,
+        region,
+        user_pool_id,
+        identity_pool_id,
+        user_pool_web_client_id,
+        data_portal_bucket,
+        api_endpoint_sbeacon,
         webapp_dir,
     )
     npm_install(install_cmd, webapp_dir)
