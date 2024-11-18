@@ -42,3 +42,29 @@ variable "build-destination" {
   description = "Path to built source"
   default     = "../webapp/dist/svep-ui/browser/"
 }
+
+
+variable "user_pool_id" {
+  type        = string
+  description = "User pool ID for authentication."
+}
+
+variable "identity_pool_id" {
+  type        = string
+  description = "Identity pool ID for authentication."
+}
+
+variable "data_portal_bucket" {
+  type        = string
+  description = "Bucket name of the data portal."
+}
+
+variable "user_pool_web_client_id" {
+  type        = string
+  description = "User pool web client ID for authentication."
+}
+
+variable "api_endpoint_sbeacon" {
+  type        = string
+  description = "API endpoint for sbeacon."
+}

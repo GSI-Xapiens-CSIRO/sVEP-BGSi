@@ -8,6 +8,12 @@ data "external" "build" {
     backend_api_url = var.backend_api_url
     frontend_api_url = aws_api_gateway_deployment.svep_ui.invoke_url
     cloudfront_url = aws_cloudfront_distribution.svep_s3_distribution.domain_name
+    region = var.region
+    user_pool_id = var.user_pool_id
+    identity_pool_id = var.identity_pool_id
+    data_portal_bucket = var.data_portal_bucket
+    user_pool_web_client_id = var.user_pool_web_client_id
+    api_endpoint_sbeacon = var.api_endpoint_sbeacon
   }
   working_dir = path.module
 }
