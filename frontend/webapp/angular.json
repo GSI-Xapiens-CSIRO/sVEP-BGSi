@@ -21,7 +21,8 @@
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
-              "zone.js"
+              "zone.js",
+              "src/aws-polyfill.ts"
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
@@ -32,11 +33,28 @@
               "src/styles.scss"
             ],
             "scripts": [],
-            "server": "src/main.server.ts",
-            "prerender": true,
-            "ssr": {
-              "entry": "server.ts"
-            }
+            "allowedCommonJsDependencies": [
+              "lodash",
+              "url",
+              "ulid",
+              "camelcase-keys",
+              "lodash/flatten",
+              "lodash/noop",
+              "@aws-crypto/sha256-browser",
+              "uuid",
+              "@aws-crypto/crc32",
+              "buffer",
+              "isomorphic-unfetch",
+              "js-cookie",
+              "cookie",
+              "plotly.js-dist-min",
+              "events",
+              "wordcloud",
+              "@aws-crypto/sha256-js",
+              "zen-observable",
+              "zen-push",
+              "bowser"
+            ]
           },
           "configurations": {
             "production": {
@@ -91,7 +109,8 @@
           "options": {
             "polyfills": [
               "zone.js",
-              "zone.js/testing"
+              "zone.js/testing",
+              "src/aws-polyfill.ts"
             ],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
@@ -106,5 +125,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

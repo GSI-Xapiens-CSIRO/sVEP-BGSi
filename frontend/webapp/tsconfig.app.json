@@ -4,13 +4,14 @@
   "compilerOptions": {
     "outDir": "./out-tsc/app",
     "types": [
-      "node"
+      "@angular/localize"
     ]
   },
   "files": [
     "src/main.ts",
-    "src/main.server.ts",
-    "server.ts"
+    "src/aws-polyfill.ts"
+    // "src/main.server.ts",
+    // "server.ts"
   ],
   "include": [
     "src/**/*.d.ts"
