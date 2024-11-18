@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatInputModule } from '@angular/material/input';
 import { FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { FileDropEvent, FileDropperComponent } from './file-dropper/file-dropper.component';
+import { FileSelectEvent, ProjectsListComponent } from './projects-list/projects-list.component'
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { JobsService } from './services/jobs.service';
 import { HttpEvent, HttpEventType } from '@angular/common/http';
@@ -25,7 +25,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatInputModule,
     FormsModule,
     ReactiveFormsModule,
-    FileDropperComponent,
+    ProjectsListComponent,
     RouterLink,
     MatProgressSpinnerModule,
   ],
@@ -34,9 +34,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './submit-page.component.scss',
 })
 export class SubmitPageComponent {
-  @ViewChild('dropper') private dropper!: FileDropperComponent;
-  protected vcfFile: File | null = null;
-  protected indexFile: File | null = null;
+  @ViewChild('projects') private projects!: ProjectsListComponent;
+  protected vcfFile: string | null = null;
+  protected indexFile: string | null = null;
   protected valid = false;
   protected submissionStarted = false;
   protected vcfFileInputControl: FormControl;
@@ -55,12 +55,12 @@ export class SubmitPageComponent {
       if (value) {
         this.vcfFile = null;
         this.indexFile = null;
-        this.dropper.reset();
       }
     });
   }
 
-  filesDropped(event: FileDropEvent) {
+  filesSelected(event: FileSelectEvent) {
+    console.log(event.vcf);
     this.vcfFile = event.vcf;
     this.indexFile = event.index;
     this.valid = true;
@@ -86,52 +86,25 @@ export class SubmitPageComponent {
 
   submit() {
     this.submissionStarted = true;
-    this.vcfFileInputControl.disable();
 
     if (this.vcfFile) {
-      this.uploadStarted = true;
-      this.sizeToUpload = this.vcfFile.size + this.indexFile!.size;
-      let urlInfo: any = null;
-      this.js.getUploadURLS(this.vcfFile!.name, this.indexFile!.name)
+      const s3URI = `s3://sbeacon-backend-dataportal-20241107003128459300000004/${this.vcfFile}`;
+      
+      this.js.submitJob(s3URI)
         .pipe(
-          tap((u: any) => { urlInfo = u.urls }),
-          switchMap(
-            (result: any) => merge(
-              this.js.uploadToURL(result.urls.vcf_url, this.vcfFile!),
-              this.js.uploadToURL(result.urls.index_url, this.indexFile!),
-            )
-          ),
-          tap((e) => this.handleProgress(e)),
-          last()
-        ).pipe(
-          switchMap(() => {
-            const bucket = urlInfo['vcf_url']['fields']['bucket'] ?? null;
-            const key = urlInfo['vcf_url']['fields']['key'] ?? null;
-            const s3URI = `s3://${bucket}/${key}`;
-
-            console.log('uploaded', s3URI);
-            return this.js.submitJob(s3URI);
-          }),
           catchError(() => of(null))
-        ).subscribe((response: any) => {
+        )
+        .subscribe((response: any) => {
           if (!response) {
-            this.sb.open('An error occured please check you input and try again later', 'Okay', { duration: 60000 });
+            this.sb.open('An error occurred please check your input and try again later', 'Okay', { duration: 60000 });
             return;
           }
           this.results = response.RequestId ?? null;
           this.reset();
         });
     } else {
-      this.js.submitJob(this.vcfFileInputControl.value)
-        .pipe(catchError(() => of(null)))
-        .subscribe((response: any) => {
-          if (!response) {
-            this.sb.open('An error occured please check you input and try again later', 'Okay', { duration: 60000 });
-            return;
-          }
-          this.results = response.RequestId ?? null;
-          this.reset();
-        })
+      this.sb.open('No file selected', 'Okay', { duration: 5000 });
+      this.submissionStarted = false;
     }
   }
 }

@@ -10,25 +10,12 @@
   </p>
   <h2 class="text-left">Instructions</h2>
   <p>
-    sVEP operates by using a single input in the form of a VCF file. Please
-    provide the VCF file using the following file dropper.
+    sVEP operates by using a single input in the form of a VCF file. Please select a VCF from the list of available files.
   </p>
-  <app-file-dropper
-    #dropper
-    [disabled]="submissionStarted"
-    (dropped)="filesDropped($event)"
+  <app-projects-list 
+    #projects
+    (filesSelected)="filesSelected($event)"
   />
-  <br />
-  <mat-form-field appearance="outline" class="w-full">
-    <mat-label>Provide S3 URI for vcf file (index location implied)</mat-label>
-    <input
-      [formControl]="vcfFileInputControl"
-      type="text"
-      matInput
-      placeholder="s3://your-bucket/your-vcf.vcf.gz"
-    />
-    <mat-error>Must be a valid vcf.gz file</mat-error>
-  </mat-form-field>
   <br />
   @if (uploadStarted) {
   <mat-progress-bar [value]="(100 * uploadedAmount) / sizeToUpload" />
@@ -49,10 +36,11 @@
       mat-raised-button
       color="primary"
       (click)="submit()"
-      [disabled]="!(valid || vcfFileInputControl.valid) || submissionStarted"
+      [disabled]="!(valid) || submissionStarted"
     >
       Submit
     </button>
+    <!--[disabled]="!(valid || vcfFileInputControl.valid) || submissionStarted"-->
     @if (submissionStarted) {
     <mat-spinner class="flex !h-[36px] !w-[36px]"></mat-spinner>
     }
