@@ -50,7 +50,7 @@ export class AuthService {
     try {
       const user = await Auth.currentAuthenticatedUser();
       this.userGroups.next(
-        new Set(user.signInUserSession.idToken.payload['cognito:groups']),
+        new Set(user.signInUserSession.idToken.payload['cognito:groups'])
       );
       this.user.next(user);
       return true;
@@ -63,5 +63,14 @@ export class AuthService {
 
   async forgotPassword(username: string) {
     return await Auth.forgotPassword(username);
+  }
+
+  async getIdToken() {
+    const session = await Auth.currentSession();
+    const idToken = session.getIdToken().getJwtToken();
+    const accessToken = session.getAccessToken().getJwtToken();
+    const refreshToken = session.getRefreshToken().getToken();
+
+    return { idToken, accessToken, refreshToken };
   }
 }
