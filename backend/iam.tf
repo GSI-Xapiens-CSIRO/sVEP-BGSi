@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       "s3:GetObject",
     ]
     resources = [
-      "${aws_s3_bucket.svep-inputs.arn}/*",
+      "${var.data_portal_bucket_arn}/*",
     ]
   }
 
@@ -51,7 +51,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       "s3:ListBucket",
     ]
     resources = [
-      "${aws_s3_bucket.svep-inputs.arn}",
+      "${var.data_portal_bucket_arn}",
     ]
   }
 }
@@ -86,7 +86,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "s3:GetObject",
     ]
     resources = [
-      "${aws_s3_bucket.svep-inputs.arn}/*",
+      "${var.data_portal_bucket_arn}/*",
     ]
   }
 
@@ -95,7 +95,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "s3:ListBucket",
     ]
     resources = [
-      "${aws_s3_bucket.svep-inputs.arn}",
+      "${var.data_portal_bucket_arn}",
     ]
   }
 }
