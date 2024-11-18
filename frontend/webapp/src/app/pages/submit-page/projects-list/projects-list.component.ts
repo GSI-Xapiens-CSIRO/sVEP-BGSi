@@ -8,10 +8,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatRadioModule } from '@angular/material/radio';
 
+interface ProjectFile {
+  filename: string;
+  hasindex: boolean;
+}
+
 interface Project {
   name: string;
   description: string;
-  files: string[];
+  files: ProjectFile[];
   indexed: boolean;
 }
 
@@ -70,12 +75,24 @@ export class ProjectsListComponent {
           this.sb.open('API request failed', 'Okay', { duration: 60000 });
           this.dataSource.data = [];
         } else {
-          this.dataSource.data = data.map((project) => ({
-            name: project.name,
-            description: project.description,
-            files: project.files.filter((file: string) => file.endsWith('.vcf.gz')),
-            indexed: false,
-          }));
+          this.dataSource.data = data.map((project) => {
+            const vcfFiles = project.files.filter((file: string) => file.endsWith('.vcf.gz'));
+            const filesWithStatus = vcfFiles.map((file: string) => {
+              const prefix = file.slice(0, -7);
+              const hasIndex = project.files.includes(`${prefix}.vcf.gz.tbi`);
+              return {
+                filename: file,
+                disabled: !hasIndex,
+              };
+            });
+  
+            return {
+              name: project.name,
+              description: project.description,
+              files: filesWithStatus,
+              indexed: false,
+            };
+          });
         }
         this.loading = false;
       });

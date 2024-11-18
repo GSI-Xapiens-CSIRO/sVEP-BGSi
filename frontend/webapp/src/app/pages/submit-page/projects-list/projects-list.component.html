@@ -19,11 +19,12 @@
       @for (file of element.files; track $index) {
         <div class="file-row">
           <mat-radio-button
-            [checked]="isFileSelected(file)"
-            (change)="onFileSelect(file)"
-            [value]="file"
+            [checked]="isFileSelected(file.filename)"
+            (change)="onFileSelect(file.filename)"
+            [value]="file.filename"
+            [disabled]="file.disabled"
           >
-            {{ file }}
+            {{ file.filename }}
           </mat-radio-button>
         </div>
       }

@@ -12,6 +12,9 @@
   <p>
     sVEP operates by using a single input in the form of a VCF file. Please select a VCF from the list of available files.
   </p>
+  <p>
+    Disabled options indicate missing .tbi index files in project bucket.
+  </p>
   <app-projects-list 
     #projects
     (filesSelected)="filesSelected($event)"
