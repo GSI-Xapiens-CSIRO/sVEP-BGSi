@@ -68,6 +68,7 @@ export class SubmitPageComponent {
   }
 
   reset() {
+    this.projects.list()
     this.submissionStarted = false;
     this.uploadStarted = false;
     this.valid = false;
