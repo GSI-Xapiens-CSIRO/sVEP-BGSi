@@ -19,8 +19,8 @@ CONCATPAGES_SNS_TOPIC_ARN = os.environ['CONCATPAGES_SNS_TOPIC_ARN']
 os.environ['PATH'] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 
-def clean_regions(api_id):
-    response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=api_id)
+def clean_regions(request_id):
+    response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=request_id)
     if 'Contents' in response:
         paths = [
             f'{SVEP_REGIONS}/{d["Key"]}'
@@ -29,10 +29,10 @@ def clean_regions(api_id):
         fs.bulk_delete(pathlist=paths)
 
 
-def publish_result(api_id, all_keys, last_file, page_num, prefix):
+def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
     start_time = time.time()
-    filename = f'{api_id}{RESULT_SUFFIX}'
-    file_path = f's3://{SVEP_RESULTS}/{filename}'
+    filename = f'{request_id}{RESULT_SUFFIX}'
+    file_path = f's3://{SVEP_RESULTS}/private/{user_id}/svep-results/{filename}'
     response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=prefix)
     if len(response['Contents']) == page_num:
         paths = [
@@ -42,11 +42,11 @@ def publish_result(api_id, all_keys, last_file, page_num, prefix):
         fs.merge(path=file_path, filelist=paths)
         print(f"time taken = {(time.time()-start_time) * 1000}")
         print("Done concatenating")
-        clean_regions(api_id)
+        clean_regions(request_id)
     else:
         print("createPages failed to create one of the page")
         sns_publish(CONCATPAGES_SNS_TOPIC_ARN, {
-            'APIid': api_id,
+            'requestId': request_id,
             'lastFile': last_file,
             'pageNum': page_num,
         })
@@ -54,9 +54,10 @@ def publish_result(api_id, all_keys, last_file, page_num, prefix):
 
 def lambda_handler(event, _):
     message = get_sns_event(event)
-    api_id = message['APIid']
+    request_id = message['requestId']
+    user_id = message['userId']
     all_keys = message['allKeys']
     last_file = message['lastFile']
     page_num = message['pageNum']
     prefix = message['prefix']
-    publish_result(api_id, all_keys, last_file, page_num, prefix)
+    publish_result(request_id, user_id, all_keys, last_file, page_num, prefix)

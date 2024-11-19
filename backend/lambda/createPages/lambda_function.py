@@ -26,14 +26,15 @@ def append(page_keys, page_num, prefix):
     s3.Object(SVEP_REGIONS, filename).put(Body=(b'\n'.join(content)))
 
 
-def publish_result(api_id, page_keys, page_num, prefix):
+def publish_result(request_id, user_id, page_keys, page_num, prefix):
     filename = f'{prefix}{page_num}concatenated.tsv'
     print(prefix)
     bucket_len = len(s3_list_objects(SVEP_REGIONS, prefix))
     if bucket_len != page_num:
         print("calling itself again to make sure all files are done.")
         sns_publish(CREATEPAGES_SNS_TOPIC_ARN, {
-            'APIid': api_id,
+            'requestId': request_id,
+            'userId': user_id,
             'pageKeys': page_keys,
             'pageNum': page_num,
             'prefix': prefix,
@@ -55,7 +56,8 @@ def publish_result(api_id, page_keys, page_num, prefix):
         total_len = len(all_keys)
         for idx, key in enumerate(all_keys, start=1):
             sns_publish(CREATEPAGES_SNS_TOPIC_ARN, {
-                'APIid': api_id,
+                'requestId': request_id,
+                'userId': user_id,
                 'pageKeys': all_keys[idx - 1],
                 'pageNum': idx,
                 'prefix': new_prefix,
@@ -69,7 +71,8 @@ def publish_result(api_id, page_keys, page_num, prefix):
             for d in files
         ]
         sns_publish(CONCATPAGES_SNS_TOPIC_ARN, {
-            'APIid': api_id,
+            'requestId': request_id,
+            'userId': user_id,
             'allKeys': all_keys,
             'lastFile': filename,
             'pageNum': page_num,
@@ -77,7 +80,7 @@ def publish_result(api_id, page_keys, page_num, prefix):
         })
         # trigger another lambda to concat all pages
     elif bucket_len == 1:
-        result_file = f'{api_id}_results.tsv'
+        result_file = f's3://{SVEP_RESULTS}/private/{user_id}/svep-results/{filename}'
         prefix_files = s3_list_objects(SVEP_REGIONS, prefix)
         prefix_keys = prefix_files[0]['Key']
         copy_source = {
@@ -94,7 +97,8 @@ def s3_list_objects(bucket, prefix):
 
 def lambda_handler(event, _):
     message = get_sns_event(event)
-    api_id = message['APIid']
+    request_id = message['requestId']
+    user_id = message['userId']
     page_keys = message['pageKeys']
     page_num = message['pageNum']
     prefix = message['prefix']
@@ -103,4 +107,4 @@ def lambda_handler(event, _):
     if dont_append == 0:
         append(page_keys, page_num, prefix)
     if last_page == 1:
-        publish_result(api_id, page_keys, page_num, prefix)
+        publish_result(request_id, user_id, page_keys, page_num, prefix)

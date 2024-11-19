@@ -8,7 +8,8 @@ module "svep-backend" {
     common-tags = merge(var.common-tags, {
         "NAME"  = "svep-backend"
     })
-    data_portal_bucket_arn = "arn:aws:s3:::sbeacon-backend-dataportal-20241107003128459300000004"
+    data_portal_bucket_arn  = "arn:aws:s3:::sbeacon-backend-dataportal-20241107003128459300000004"
+    data_portal_bucket_name = "sbeacon-backend-dataportal-20241107003128459300000004"
 }
 
 module "svep-frontend" {

@@ -252,7 +252,7 @@ module "lambda-createPages" {
   environment ={
     variables = {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
-      SVEP_RESULTS = aws_s3_bucket.svep-results.bucket
+      SVEP_RESULTS = var.data_portal_bucket_name
       CONCATPAGES_SNS_TOPIC_ARN = aws_sns_topic.concatPages.arn
       CREATEPAGES_SNS_TOPIC_ARN = aws_sns_topic.createPages.arn
     }
@@ -281,7 +281,7 @@ module "lambda-concatPages" {
     variables = {
       RESULT_SUFFIX = local.result_suffix
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
-      SVEP_RESULTS = aws_s3_bucket.svep-results.bucket
+      SVEP_RESULTS = var.data_portal_bucket_name
       CONCATPAGES_SNS_TOPIC_ARN = aws_sns_topic.concatPages.arn
     }
   }
@@ -310,7 +310,7 @@ module "lambda-getResultsURL" {
       REGION = var.region
       RESULT_DURATION = local.result_duration
       RESULT_SUFFIX = local.result_suffix
-      SVEP_RESULTS = aws_s3_bucket.svep-results.bucket
+      SVEP_RESULTS = var.data_portal_bucket_name
     }
   }
 }

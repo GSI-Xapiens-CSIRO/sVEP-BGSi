@@ -16,3 +16,8 @@ variable "data_portal_bucket_arn" {
   type        = string
   description = "ARN of the data portal bucket"
 }
+
+variable "data_portal_bucket_name" {
+  type        = string
+  description = "Name of the data portal bucket"
+}

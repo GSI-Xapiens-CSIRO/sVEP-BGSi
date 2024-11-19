@@ -12,6 +12,7 @@ import { HttpEvent, HttpEventType } from '@angular/common/http';
 import { catchError, last, merge, of, switchMap, tap } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { environment } from '../../../environments/environment'
 
 @Component({
   selector: 'app-submit-page',
@@ -89,7 +90,7 @@ export class SubmitPageComponent {
     this.submissionStarted = true;
 
     if (this.vcfFile) {
-      const s3URI = `s3://sbeacon-backend-dataportal-20241107003128459300000004/${this.vcfFile}`;
+      const s3URI = `s3://${environment.storage.dataPortalBucket}/${this.vcfFile}`;
       
       this.js.submitJob(s3URI)
         .pipe(

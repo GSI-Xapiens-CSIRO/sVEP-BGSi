@@ -1,6 +1,8 @@
 import { HttpClient, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
+import { Auth } from 'aws-amplify'
+import { from, switchMap } from 'rxjs';
 
 @Injectable()
 export class JobsService {
@@ -28,6 +30,11 @@ export class JobsService {
   }
 
   submitJob(location: string) {
-    return this.http.post(`${environment.backendApiUrl}/submit`, { location });
+    return from(Auth.currentCredentials()).pipe(
+      switchMap(credentials => {
+        const userId = credentials.identityId;
+        return this.http.post(`${environment.backendApiUrl}/submit`, { location, userId });
+      })
+    );
   }
 }

@@ -40,6 +40,7 @@ def lambda_handler(event, _):
     try:
         body_dict = json.loads(event_body)
         request_id = event['requestContext']['requestId']
+        user_id = body_dict['userId']
         location = body_dict['location']
         vcf_regions = get_translated_regions(location)
     except ValueError:
@@ -51,8 +52,8 @@ def lambda_handler(event, _):
         'location': location,
     })
     sns_publish(CONCAT_STARTER_SNS_TOPIC_ARN, {
-        # TODO: Change all these APIid strings to requestID
-        'APIid': request_id,
+        'requestId': request_id,
+        'userId': user_id,
     })
 
     return bundle_response(200, {

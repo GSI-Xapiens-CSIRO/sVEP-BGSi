@@ -329,7 +329,7 @@ data "aws_iam_policy_document" "lambda-createPages" {
     ]
     resources = [
       "${aws_s3_bucket.svep-regions.arn}/*",
-      "${aws_s3_bucket.svep-results.arn}/*",
+      "${var.data_portal_bucket_arn}/*",
     ]
   }
 
@@ -371,7 +371,7 @@ data "aws_iam_policy_document" "lambda-concatPages" {
       "s3:PutObject",
     ]
     resources = [
-      "${aws_s3_bucket.svep-results.arn}/*",
+      "${var.data_portal_bucket_arn}/*",
     ]
   }
 
@@ -394,7 +394,7 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
       "s3:GetObject",
     ]
     resources = [
-      "${aws_s3_bucket.svep-results.arn}/*"
+      "${var.data_portal_bucket_arn}/*"
     ]
   }
 
@@ -403,7 +403,7 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
       "s3:ListBucket",
     ]
     resources = [
-      aws_s3_bucket.svep-results.arn
+      var.data_portal_bucket_arn
     ]
   }
 }

@@ -52,7 +52,7 @@ export class ResultsPageComponent implements OnInit {
     })
   }
 
-  load() {
+  async load() {
     this.ls.start();
     this.rs.getResults(this.requestIdFormControl.value).pipe(catchError(() => of(null))).subscribe(data => {
       if (data) {
