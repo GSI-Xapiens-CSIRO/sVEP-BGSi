@@ -1,6 +1,0 @@
-# terraform
-.terraform*
-builds*
-*.tfvars
-tests/*
-*.tfstate

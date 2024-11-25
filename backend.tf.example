@@ -1,8 +1,0 @@
-terraform {
-  backend "s3" {
-    bucket         = "XXXX"
-    key            = "svep"
-    region         = "XXXX"
-    dynamodb_table = "XXXX"
-  }
-}

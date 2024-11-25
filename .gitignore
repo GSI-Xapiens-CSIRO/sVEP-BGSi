@@ -1,4 +1,6 @@
 .terraform
-backend.tf
+terraform.tfstate
+.git
+.idea/
 .DS_Store
 builds
