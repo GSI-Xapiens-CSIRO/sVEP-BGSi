@@ -37,6 +37,7 @@ module "lambda-initQuery" {
       RESULT_SUFFIX = local.result_suffix
       SLICE_SIZE_MBP = local.slice_size_mbp
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
+      HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
 }
@@ -66,6 +67,7 @@ module "lambda-queryVCF" {
       QUERY_VCF_SNS_TOPIC_ARN = aws_sns_topic.queryVCF.arn
       QUERY_VCF_SUBMIT_SNS_TOPIC_ARN = aws_sns_topic.queryVCFsubmit.arn
       SLICE_SIZE_MBP = local.slice_size_mbp
+      HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
 }
@@ -121,6 +123,7 @@ module "lambda-queryGTF" {
       PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN = aws_sns_topic.pluginConsequence.arn
       PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN = aws_sns_topic.pluginUpdownstream.arn
       QUERY_GTF_SNS_TOPIC_ARN = aws_sns_topic.queryGTF.arn
+      HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
 }
@@ -152,6 +155,7 @@ module "lambda-pluginConsequence" {
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       SPLICE_REFERENCE = "sorted_splice_GRCh38.109.gtf.gz"
       MIRNA_REFERENCE = "sorted_filtered_mirna.gff3.gz" 
+      HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
   }
 }
 
@@ -177,6 +181,7 @@ module "lambda-pluginUpdownstream" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       REFERENCE_GENOME = "transcripts_Homo_sapiens.GRCh38.109.chr.gtf.gz"
+      HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
 }
