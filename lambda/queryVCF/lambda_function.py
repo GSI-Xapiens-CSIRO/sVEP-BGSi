@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from lambda_utils import Orchestrator, start_function, Timer
+from shared.utils import Orchestrator, start_function, Timer
 
 
 # Environment variables

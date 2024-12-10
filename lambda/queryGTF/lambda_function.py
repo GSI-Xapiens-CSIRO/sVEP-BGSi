@@ -2,7 +2,7 @@ import json
 import os
 import subprocess
 
-from lambda_utils import download_vcf, Orchestrator, start_function, Timer
+from shared.utils import download_vcf, Orchestrator, start_function, Timer
 
 
 # Environment variables

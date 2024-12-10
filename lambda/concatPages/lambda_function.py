@@ -3,12 +3,9 @@ import time
 
 import boto3
 
-from lambda_utils import get_sns_event, sns_publish
-import s3fs
+from shared.utils import get_sns_event, sns_publish
 
-
-# AWS clients and resources
-fs = s3fs.S3FileSystem(anon=False)
+# AWS S3 client
 s3 = boto3.client('s3')
 
 # Environment variables
@@ -22,11 +19,8 @@ os.environ['PATH'] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 def clean_regions(request_id):
     response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=request_id)
     if 'Contents' in response:
-        paths = [
-            f'{SVEP_REGIONS}/{d["Key"]}'
-            for d in response['Contents']
-        ]
-        fs.bulk_delete(pathlist=paths)
+        delete_objects = [{'Key': d['Key']} for d in response['Contents']]
+        s3.delete_objects(Bucket=SVEP_REGIONS, Delete={'Objects': delete_objects})
 
 
 def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
@@ -39,7 +33,11 @@ def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
             f'{SVEP_REGIONS}/{d}'
             for d in all_keys
         ]
-        fs.merge(path=file_path, filelist=paths)
+        merged_content = b""
+        for file in paths:
+            obj = s3.get_object(Bucket=SVEP_REGIONS, Key=file.split('/')[-1])
+            merged_content += obj['Body'].read()
+        s3.put_object(Bucket=SVEP_RESULTS, Key=f'private/{user_id}/svep-results/{filename}', Body=merged_content)
         print(f"time taken = {(time.time()-start_time) * 1000}")
         print("Done concatenating")
         clean_regions(request_id)

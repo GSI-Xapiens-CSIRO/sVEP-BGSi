@@ -3,7 +3,7 @@ import time
 
 import boto3
 
-from lambda_utils import get_sns_event, sns_publish
+from shared.utils import get_sns_event, sns_publish
 
 
 # AWS clients and resources

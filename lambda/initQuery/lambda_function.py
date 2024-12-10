@@ -1,9 +1,8 @@
 import json
 import os
 
-from api_response import bad_request, bundle_response
-import chrom_matching
-from lambda_utils import print_event, sns_publish, start_function
+from shared.apiutils import bad_request, bundle_response
+from shared.utils import chrom_matching, print_event, sns_publish, start_function
 
 
 # Environment variables

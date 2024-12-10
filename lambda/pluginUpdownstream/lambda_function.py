@@ -3,7 +3,7 @@ import re
 import shlex
 import subprocess
 
-from lambda_utils import download_vcf, Orchestrator, s3
+from shared.utils import download_vcf, Orchestrator, s3
 
 
 # Environment variables

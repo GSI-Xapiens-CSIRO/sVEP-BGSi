@@ -4,3 +4,14 @@ terraform.tfstate
 .idea/
 .DS_Store
 builds
+
+# python lambda layers
+layers/python_libraries/python
+layers/binaries/bin/*
+layers/binaries/lib/*
+
+# Build files
+*.zip
+*.pyc
+build
+libraries

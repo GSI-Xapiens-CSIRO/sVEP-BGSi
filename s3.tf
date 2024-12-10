@@ -38,3 +38,9 @@ resource "aws_s3_bucket_cors_configuration" "svep-results-cors" {
     max_age_seconds = 3000
   }
 }
+
+resource "aws_s3_bucket" "lambda-layers-bucket" {
+  bucket_prefix = "svep-backend-layers-"
+  force_destroy = true
+  tags          = var.common-tags
+}

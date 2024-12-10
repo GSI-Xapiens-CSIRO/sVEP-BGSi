@@ -2,7 +2,7 @@ import os
 
 import boto3
 
-from lambda_utils import get_sns_event, sns_publish, s3
+from shared.utils import get_sns_event, sns_publish, s3
 
 
 # AWS clients as s3 is a resource

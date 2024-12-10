@@ -9,6 +9,10 @@ locals {
   slice_size_mbp = 5
   result_suffix = "_results.tsv"
   result_duration = 86400
+  # layers
+  binaries_layer         = "${aws_lambda_layer_version.binaries_layer.layer_arn}:${aws_lambda_layer_version.binaries_layer.version}"
+  // python_libraries_layer = module.python_libraries_layer.lambda_layer_arn
+  python_modules_layer   = module.python_modules_layer.lambda_layer_arn
 }
 
 #
@@ -20,7 +24,7 @@ module "lambda-initQuery" {
   function_name = "svep-backend-initQuery"
   description = "Invokes queryVCF with the calculated regions"
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 1792
   timeout = 28
   policy = {
@@ -40,6 +44,11 @@ module "lambda-initQuery" {
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
 }
 
 #
@@ -51,7 +60,7 @@ module "lambda-queryVCF" {
   function_name = "svep-backend-queryVCF"
   description = "Invokes queryGTF for each region."
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 2048
   timeout = 28
   policy = {
@@ -70,6 +79,11 @@ module "lambda-queryVCF" {
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
 }
 
 #
@@ -81,7 +95,7 @@ module "lambda-queryVCFsubmit" {
   function_name = "svep-backend-queryVCFsubmit"
   description = "This lambda will be called if there are too many batchids to be processed within"
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 2048
   timeout = 28
   policy = {
@@ -97,6 +111,10 @@ module "lambda-queryVCFsubmit" {
       QUERY_VCF_SUBMIT_SNS_TOPIC_ARN = aws_sns_topic.queryVCFsubmit.arn
     }
   }
+
+  layers = [
+    local.python_modules_layer
+  ]
 }
 
 #
@@ -107,7 +125,7 @@ module "lambda-queryGTF" {
   function_name = "svep-backend-queryGTF"
   description = "Queries GTF for a specified VCF regions."
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 2048
   timeout = 24
   policy = {
@@ -126,6 +144,11 @@ module "lambda-queryGTF" {
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
 }
 
 #
@@ -167,7 +190,7 @@ module "lambda-pluginUpdownstream" {
   function_name = "svep-backend-pluginUpdownstream"
   description = "Write upstream and downstream gene variant to temp bucket."
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 2048
   timeout = 24
   policy = {
@@ -184,6 +207,11 @@ module "lambda-pluginUpdownstream" {
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
 }
 
 #
@@ -195,7 +223,7 @@ module "lambda-concat" {
   function_name = "svep-backend-concat"
   description = "Triggers createPages."
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 2048
   timeout = 28
   policy = {
@@ -210,6 +238,10 @@ module "lambda-concat" {
       CREATEPAGES_SNS_TOPIC_ARN = aws_sns_topic.createPages.arn
     }
   }
+
+  layers = [
+    local.python_modules_layer
+  ]
 }
 
 #
@@ -221,7 +253,7 @@ module "lambda-concatStarter" {
   function_name = "svep-backend-concatStarter"
   description = "Validates all processing is done and triggers concat"
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 128
   timeout = 28
   policy = {
@@ -238,6 +270,10 @@ module "lambda-concatStarter" {
       CONCAT_STARTER_SNS_TOPIC_ARN = aws_sns_topic.concatStarter.arn
     }
   }
+
+  layers = [
+    local.python_modules_layer,
+  ]
 }
 
 #
@@ -249,7 +285,7 @@ module "lambda-createPages" {
   function_name = "svep-backend-createPages"
   description = "concatenates individual page with 700 entries, received from concat lambda"
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 2048
   timeout = 28
   policy = {
@@ -266,6 +302,10 @@ module "lambda-createPages" {
       CREATEPAGES_SNS_TOPIC_ARN = aws_sns_topic.createPages.arn
     }
   }
+
+  layers = [
+    local.python_modules_layer,
+  ]
 }
 
 #
@@ -277,7 +317,7 @@ module "lambda-concatPages" {
   function_name = "svep-backend-concatPages"
   description = "concatenates all the page files created by createPages lambda."
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 2048
   timeout = 28
   policy = {
@@ -294,6 +334,10 @@ module "lambda-concatPages" {
       CONCATPAGES_SNS_TOPIC_ARN = aws_sns_topic.concatPages.arn
     }
   }
+
+  layers = [
+    local.python_modules_layer
+  ]
 }
 
 #
@@ -305,7 +349,7 @@ module "lambda-getResultsURL" {
   function_name = "svep-backend-getResultsURL"
   description = "Returns the presigned results URL for results"
   handler = "lambda_function.lambda_handler"
-  runtime = "python3.9"
+  runtime = "python3.12"
   memory_size = 1792
   timeout = 28
   policy = {
@@ -322,4 +366,8 @@ module "lambda-getResultsURL" {
       SVEP_RESULTS = var.data_portal_bucket_name
     }
   }
+
+  layers = [
+    local.python_modules_layer,
+  ]
 }

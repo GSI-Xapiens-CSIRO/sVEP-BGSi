@@ -1,7 +1,7 @@
 import os
 
 
-from lambda_utils import Orchestrator, start_function
+from shared.utils import Orchestrator, start_function
 
 
 # Environment variables

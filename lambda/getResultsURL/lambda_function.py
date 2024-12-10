@@ -1,7 +1,7 @@
 import os
 
-from api_response import bad_request, bundle_response
-from lambda_utils import (
+from shared.apiutils import bad_request, bundle_response
+from shared.utils import (
     print_event,
     generate_presigned_get_url,
 )
