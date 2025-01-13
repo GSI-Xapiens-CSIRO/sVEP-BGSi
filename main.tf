@@ -137,7 +137,7 @@ module "lambda-queryGTF" {
     variables = {
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
-      REFERENCE_GENOME = "sorted_filtered_Homo_sapiens.GRCh38.109.chr.gtf.gz"
+      REFERENCE_GENOME = "sorted_filtered_Homo_sapiens.GRCh38.113.chr.gtf.gz"
       PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN = aws_sns_topic.pluginConsequence.arn
       PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN = aws_sns_topic.pluginUpdownstream.arn
       QUERY_GTF_SNS_TOPIC_ARN = aws_sns_topic.queryGTF.arn
@@ -176,7 +176,7 @@ module "lambda-pluginConsequence" {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
-      SPLICE_REFERENCE = "sorted_splice_GRCh38.109.gtf.gz"
+      SPLICE_REFERENCE = "sorted_splice_GRCh38.113.gtf.gz"
       MIRNA_REFERENCE = "sorted_filtered_mirna.gff3.gz" 
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
   }
@@ -203,7 +203,7 @@ module "lambda-pluginUpdownstream" {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
-      REFERENCE_GENOME = "transcripts_Homo_sapiens.GRCh38.109.chr.gtf.gz"
+      REFERENCE_GENOME = "transcripts_Homo_sapiens.GRCh38.113.chr.gtf.gz"
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }

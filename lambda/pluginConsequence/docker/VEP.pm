@@ -94,7 +94,7 @@ sub handle {
     #print Dumper @data;
     my $chr = $data[0][0]->{'chrom'};
     #print($chr);
-    my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chr.'.fa.gz';
+    my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chr.'.fa.bgz';
     print "Copying fasta reference files.\n";
     system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$fasta*' 1>/dev/null");
     print "Copying splice reference files.\n";
@@ -316,7 +316,7 @@ sub parse_vcf {
         my $splice_region_variant =0;
         if(exists($info{'CDS'})){
           my $location = $chr.':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
-          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chr.'.fa.gz';
+          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chr.'.fa.bgz';
           my $file = '/tmp/'.$fasta;
           my @result = `./samtools faidx $file $location`;
           shift @result;
