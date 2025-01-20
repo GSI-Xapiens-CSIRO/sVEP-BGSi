@@ -407,3 +407,49 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
     ]
   }
 }
+
+#
+# updateReferenceFiles Lambda Function
+#
+data "aws_iam_policy_document" "lambda-updateReferenceFiles" {
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket"
+    ]
+    resources = [
+      aws_s3_bucket.svep-references.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.updateReferenceFiles.arn,
+    ]
+  }
+
+  statement {
+      actions = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DescribeTable",
+      ]
+      resources = [
+        aws_dynamodb_table.svep_references.arn,
+      ]
+  }
+}

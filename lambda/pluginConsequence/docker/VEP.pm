@@ -78,6 +78,7 @@ my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
 my $spliceFile =  $ENV{'SPLICE_REFERENCE'};
 my $mirnaFile =  $ENV{'MIRNA_REFERENCE'};
+my $fastaBase =  $ENV{'FASTA_REFERENCE_BASE'};
 my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
 sub handle {
@@ -91,10 +92,8 @@ sub handle {
     print("tempFileName is - $tempFileName\n");
     #############################################
 
-    #print Dumper @data;
     my $chr = $data[0][0]->{'chrom'};
-    #print($chr);
-    my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chr.'.fa.bgz';
+    my $fasta = $fastaBase.'.'.$chr.'.fa.bgz';
     print "Copying fasta reference files.\n";
     system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$fasta*' 1>/dev/null");
     print "Copying splice reference files.\n";
@@ -463,10 +462,9 @@ sub parse_vcf {
           system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$mirnaFile*' 1>/dev/null");
         }
         if($rows[1] eq "mirbase"){
-          my $file = "sorted_filtered_mirna.gff3.gz";
           #my $intron_loc = $start;
           my $location = "chr".$chr.":".$start."-".$start;
-          my $mirna_result =  `tabix $file $location`; # change this for svep
+          my $mirna_result =  `tabix $mirnaLocalFile $location`; # change this for svep
           if(length $mirna_result){
             $tr->{within_mirna} = 1;
           }else{

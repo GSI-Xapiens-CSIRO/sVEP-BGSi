@@ -146,3 +146,27 @@ resource "aws_lambda_permission" "SNSLambdaconcatPages" {
   principal = "sns.amazonaws.com"
   source_arn = aws_sns_topic.concatPages.arn
 }
+
+#
+# updateReferenceFiles Lambda Function
+#
+resource "aws_lambda_permission" "SNSLambdaupdateReferenceFiles" {
+  statement_id = "SVEPBackendSNSLambdaupdateReferenceFiles"
+  action = "lambda:InvokeFunction"
+  function_name = module.lambda-updateReferenceFiles.lambda_function_name
+  principal = "sns.amazonaws.com"
+  source_arn = aws_sns_topic.updateReferenceFiles.arn
+}
+
+resource "aws_lambda_permission" "CloudwatchLambdaupdateReferenceFiles" {
+  statement_id = "SVEPBackendCloudwatchLambdaupdateReferenceFiles"
+  action = "lambda:InvokeFunction"
+  function_name = module.lambda-updateReferenceFiles.lambda_function_name
+  principal = "events.amazonaws.com"
+  source_arn = aws_cloudwatch_event_rule.update_references_trigger.arn
+}
+
+resource "aws_lambda_function_recursion_config" "SNSLambdaupdateReferenceFiles" {
+  function_name = module.lambda-updateReferenceFiles.lambda_function_name
+  recursive_loop = "Allow"
+}

@@ -22,3 +22,27 @@ variable "data_portal_bucket_name" {
   type        = string
   description = "Name of the data portal bucket"
 }
+
+variable "gtf_file_base" {
+  type        = string
+  description = "Base name for the GTF reference file"
+  default     = "Homo_sapiens.GRCh38"
+}
+
+variable "splice_file_base" {
+  type        = string
+  description = "Base name for the splice GTF reference file"
+  default     = "splice.Homo_sapiens.GRCh38"
+}
+
+variable "fasta_file_base" {
+  type        = string
+  description = "Base name for the FASTA reference file"
+  default     = "Homo_sapiens.GRCh38.dna.chromosome"
+}
+
+variable "mirna_file_base" {
+  type        = string
+  description = "Base name for the miRNA reference file"
+  default     = "mirna"
+}

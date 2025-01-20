@@ -87,3 +87,13 @@ resource "aws_sns_topic_subscription" "concatPages" {
   protocol = "lambda"
   endpoint = module.lambda-concatPages.function_arn
 }
+
+resource "aws_sns_topic" "updateReferenceFiles" {
+  name = "svep-backend-updateReferenceFiles"
+}
+
+resource "aws_sns_topic_subscription" "updateReferenceFiles" {
+  topic_arn = aws_sns_topic.updateReferenceFiles.arn
+  protocol = "lambda"
+  endpoint = module.lambda-updateReferenceFiles.lambda_function_arn
+}
