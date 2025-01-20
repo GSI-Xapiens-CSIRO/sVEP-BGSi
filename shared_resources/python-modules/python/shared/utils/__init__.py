@@ -1,4 +1,9 @@
-from .chrom_matching import get_vcf_chromosomes, get_matching_chromosome, get_regions, _match_chromosome_name
+from .chrom_matching import (
+    get_vcf_chromosomes,
+    get_matching_chromosome,
+    get_regions,
+    _match_chromosome_name,
+)
 from .lambda_utils import (
     s3,
     Timer,
@@ -14,4 +19,20 @@ from .lambda_utils import (
     sns_publish,
     start_function,
     truncated_print,
+)
+from .reference_utils import (
+    truncate_tmp,
+    prepend_tmp,
+    fetch_remote_content,
+    download_remote_content,
+    query_references_table,
+    update_references_table,
+    s3_download,
+    s3_upload,
+    execute_subprocess,
+    _remove,
+    _filter,
+    _sort,
+    _bgzip,
+    _tabix_index,
 )

@@ -7,21 +7,21 @@ import boto3
 from botocore.config import Config
 
 # Optional environment variables
-SVEP_TEMP = os.environ.get('SVEP_TEMP')
-REGION = os.environ.get('REGION')
+SVEP_TEMP = os.environ.get("SVEP_TEMP")
+REGION = os.environ.get("REGION")
 
 # AWS clients and resources
-s3 = boto3.resource('s3')
-sns = boto3.client('sns')
+s3 = boto3.resource("s3")
+sns = boto3.client("sns")
 s3_client = boto3.client(
     "s3",
     region_name=REGION,
-    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"})
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
 )
 
 MAX_PRINT_LENGTH = 1024
 MAX_SNS_EVENT_PRINT_LENGTH = 2048
-TEMP_FILE_FIELD = 'tempFileName'
+TEMP_FILE_FIELD = "tempFileName"
 
 
 class Timer:
@@ -51,7 +51,7 @@ class Orchestrator:
 
 
 def _get_function_name_from_arn(arn):
-    return arn.split(':')[-1]
+    return arn.split(":")[-1]
 
 
 def _truncate_string(string, max_length=MAX_PRINT_LENGTH):
@@ -66,7 +66,7 @@ def _truncate_string(string, max_length=MAX_PRINT_LENGTH):
     placeholder_chars = 8 + math.ceil(math.log(min_removed, 10))
     removed_chars = excess_bytes + placeholder_chars
     while True:
-        placeholder = f'<{removed_chars} bytes>'
+        placeholder = f"<{removed_chars} bytes>"
         # Handle edge cases where the placeholder gets larger
         # when characters are removed.
         total_reduction = removed_chars - len(placeholder)
@@ -87,12 +87,12 @@ def _truncate_string(string, max_length=MAX_PRINT_LENGTH):
 
 def generate_presigned_get_url(bucket, key, expires=3600):
     kwargs = {
-        'ClientMethod': 'get_object',
-        'Params': {
-            'Bucket': bucket,
-            'Key': key,
+        "ClientMethod": "get_object",
+        "Params": {
+            "Bucket": bucket,
+            "Key": key,
         },
-        'ExpiresIn': expires,
+        "ExpiresIn": expires,
     }
     print(f"Calling s3.generate_presigned_url with kwargs: {json.dumps(kwargs)}")
     response = s3_client.generate_presigned_url(**kwargs)
@@ -103,21 +103,21 @@ def generate_presigned_get_url(bucket, key, expires=3600):
 def download_vcf(bucket, vcf):
     keys = [
         vcf,
-        f'{vcf}.tbi',
+        f"{vcf}.tbi",
     ]
     for key in keys:
-        local_file_name = f'/tmp/{key}'
+        local_file_name = f"/tmp/{key}"
         s3.Bucket(bucket).download_file(key, local_file_name)
 
 
 def _create_temp_file(filename):
     print(f"Creating file: {filename}")
-    s3.Object(SVEP_TEMP, filename).put(Body=b'')
+    s3.Object(SVEP_TEMP, filename).put(Body=b"")
 
 
 def clear_tmp():
-    for file_name in os.listdir('/tmp'):
-        file_path = f'/tmp/{file_name}'
+    for file_name in os.listdir("/tmp"):
+        file_path = f"/tmp/{file_name}"
         if os.path.isfile(file_path):
             os.unlink(file_path)
         elif os.path.isdir(file_path):
@@ -130,28 +130,29 @@ def print_event(event, max_length=MAX_PRINT_LENGTH):
 
 def get_sns_event(event, max_length=MAX_SNS_EVENT_PRINT_LENGTH):
     print_event(event, max_length)
-    return json.loads(event['Records'][0]['Sns']['Message'])
+    return json.loads(event["Records"][0]["Sns"]["Message"])
 
 
 def sns_publish(topic_arn, message, max_length=MAX_PRINT_LENGTH):
     kwargs = {
-        'TopicArn': topic_arn,
-        'Message': json.dumps(message, separators=(',', ':')),
+        "TopicArn": topic_arn,
+        "Message": json.dumps(message, separators=(",", ":")),
     }
     truncated_print(f"Publishing to SNS: {json.dumps(kwargs)}", max_length)
     sns.publish(**kwargs)
 
 
-def start_function(topic_arn, base_filename, message, resend=False,
-                   max_length=MAX_PRINT_LENGTH):
+def start_function(
+    topic_arn, base_filename, message, resend=False, max_length=MAX_PRINT_LENGTH
+):
     assert TEMP_FILE_FIELD not in message
     function_name = _get_function_name_from_arn(topic_arn)
     if resend:
         base_name, old_index = base_filename.rsplit(function_name, 1)
         old_index = old_index or 0  # Account for empty string
-        filename = f'{base_name}{function_name}{int(old_index) + 1}'
+        filename = f"{base_name}{function_name}{int(old_index) + 1}"
     else:
-        filename = f'{base_filename}_{function_name}'
+        filename = f"{base_filename}_{function_name}"
     message[TEMP_FILE_FIELD] = filename
     _create_temp_file(filename)
     sns_publish(topic_arn, message, max_length)

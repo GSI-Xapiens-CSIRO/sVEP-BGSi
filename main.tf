@@ -137,7 +137,7 @@ module "lambda-queryGTF" {
     variables = {
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
-      REFERENCE_GENOME = "sorted_filtered_Homo_sapiens.GRCh38.113.chr.gtf.gz"
+      REFERENCE_GENOME = "sorted_filtered_${var.gtf_file_base}.gtf.bgz"
       PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN = aws_sns_topic.pluginConsequence.arn
       PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN = aws_sns_topic.pluginUpdownstream.arn
       QUERY_GTF_SNS_TOPIC_ARN = aws_sns_topic.queryGTF.arn
@@ -176,8 +176,9 @@ module "lambda-pluginConsequence" {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
-      SPLICE_REFERENCE = "sorted_splice_GRCh38.113.gtf.gz"
-      MIRNA_REFERENCE = "sorted_filtered_mirna.gff3.gz" 
+      SPLICE_REFERENCE = "sorted_${var.splice_file_base}.gtf.bgz"
+      MIRNA_REFERENCE = "sorted_filtered_${var.mirna_file_base}.gff3.bgz"
+      FASTA_REFERENCE_BASE = var.fasta_file_base
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
   }
 }
@@ -203,7 +204,7 @@ module "lambda-pluginUpdownstream" {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
-      REFERENCE_GENOME = "transcripts_Homo_sapiens.GRCh38.113.chr.gtf.gz"
+      REFERENCE_GENOME = "transcripts_${var.gtf_file_base}.gtf.bgz"
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -368,6 +369,44 @@ module "lambda-getResultsURL" {
   }
 
   layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# updateReferenceFiles Lambda Function
+#
+module "lambda-updateReferenceFiles" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-updateReferenceFiles"
+  description         = "Retrieves latest reference files and updates the reference bucket in S3"
+  runtime             = "python3.12"
+  handler             = "lambda_function.lambda_handler"
+  memory_size         = 2048
+  timeout             = 900
+  attach_policy_jsons = true
+  ephemeral_storage_size = 8192
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-updateReferenceFiles.json
+  ]
+  number_of_policy_jsons = 1 
+  source_path            = "${path.module}/lambda/updateReferenceFiles"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
+    DYNAMO_SVEP_REFERENCES_TABLE = aws_dynamodb_table.svep_references.name
+    GTF_BASE = var.gtf_file_base
+    SPLICE_BASE = var.splice_file_base
+    FASTA_BASE = var.fasta_file_base
+    MIRNA_BASE = var.mirna_file_base
+    UPDATEREFERENCEFILES_SNS_TOPIC_ARN = aws_sns_topic.updateReferenceFiles.arn
+  }
+
+  layers = [
+    local.binaries_layer,
     local.python_modules_layer,
   ]
 }

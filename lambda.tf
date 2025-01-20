@@ -1,14 +1,14 @@
 #
 # initQuery Lambda Function
 #
-resource "aws_lambda_permission" "APIinitQuery" {
-  statement_id = "SVEPBackendAllowinitQueryInvoke"
+resource "aws_lambda_permission" "init_query_invoke_permission" {
+  statement_id = "APIInitQueryAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-initQuery.function_name
   principal = "apigateway.amazonaws.com"
   source_arn = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.submit.path_part}"
 }
-resource "aws_lambda_function_recursion_config" "APIinitQuery" {
+resource "aws_lambda_function_recursion_config" "init_query_recursion" {
   function_name = module.lambda-initQuery.function_name
   recursive_loop = "Allow"
 }
@@ -16,8 +16,8 @@ resource "aws_lambda_function_recursion_config" "APIinitQuery" {
 #
 # getResultsURL Lambda Function
 #
-resource "aws_lambda_permission" "APIgetResultsURL" {
-  statement_id = "SVEPBackendAllowgetResultsURLInvoke"
+resource "aws_lambda_permission" "get_results_url_invoke_permission" {
+  statement_id = "APIGetResultsUrlAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-getResultsURL.function_name
   principal = "apigateway.amazonaws.com"
@@ -27,14 +27,14 @@ resource "aws_lambda_permission" "APIgetResultsURL" {
 #
 # queryVCF Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdaqueryVCF" {
-  statement_id = "SVEPBackendSNSLambdaqueryVCF"
+resource "aws_lambda_permission" "query_vcf_invoke_permission" {
+  statement_id = "SNSQueryVCFAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-queryVCF.function_name
   principal = "sns.amazonaws.com"
   source_arn = aws_sns_topic.queryVCF.arn
 }
-resource "aws_lambda_function_recursion_config" "SNSLambdaqueryVCF" {
+resource "aws_lambda_function_recursion_config" "query_vcf_recursion" {
   function_name = module.lambda-queryVCF.function_name
   recursive_loop = "Allow"
 }
@@ -42,8 +42,8 @@ resource "aws_lambda_function_recursion_config" "SNSLambdaqueryVCF" {
 #
 # queryVCFsubmit Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdaqueryVCFsubmit" {
-  statement_id = "SVEPBackendSNSLambdaqueryVCFsubmit"
+resource "aws_lambda_permission" "query_vcf_submit_invoke_permission" {
+  statement_id = "SNSQueryVCFSubmitAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-queryVCFsubmit.function_name
   principal = "sns.amazonaws.com"
@@ -53,14 +53,14 @@ resource "aws_lambda_permission" "SNSLambdaqueryVCFsubmit" {
 #
 # queryGTF Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdaqueryGTF" {
-  statement_id = "SVEPBackendSNSLambdaqueryGTF"
+resource "aws_lambda_permission" "query_gtf_invoke_permission" {
+  statement_id = "SNSQueryGTFAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-queryGTF.function_name
   principal = "sns.amazonaws.com"
   source_arn = aws_sns_topic.queryGTF.arn
 }
-resource "aws_lambda_function_recursion_config" "SNSLambdaqueryGTF" {
+resource "aws_lambda_function_recursion_config" "query_gtf_recursion" {
   function_name = module.lambda-queryGTF.function_name
   recursive_loop = "Allow"
 }
@@ -69,16 +69,14 @@ resource "aws_lambda_function_recursion_config" "SNSLambdaqueryGTF" {
 #
 # pluginConsequence Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdapluginConsequence" {
-  statement_id = "SVEPBackendSNSLambdapluginConsequence"
+resource "aws_lambda_permission" "plugin_consequence_invoke_permission" {
+  statement_id = "SNSPluginConsequenceAllowInvoke"
   action = "lambda:InvokeFunction"
-  # TODO: Update to reference function_name once terraform-aws-lambda is updated
   function_name = module.lambda-pluginConsequence.lambda_function_name
   principal = "sns.amazonaws.com"
   source_arn = aws_sns_topic.pluginConsequence.arn
 }
-resource "aws_lambda_function_recursion_config" "SNSLambdapluginConsequence" {
-  # TODO: Update to reference function_name once terraform-aws-lambda is updated
+resource "aws_lambda_function_recursion_config" "plugin_consequence_recursion" {
   function_name = module.lambda-pluginConsequence.lambda_function_name
   recursive_loop = "Allow"
 }
@@ -87,8 +85,8 @@ resource "aws_lambda_function_recursion_config" "SNSLambdapluginConsequence" {
 #
 # pluginUpdownstream Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdapluginUpdownstream" {
-  statement_id = "SVEPBackendSNSLambdapluginUpdownstream"
+resource "aws_lambda_permission" "plugin_updownstream_invoke_permission" {
+  statement_id = "SNSPluginUpdownstreamAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-pluginUpdownstream.function_name
   principal = "sns.amazonaws.com"
@@ -98,8 +96,8 @@ resource "aws_lambda_permission" "SNSLambdapluginUpdownstream" {
 #
 # concat Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdaconcat" {
-  statement_id = "SVEPBackendSNSLambdaconcat"
+resource "aws_lambda_permission" "concat_invoke_permission" {
+  statement_id = "SNSConcatAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-concat.function_name
   principal = "sns.amazonaws.com"
@@ -109,14 +107,14 @@ resource "aws_lambda_permission" "SNSLambdaconcat" {
 #
 # concatStarter Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdaconcatStarter" {
-  statement_id = "SVEPBackendSNSLambdaconcatStarter"
+resource "aws_lambda_permission" "concat_starter_invoke_permission" {
+  statement_id = "SNSConcatStarterAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-concatStarter.function_name
   principal = "sns.amazonaws.com"
   source_arn = aws_sns_topic.concatStarter.arn
 }
-resource "aws_lambda_function_recursion_config" "SNSLambdaconcatStarter" {
+resource "aws_lambda_function_recursion_config" "concat_starter_recursion" {
   function_name = module.lambda-concatStarter.function_name
   recursive_loop = "Allow"
 }
@@ -124,14 +122,14 @@ resource "aws_lambda_function_recursion_config" "SNSLambdaconcatStarter" {
 #
 # createPages Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdacreatePages" {
-  statement_id = "SVEPBackendSNSLambdacreatePages"
+resource "aws_lambda_permission" "create_pages_invoke_permission" {
+  statement_id = "SNSCreatePagesAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-createPages.function_name
   principal = "sns.amazonaws.com"
   source_arn = aws_sns_topic.createPages.arn
 }
-resource "aws_lambda_function_recursion_config" "SNSLambdacreatePages" {
+resource "aws_lambda_function_recursion_config" "create_pages_recursion" {
   function_name = module.lambda-createPages.function_name
   recursive_loop = "Allow"
 }
@@ -139,10 +137,34 @@ resource "aws_lambda_function_recursion_config" "SNSLambdacreatePages" {
 #
 # concatPages Lambda Function
 #
-resource "aws_lambda_permission" "SNSLambdaconcatPages" {
-  statement_id = "SVEPBackendSNSLambdaconcatPages"
+resource "aws_lambda_permission" "concat_pages_invoke_permission" {
+  statement_id = "SNSConcatPagesAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-concatPages.function_name
   principal = "sns.amazonaws.com"
   source_arn = aws_sns_topic.concatPages.arn
+}
+
+#
+# updateReferenceFiles Lambda Function
+#
+resource "aws_lambda_permission" "sns_update_reference_files_invoke_permission" {
+  statement_id = "SNSUpdateReferenceFilesAllowInvoke"
+  action = "lambda:InvokeFunction"
+  function_name = module.lambda-updateReferenceFiles.lambda_function_name
+  principal = "sns.amazonaws.com"
+  source_arn = aws_sns_topic.updateReferenceFiles.arn
+}
+
+resource "aws_lambda_permission" "cloudwatch_update_reference_files_invoke_permission" {
+  statement_id = "CloudwatchUpdateReferenceFilesAllowInvoke"
+  action = "lambda:InvokeFunction"
+  function_name = module.lambda-updateReferenceFiles.lambda_function_name
+  principal = "events.amazonaws.com"
+  source_arn = aws_cloudwatch_event_rule.update_references_trigger.arn
+}
+
+resource "aws_lambda_function_recursion_config" "update_reference_files_recursion" {
+  function_name = module.lambda-updateReferenceFiles.lambda_function_name
+  recursive_loop = "Allow"
 }
