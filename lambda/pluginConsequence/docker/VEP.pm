@@ -93,7 +93,7 @@ sub handle {
     #############################################
 
     my $chr = $data[0][0]->{'chrom'};
-    my $fasta = $fastaBase.'.'.$chr.'.fa.bgz';
+    my $fasta = $fastaBase.'.'.($chr =~ s/^chr//r).'.fa.bgz';
     print "Copying fasta reference files.\n";
     system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$fasta*' 1>/dev/null");
     print "Copying splice reference files.\n";
@@ -290,7 +290,7 @@ sub parse_vcf {
         my $file = "/tmp/".$spliceFile;
         my $intronStart = $start - 8;
         my $intronEnd = $start + 8;
-        my $location = $chr.":".$intronStart."-".$intronEnd;
+        my $location = ($chr =~ s/^chr//r).":".$intronStart."-".$intronEnd;
         $intron_result =  `./tabix $file $location`;
         #print("\n Intron result = $intron_result")
       }
@@ -314,8 +314,8 @@ sub parse_vcf {
         my $intron_boundary = 0;
         my $splice_region_variant =0;
         if(exists($info{'CDS'})){
-          my $location = $chr.':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
-          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chr.'.fa.bgz';
+          my $location = ($chr =~ s/^chr//r).':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
+          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.($chr =~ s/^chr//r).'.fa.bgz';
           my $file = '/tmp/'.$fasta;
           my @result = `./samtools faidx $file $location`;
           shift @result;
@@ -463,7 +463,7 @@ sub parse_vcf {
         }
         if($rows[1] eq "mirbase"){
           #my $intron_loc = $start;
-          my $location = "chr".$chr.":".$start."-".$start;
+          my $location = "chr".($chr =~ s/^chr//r).":".$start."-".$start;
           my $mirna_result =  `tabix $mirnaLocalFile $location`; # change this for svep
           if(length $mirna_result){
             $tr->{within_mirna} = 1;

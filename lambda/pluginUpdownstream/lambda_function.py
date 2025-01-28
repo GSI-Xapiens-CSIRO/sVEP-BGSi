@@ -39,7 +39,7 @@ def query_updownstream(chrom, pos, alt, transcripts):
     up = int(pos) - 5000
     down = int(pos) + 5000
     results = []
-    loc = f"{chrom}:{up}-{down}"
+    loc = f"{chrom.replace('chr', '')}:{up}-{down}"
     local_file = f"/tmp/{REFERENCE_GENOME}"
     args = [
         "tabix",

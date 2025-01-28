@@ -30,7 +30,7 @@ def overlap_feature(all_coords, base_id, timer):
     counter = 0
     for idx, coord in enumerate(all_coords):
         chrom, pos, ref, alt = coord.split('\t')
-        loc = f'{chrom}:{pos}-{pos}'
+        loc = f'{chrom.replace('chr', '')}:{pos}-{pos}'
         local_file = f'/tmp/{REFERENCE_GENOME}'
         args = [
             'tabix',
