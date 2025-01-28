@@ -4,7 +4,7 @@
 resource "aws_cloudwatch_event_rule" "update_references_trigger" {
     name        = "svep_update_references_trigger"
     description = "A scheduled trigger that checks for changes to and updates reference files used by sVEP."
-    schedule_expression = "cron(0 19 1,15 * ? *)"
+    schedule_expression = "cron(0 19 ? * 7#1 *)"
 }
 
 resource "aws_cloudwatch_event_target" "update_references_trigger" {
