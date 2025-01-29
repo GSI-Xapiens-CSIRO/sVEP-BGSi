@@ -1,4 +1,4 @@
-FROM --platform=x86_64 public.ecr.aws/lambda/provided:al2
+FROM public.ecr.aws/lambda/provided:al2-x86_64
 
 # Install system packages and perl
 RUN yum update -y && \

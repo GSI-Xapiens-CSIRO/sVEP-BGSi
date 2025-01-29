@@ -43,4 +43,6 @@ module "docker_image_pluginConsequence_lambda" {
     triggers = {
         dir_sha = data.external.pluginConsequence_lambda_source_hash.result.hash
     }
+
+    platform = "linux/amd64"
 }
