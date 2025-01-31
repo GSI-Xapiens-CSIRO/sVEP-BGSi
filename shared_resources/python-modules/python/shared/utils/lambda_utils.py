@@ -5,6 +5,7 @@ import math
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 
 # Optional environment variables
 SVEP_TEMP = os.environ.get("SVEP_TEMP")
@@ -100,14 +101,23 @@ def generate_presigned_get_url(bucket, key, expires=3600):
     return response
 
 
-def download_vcf(bucket, vcf):
-    keys = [
-        vcf,
-        f"{vcf}.tbi",
-    ]
-    for key in keys:
-        local_file_name = f"/tmp/{key}"
+def download_to_tmp(bucket, key, raise_on_notfound=False):
+    local_file_name = f"/tmp/{key}"
+    try:
         s3.Bucket(bucket).download_file(key, local_file_name)
+    except ClientError as error:
+        if error["response"]["Error"]["Code"] == "404" and not raise_on_notfound:
+            return False
+        else:
+            raise error
+    return True
+
+
+
+def download_vcf(bucket, vcf):
+    download_to_tmp(bucket, vcf, raise_on_notfound=True)
+    if not download_to_tmp(bucket, f"{vcf}.csi"):
+        download_to_tmp(bucket, f"{vcf}.tbi", raise_on_notfound=True)
 
 
 def _create_temp_file(filename):
