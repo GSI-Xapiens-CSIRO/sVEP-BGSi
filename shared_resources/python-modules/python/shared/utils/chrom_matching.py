@@ -40,6 +40,12 @@ CHROMOSOME_LENGTHS_MBP = {
 CHROMOSOMES = CHROMOSOME_LENGTHS_MBP.keys()
 
 
+class ChromosomeNotFoundError(Exception):
+    def __init__(self, chromosome_name):
+        self.chromosome_name = chromosome_name
+        super().__init__(f"No matching chromosome found for '{chromosome_name}'")
+
+
 def get_vcf_chromosomes(vcf):
     args = [
         'tabix',
@@ -82,5 +88,4 @@ def _match_chromosome_name(chromosome_name):
             return chrom
         elif chrom in CHROMOSOME_ALIASES:
             return CHROMOSOME_ALIASES[chrom]
-    print(f'WARNING: Could not find chromosome to match "{chromosome_name}"')
-    return None
+    raise ChromosomeNotFoundError(chromosome_name)

@@ -23,7 +23,7 @@ def get_translated_regions_and_mapping(location):
         chromosome = chrom_matching.get_matching_chromosome(vcf_chromosomes,
                                                             target_chromosome)
         if not chromosome:
-            raise ValueError(f"No matching chromosome found for '{target_chromosome}'")
+            continue
         vcf_regions += [
             f'{chromosome}:{region}'
             for region in region_list
@@ -42,11 +42,12 @@ def lambda_handler(event, _):
         request_id = event['requestContext']['requestId']
         user_id = body_dict['userId']
         location = body_dict['location']
-        vcf_regions, chrom_mapping = get_translated_regions_and_mapping(location)
-    except json.JSONDecodeError:
+    except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
-    except ValueError as e:
-        return bad_request(e)
+    try:
+        vcf_regions, chrom_mapping = get_translated_regions_and_mapping(location)
+    except chrom_matching.ChromosomeNotFoundError as e:
+        return bad_request(str(e))
 
     print(vcf_regions)
     start_function(QUERY_VCF_SNS_TOPIC_ARN, request_id, {

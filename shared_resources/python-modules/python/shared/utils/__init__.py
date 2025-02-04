@@ -1,4 +1,5 @@
 from .chrom_matching import (
+    ChromosomeNotFoundError,
     get_vcf_chromosomes,
     get_matching_chromosome,
     get_regions,
