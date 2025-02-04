@@ -106,7 +106,7 @@ def download_to_tmp(bucket, key, raise_on_notfound=False):
     try:
         s3.Bucket(bucket).download_file(key, local_file_name)
     except ClientError as error:
-        if error["response"]["Error"]["Code"] == "404" and not raise_on_notfound:
+        if error.response["Error"]["Code"] == "404" and not raise_on_notfound:
             return False
         else:
             raise error
