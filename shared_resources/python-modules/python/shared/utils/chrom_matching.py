@@ -71,6 +71,10 @@ def get_regions(slice_size_mbp):
     return regions
 
 
+def get_chromosome_mapping(vcf_chroms):
+    return {chrom: _match_chromosome_name(chrom) for chrom in vcf_chroms}
+
+
 def _match_chromosome_name(chromosome_name):
     for i in range(len(chromosome_name)):
         chrom = chromosome_name[i:]  # progressively remove prefix

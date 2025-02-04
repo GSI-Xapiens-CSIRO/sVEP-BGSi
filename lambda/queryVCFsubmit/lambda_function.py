@@ -12,6 +12,7 @@ def lambda_handler(event, _):
     orchestrator = Orchestrator(event)
     message = orchestrator.message
     total_coords = message['coords']
+    chrom_mapping = message['mapping']
     print(f"length = {len(total_coords)}")
     base_filename = orchestrator.temp_file_name
     for idx in range(len(total_coords)):
@@ -20,6 +21,7 @@ def lambda_handler(event, _):
             base_filename=f'{base_filename}_{idx}',
             message={
                 'coords': total_coords[idx],
+                'mapping': chrom_mapping
             },
         )
     orchestrator.mark_completed()

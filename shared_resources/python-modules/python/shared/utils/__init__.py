@@ -2,6 +2,7 @@ from .chrom_matching import (
     get_vcf_chromosomes,
     get_matching_chromosome,
     get_regions,
+    get_chromosome_mapping,
     _match_chromosome_name,
 )
 from .lambda_utils import (

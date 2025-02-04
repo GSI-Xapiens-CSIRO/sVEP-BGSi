@@ -30,7 +30,7 @@ def get_query_process(location, chrom, start, end):
                             encoding='ascii')
 
 
-def submit_query_gtf(query_process, base_id, timer):
+def submit_query_gtf(query_process, base_id, timer, chrom_mapping):
     regions_list = query_process.stdout.read().splitlines()
     total_coords = [
         regions_list[x:x+RECORDS_PER_SAMPLE]
@@ -52,6 +52,7 @@ def submit_query_gtf(query_process, base_id, timer):
                     base_filename=f'{idx_base_id}_{i}',
                     message={
                         'coords': remaining_coords[i:i+BATCH_CHUNK_SIZE],
+                        'mapping': chrom_mapping,
                     },
                 )
             break
@@ -61,6 +62,7 @@ def submit_query_gtf(query_process, base_id, timer):
                 base_filename=idx_base_id,
                 message={
                     'coords': total_coords[idx],
+                    'mapping': chrom_mapping,
                 },
             )
 
@@ -72,6 +74,7 @@ def lambda_handler(event, context):
     second_timer = Timer(context, MILLISECONDS_BEFORE_SECOND_SPLIT)
     vcf_regions = message['regions']
     location = message['location']
+    chrom_mapping = message['mapping']
     base_id = orchestrator.temp_file_name
     for index, region in enumerate(vcf_regions):
         if first_timer.out_of_time():
@@ -84,6 +87,7 @@ def lambda_handler(event, context):
                 message={
                     'regions': new_regions,
                     'location': location,
+                    'mapping': chrom_mapping,
                 },
                 resend=True,
             )
@@ -94,5 +98,5 @@ def lambda_handler(event, context):
             start = round(1000000*float(start_str) + 1)
             end = start + round(1000000*SLICE_SIZE_MBP - 1)
             query_process = get_query_process(location, chrom, start, end)
-            submit_query_gtf(query_process, region_base_id, second_timer)
+            submit_query_gtf(query_process, region_base_id, second_timer, chrom_mapping)
     orchestrator.mark_completed()

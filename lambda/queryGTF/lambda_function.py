@@ -24,13 +24,13 @@ PAYLOAD_SIZE = 260000
 download_vcf(BUCKET_NAME, REFERENCE_GENOME)
 
 
-def overlap_feature(all_coords, base_id, timer):
+def overlap_feature(all_coords, base_id, timer, chrom_mapping):
     results = []
     tot_size = 0
     counter = 0
     for idx, coord in enumerate(all_coords):
         chrom, pos, ref, alt = coord.split('\t')
-        loc = f'{chrom.replace('chr', '')}:{pos}-{pos}'
+        loc = f'{chrom_mapping[chrom]}:{pos}-{pos}'
         local_file = f'/tmp/{REFERENCE_GENOME}'
         args = [
             'tabix',
@@ -56,40 +56,42 @@ def overlap_feature(all_coords, base_id, timer):
                 # should only be executed in very few cases.
                 counter += 1
 
-                send_data_to_plugins(base_id, counter, results)
-                send_data_to_self(base_id, all_coords[idx:])
+                send_data_to_plugins(base_id, counter, results, chrom_mapping)
+                send_data_to_self(base_id, all_coords[idx:], chrom_mapping)
                 return
         else:
             counter += 1
-            send_data_to_plugins(base_id, counter, results)
+            send_data_to_plugins(base_id, counter, results, chrom_mapping)
             if timer.out_of_time():
-                send_data_to_self(base_id, all_coords[idx:])
+                send_data_to_self(base_id, all_coords[idx:], chrom_mapping)
                 return
             else:
                 results = [data]
                 tot_size = cur_size
     counter += 1
-    send_data_to_plugins(base_id, counter, results)
+    send_data_to_plugins(base_id, counter, results, chrom_mapping)
 
 
-def send_data_to_plugins(base_id, counter, results):
+def send_data_to_plugins(base_id, counter, results, chrom_mapping):
     for topic in TOPICS:
         start_function(
             topic_arn=topic,
             base_filename=f'{base_id}_{counter}',
             message={
                 'snsData': results,
+                'mapping': chrom_mapping,
             },
         )
 
 
-def send_data_to_self(base_id, remaining_coords):
+def send_data_to_self(base_id, remaining_coords, chrom_mapping):
     print("Less Time remaining - call itself.")
     start_function(
         topic_arn=QUERY_GTF_SNS_TOPIC_ARN,
         base_filename=base_id,
         message={
             'coords': remaining_coords,
+            'mapping': chrom_mapping,
         },
         resend=True,
     )
@@ -100,6 +102,7 @@ def lambda_handler(event, context):
     message = orchestrator.message
     timer = Timer(context, MILLISECONDS_BEFORE_SPLIT)
     coords = message['coords']
+    chrom_mapping = message['mapping']
     base_id = orchestrator.temp_file_name
-    overlap_feature(coords, base_id, timer)
+    overlap_feature(coords, base_id, timer, chrom_mapping)
     orchestrator.mark_completed()
