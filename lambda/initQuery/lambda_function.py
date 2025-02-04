@@ -23,7 +23,7 @@ def get_translated_regions_and_mapping(location):
         chromosome = chrom_matching.get_matching_chromosome(vcf_chromosomes,
                                                             target_chromosome)
         if not chromosome:
-            raise ValueError("No matching chromosome found for '{target_chromosome}'")
+            raise ValueError(f"No matching chromosome found for '{target_chromosome}'")
         vcf_regions += [
             f'{chromosome}:{region}'
             for region in region_list
