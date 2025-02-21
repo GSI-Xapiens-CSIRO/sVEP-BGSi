@@ -4,6 +4,9 @@
 resource "aws_api_gateway_rest_api" "VPApi" {
   name = "svep-backend-api"
   description = "API That implements the Variant Prioritization specification"
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
 }
 
 # 
@@ -278,31 +281,37 @@ resource "aws_api_gateway_integration_response" "results-url-get" {
 #
 resource "aws_api_gateway_deployment" "VPApi" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
-  stage_name  = "prod"
   # taint deployment if any api resources change
-  stage_description = md5(join("", [
-    md5(file("${path.module}/api.tf")),
-    # /submit
-    aws_api_gateway_method.submit-options.id,
-    aws_api_gateway_integration.submit-options.id,
-    aws_api_gateway_integration_response.submit-options.id,
-    aws_api_gateway_method_response.submit-options.id,
-    aws_api_gateway_method.submit-patch.id,
-    aws_api_gateway_integration.submit-patch.id,
-    aws_api_gateway_integration_response.submit-patch.id,
-    aws_api_gateway_method_response.submit-patch.id,
-    aws_api_gateway_method.submit-post.id,
-    aws_api_gateway_integration.submit-post.id,
-    aws_api_gateway_integration_response.submit-post.id,
-    aws_api_gateway_method_response.submit-post.id,
-    # /results_url
-    aws_api_gateway_method.results-url-options.id,
-    aws_api_gateway_integration.results-url-options.id,
-    aws_api_gateway_integration_response.results-url-options.id,
-    aws_api_gateway_method_response.results-url-options.id,
-    aws_api_gateway_method.results-url-get.id,
-    aws_api_gateway_integration.results-url-get.id,
-    aws_api_gateway_integration_response.results-url-get.id,
-    aws_api_gateway_method_response.results-url-get.id,
-  ]))
+  triggers = {
+    redeployment = sha1(jsonencode([
+      # /submit
+      aws_api_gateway_method.submit-options.id,
+      aws_api_gateway_integration.submit-options.id,
+      aws_api_gateway_integration_response.submit-options.id,
+      aws_api_gateway_method_response.submit-options.id,
+      aws_api_gateway_method.submit-patch.id,
+      aws_api_gateway_integration.submit-patch.id,
+      aws_api_gateway_integration_response.submit-patch.id,
+      aws_api_gateway_method_response.submit-patch.id,
+      aws_api_gateway_method.submit-post.id,
+      aws_api_gateway_integration.submit-post.id,
+      aws_api_gateway_integration_response.submit-post.id,
+      aws_api_gateway_method_response.submit-post.id,
+      # /results_url
+      aws_api_gateway_method.results-url-options.id,
+      aws_api_gateway_integration.results-url-options.id,
+      aws_api_gateway_integration_response.results-url-options.id,
+      aws_api_gateway_method_response.results-url-options.id,
+      aws_api_gateway_method.results-url-get.id,
+      aws_api_gateway_integration.results-url-get.id,
+      aws_api_gateway_integration_response.results-url-get.id,
+      aws_api_gateway_method_response.results-url-get.id,
+    ]))
+  }
+}
+
+resource "aws_api_gateway_stage" "VPApi" {
+  deployment_id = aws_api_gateway_deployment.VPApi.id
+  rest_api_id   = aws_api_gateway_rest_api.VPApi.id
+  stage_name    = "prod"
 }
