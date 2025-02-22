@@ -53,8 +53,9 @@ resource "aws_cloudfront_distribution" "api_distribution" {
     }
   }
 
-  comment = "svep-backend-api"
-  enabled = true
+  comment    = "svep-backend-api"
+  enabled    = true
+  web_acl_id = var.web_acl_arn
 
   default_cache_behavior {
     allowed_methods          = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
