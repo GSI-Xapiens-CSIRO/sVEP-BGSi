@@ -46,3 +46,16 @@ variable "mirna_file_base" {
   description = "Base name for the miRNA reference file"
   default     = "mirna"
 }
+
+# Throttling variables
+variable "method-max-request-rate" {
+  type        = number
+  description = "Number of requests allowed per second per method."
+  default     = 100
+}
+
+variable "method-queue-size" {
+  type        = number
+  description = "Number of requests allowed to be queued per method."
+  default     = 1000
+}
