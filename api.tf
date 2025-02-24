@@ -125,7 +125,8 @@ resource "aws_api_gateway_method" "submit-post" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
   resource_id = aws_api_gateway_resource.submit.id
   http_method = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
 }
 
 resource "aws_api_gateway_method_response" "submit-post" {
@@ -178,7 +179,8 @@ resource "aws_api_gateway_method" "results-url-options" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
   resource_id = aws_api_gateway_resource.results-url.id
   http_method = "OPTIONS"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
 }
 
 resource "aws_api_gateway_method_response" "results-url-options" {
@@ -236,7 +238,8 @@ resource "aws_api_gateway_method" "results-url-get" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
   resource_id = aws_api_gateway_resource.results-url.id
   http_method = "GET"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
 }
 
 resource "aws_api_gateway_method_response" "results-url-get" {

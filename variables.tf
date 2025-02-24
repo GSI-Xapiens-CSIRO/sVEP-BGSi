@@ -65,3 +65,9 @@ variable "web_acl_arn" {
   description = "arn of the WAF Web ACL to associate with the API's cloudfront distribution"
   default     = null
 }
+
+# cognito variables
+variable "cognito-user-pool-arn" {
+  type        = string
+  description = "Cognito user pool ARN"
+}
