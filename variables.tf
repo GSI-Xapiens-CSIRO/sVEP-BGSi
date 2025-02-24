@@ -59,3 +59,9 @@ variable "method-queue-size" {
   description = "Number of requests allowed to be queued per method."
   default     = 1000
 }
+
+variable "web_acl_arn" {
+  type        = string
+  description = "arn of the WAF Web ACL to associate with the API's cloudfront distribution"
+  default     = null
+}
