@@ -1,9 +1,13 @@
 import os
 import time
+import io
+import json
+import gzip
 
 import boto3
 
 from shared.utils import get_sns_event, sns_publish
+from indexer import create_index
 
 # AWS S3 client
 s3 = boto3.client('s3')
@@ -37,7 +41,12 @@ def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
         for file in paths:
             obj = s3.get_object(Bucket=SVEP_REGIONS, Key=file.split('/')[-1])
             merged_content += obj['Body'].read()
+        content_stream = io.BytesIO(merged_content)
+        index = create_index(content_stream)
+        index = json.dumps(index).encode()
+        index = gzip.compress(index)
         s3.put_object(Bucket=SVEP_RESULTS, Key=f'private/{user_id}/svep-results/{filename}', Body=merged_content)
+        s3.put_object(Bucket=SVEP_RESULTS, Key=f'private/{user_id}/svep-results/{filename}.index.json.gz', Body=merged_content)
         print(f"time taken = {(time.time()-start_time) * 1000}")
         print("Done concatenating")
         clean_regions(request_id)
