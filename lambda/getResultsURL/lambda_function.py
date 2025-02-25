@@ -44,9 +44,7 @@ def lambda_handler(event, _):
         request_id = event["queryStringParameters"]["request_id"]
         user_id = event["queryStringParameters"]["user_id"]
         results_path = f"clinic-workflows/{user_id}/{request_id}{RESULT_SUFFIX}"
-        index_path = (
-            f"private/{user_id}/svep-results/{request_id}{RESULT_SUFFIX}.index.json.gz"
-        )
+        index_path = f"{results_path}.index.json.gz"
 
         if index := get_index(index_path):
             chromosomes = list(index.keys())
@@ -88,7 +86,7 @@ def lambda_handler(event, _):
             # TODO remove this when we do not need backward compatibility
             result_url = generate_presigned_get_url(
                 RESULT_BUCKET,
-                f"private/{user_id}/svep-results/{request_id}{RESULT_SUFFIX}",
+                results_path,
                 RESULT_DURATION,
             )
             return bundle_response(
