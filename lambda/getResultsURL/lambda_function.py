@@ -74,6 +74,7 @@ def lambda_handler(event, _):
                 200,
                 {
                     "url": None,
+                    "chromosome": chromosome,
                     "pages": [
                         {chrom: len(index[chrom]["page_start_f"])}
                         for chrom in index.keys()
@@ -94,6 +95,9 @@ def lambda_handler(event, _):
                 {
                     "url": result_url,
                     "pages": [],
+                    "page": 1,
+                    "content": None,
+                    "chromosome": None,
                 },
             )
     except ValueError:
