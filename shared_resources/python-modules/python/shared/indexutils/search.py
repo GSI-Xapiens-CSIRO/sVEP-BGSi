@@ -2,9 +2,7 @@ from typing import Dict
 import bisect
 
 
-def _search(
-    index: Dict[str, Dict[str, int]], chromosome: str, position: int
-) -> int:
+def _search(index: Dict[str, Dict[str, int]], chromosome: str, position: int) -> int:
     """Finds the index entry where `position` falls in the chromosome index."""
     index_entry = index.get(chromosome, None)
     # Chromosome not found just return 0 (first page)

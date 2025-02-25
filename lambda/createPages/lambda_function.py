@@ -1,8 +1,11 @@
 import os
+import json
+import gzip
 
 import boto3
 
 from shared.utils import get_sns_event, sns_publish, s3
+from shared.indexutils import create_index
 
 
 # AWS clients as s3 is a resource
@@ -85,6 +88,19 @@ def publish_result(request_id, user_id, page_keys, page_num, prefix):
         prefix_keys = prefix_files[0]["Key"]
         copy_source = {"Bucket": SVEP_REGIONS, "Key": prefix_keys}
         s3_client.copy(copy_source, SVEP_RESULTS, result_file)
+        # download the file and create index
+        s3_client.download_file(SVEP_REGIONS, prefix_keys, f"/tmp/{filename}")
+
+        with open(f"/tmp/{filename}", "rb") as fp:
+            index = create_index(fp)
+            index = json.dumps(index).encode()
+            index = gzip.compress(index)
+            s3_client.put_object(
+                Bucket=SVEP_RESULTS,
+                Key=f"{result_file}.index.json.gz",
+                Body=index,
+            )
+        os.remove(f"/tmp/{filename}")   
 
 
 def s3_list_objects(bucket, prefix):

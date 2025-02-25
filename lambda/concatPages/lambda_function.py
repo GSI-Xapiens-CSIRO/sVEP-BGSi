@@ -7,7 +7,7 @@ import gzip
 import boto3
 
 from shared.utils import get_sns_event, sns_publish
-from indexer import create_index
+from shared.indexutils import create_index
 
 # AWS S3 client
 s3 = boto3.client("s3")
@@ -37,10 +37,6 @@ def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
         for file in paths:
             obj = s3.get_object(Bucket=SVEP_REGIONS, Key=file.split("/")[-1])
             merged_content += obj["Body"].read()
-        content_stream = io.BytesIO(merged_content)
-        index = create_index(content_stream)
-        index = json.dumps(index).encode()
-        index = gzip.compress(index)
         content_stream = io.BytesIO(merged_content)
         index = create_index(content_stream)
         index = json.dumps(index).encode()

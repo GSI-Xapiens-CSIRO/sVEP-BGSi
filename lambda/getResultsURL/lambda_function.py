@@ -10,7 +10,7 @@ from shared.utils import (
     print_event,
     generate_presigned_get_url,
 )
-from indexer import search_index_entry, get_index_page
+from shared.indexutils import search_index_entry, get_index_page
 
 
 # Environment variables
