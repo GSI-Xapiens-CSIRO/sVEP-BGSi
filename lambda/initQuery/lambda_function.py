@@ -32,7 +32,7 @@ def get_translated_regions_and_mapping(location):
 
 
 def get_sample_count(location):
-    cmd = f"bcftools query -l {location} | wc -l"
+    cmd = f'bcftools query -l "{location}" | wc -l'
     result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
     return int(result.stdout.strip())
 
