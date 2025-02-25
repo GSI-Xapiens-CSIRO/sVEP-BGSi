@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       "s3:GetObject",
     ]
     resources = [
-      "${var.data_portal_bucket_arn}/*",
+      "${var.data_portal_bucket_arn}/projects/*",
     ]
   }
 
@@ -86,7 +86,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "s3:GetObject",
     ]
     resources = [
-      "${var.data_portal_bucket_arn}/*",
+      "${var.data_portal_bucket_arn}/projects/*",
     ]
   }
 
@@ -329,7 +329,7 @@ data "aws_iam_policy_document" "lambda-createPages" {
     ]
     resources = [
       "${aws_s3_bucket.svep-regions.arn}/*",
-      "${var.data_portal_bucket_arn}/*",
+      "${var.data_portal_bucket_arn}/clinic-workflows/*",
     ]
   }
 
@@ -371,7 +371,7 @@ data "aws_iam_policy_document" "lambda-concatPages" {
       "s3:PutObject",
     ]
     resources = [
-      "${var.data_portal_bucket_arn}/*",
+      "${var.data_portal_bucket_arn}/clinic-workflows/*",
     ]
   }
 
@@ -394,7 +394,7 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
       "s3:GetObject",
     ]
     resources = [
-      "${var.data_portal_bucket_arn}/*"
+      "${var.data_portal_bucket_arn}/clinic-workflows/*"
     ]
   }
 

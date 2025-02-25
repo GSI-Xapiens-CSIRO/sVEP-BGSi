@@ -19,7 +19,9 @@ def lambda_handler(event, _):
         request_id = event["queryStringParameters"]["request_id"]
         user_id = event["queryStringParameters"]["user_id"]
         result_url = generate_presigned_get_url(
-            RESULT_BUCKET, f"private/{user_id}/svep-results/{request_id}{RESULT_SUFFIX}", RESULT_DURATION
+            RESULT_BUCKET,
+            f"clinic-workflows/{user_id}/{request_id}{RESULT_SUFFIX}",
+            RESULT_DURATION,
         )
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
