@@ -75,10 +75,10 @@ def lambda_handler(event, _):
                 {
                     "url": None,
                     "chromosome": chromosome,
-                    "pages": [
-                        {chrom: len(index[chrom]["page_start_f"])}
+                    "pages": {
+                        chrom: len(index[chrom]["page_start_f"])
                         for chrom in index.keys()
-                    ],
+                    },
                     "page": entry["page"],
                     "content": content.decode("utf-8"),
                 },
