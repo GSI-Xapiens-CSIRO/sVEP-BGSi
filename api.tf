@@ -80,8 +80,8 @@ resource "aws_api_gateway_method" "submit-patch" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
   resource_id = aws_api_gateway_resource.submit.id
   http_method = "PATCH"
-  authorization = "NONE"
-
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
 }
 
 resource "aws_api_gateway_method_response" "submit-patch" {
@@ -167,26 +167,25 @@ resource "aws_api_gateway_integration_response" "submit-post" {
 }
 
 # 
-# /results_url
+# /results
 # 
-resource "aws_api_gateway_resource" "results-url" {
+resource "aws_api_gateway_resource" "results" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
   parent_id = aws_api_gateway_rest_api.VPApi.root_resource_id
-  path_part = "results_url"
+  path_part = "results"
 }
 
-resource "aws_api_gateway_method" "results-url-options" {
+resource "aws_api_gateway_method" "results-options" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
-  resource_id = aws_api_gateway_resource.results-url.id
+  resource_id = aws_api_gateway_resource.results.id
   http_method = "OPTIONS"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+  authorization = "NONE"
 }
 
-resource "aws_api_gateway_method_response" "results-url-options" {
-  rest_api_id = aws_api_gateway_method.results-url-options.rest_api_id
-  resource_id = aws_api_gateway_method.results-url-options.resource_id
-  http_method = aws_api_gateway_method.results-url-options.http_method
+resource "aws_api_gateway_method_response" "results-options" {
+  rest_api_id = aws_api_gateway_method.results-options.rest_api_id
+  resource_id = aws_api_gateway_method.results-options.resource_id
+  http_method = aws_api_gateway_method.results-options.http_method
   status_code = "200"
 
   response_parameters ={
@@ -200,10 +199,10 @@ resource "aws_api_gateway_method_response" "results-url-options" {
   }
 }
 
-resource "aws_api_gateway_integration" "results-url-options" {
-  rest_api_id = aws_api_gateway_method.results-url-options.rest_api_id
-  resource_id = aws_api_gateway_method.results-url-options.resource_id
-  http_method = aws_api_gateway_method.results-url-options.http_method
+resource "aws_api_gateway_integration" "results-options" {
+  rest_api_id = aws_api_gateway_method.results-options.rest_api_id
+  resource_id = aws_api_gateway_method.results-options.resource_id
+  http_method = aws_api_gateway_method.results-options.http_method
   type = "MOCK"
 
   request_templates ={
@@ -215,11 +214,11 @@ resource "aws_api_gateway_integration" "results-url-options" {
   }
 }
 
-resource "aws_api_gateway_integration_response" "results-url-options" {
-  rest_api_id = aws_api_gateway_method.results-url-options.rest_api_id
-  resource_id = aws_api_gateway_method.results-url-options.resource_id
-  http_method = aws_api_gateway_method.results-url-options.http_method
-  status_code = aws_api_gateway_method_response.results-url-options.status_code
+resource "aws_api_gateway_integration_response" "results-options" {
+  rest_api_id = aws_api_gateway_method.results-options.rest_api_id
+  resource_id = aws_api_gateway_method.results-options.resource_id
+  http_method = aws_api_gateway_method.results-options.http_method
+  status_code = aws_api_gateway_method_response.results-options.status_code
 
   response_parameters ={
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
@@ -231,21 +230,21 @@ resource "aws_api_gateway_integration_response" "results-url-options" {
     "application/json" = ""
   }
 
-  depends_on = [aws_api_gateway_integration.results-url-options]
+  depends_on = [aws_api_gateway_integration.results-options]
 }
 
-resource "aws_api_gateway_method" "results-url-get" {
+resource "aws_api_gateway_method" "results-get" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
-  resource_id = aws_api_gateway_resource.results-url.id
+  resource_id = aws_api_gateway_resource.results.id
   http_method = "GET"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
 }
 
-resource "aws_api_gateway_method_response" "results-url-get" {
-  rest_api_id = aws_api_gateway_method.results-url-get.rest_api_id
-  resource_id = aws_api_gateway_method.results-url-get.resource_id
-  http_method = aws_api_gateway_method.results-url-get.http_method
+resource "aws_api_gateway_method_response" "results-get" {
+  rest_api_id = aws_api_gateway_method.results-get.rest_api_id
+  resource_id = aws_api_gateway_method.results-get.resource_id
+  http_method = aws_api_gateway_method.results-get.http_method
   status_code = "200"
 
   response_parameters ={
@@ -257,26 +256,26 @@ resource "aws_api_gateway_method_response" "results-url-get" {
   }
 }
 
-resource "aws_api_gateway_integration" "results-url-get" {
-  rest_api_id = aws_api_gateway_method.results-url-get.rest_api_id
-  resource_id = aws_api_gateway_method.results-url-get.resource_id
-  http_method = aws_api_gateway_method.results-url-get.http_method
+resource "aws_api_gateway_integration" "results-get" {
+  rest_api_id = aws_api_gateway_method.results-get.rest_api_id
+  resource_id = aws_api_gateway_method.results-get.resource_id
+  http_method = aws_api_gateway_method.results-get.http_method
   type = "AWS_PROXY"
   uri = module.lambda-getResultsURL.function_invoke_arn
   integration_http_method = "POST"
 }
 
-resource "aws_api_gateway_integration_response" "results-url-get" {
-  rest_api_id = aws_api_gateway_method.results-url-get.rest_api_id
-  resource_id = aws_api_gateway_method.results-url-get.resource_id
-  http_method = aws_api_gateway_method.results-url-get.http_method
-  status_code = aws_api_gateway_method_response.results-url-get.status_code
+resource "aws_api_gateway_integration_response" "results-get" {
+  rest_api_id = aws_api_gateway_method.results-get.rest_api_id
+  resource_id = aws_api_gateway_method.results-get.resource_id
+  http_method = aws_api_gateway_method.results-get.http_method
+  status_code = aws_api_gateway_method_response.results-get.status_code
 
   response_templates ={
     "application/json" = ""
   }
 
-  depends_on = [aws_api_gateway_integration.results-url-get]
+  depends_on = [aws_api_gateway_integration.results-get]
 }
 
 #
@@ -284,31 +283,37 @@ resource "aws_api_gateway_integration_response" "results-url-get" {
 #
 resource "aws_api_gateway_deployment" "VPApi" {
   rest_api_id = aws_api_gateway_rest_api.VPApi.id
+  # Without enabling create_before_destroy, 
+  # API Gateway can return errors such as BadRequestException: 
+  # Active stages pointing to this deployment must be moved or deleted on recreation.
+  lifecycle {
+    create_before_destroy = true
+  }
   # taint deployment if any api resources change
   triggers = {
     redeployment = sha1(jsonencode([
       # /submit
-      aws_api_gateway_method.submit-options.id,
-      aws_api_gateway_integration.submit-options.id,
-      aws_api_gateway_integration_response.submit-options.id,
-      aws_api_gateway_method_response.submit-options.id,
-      aws_api_gateway_method.submit-patch.id,
-      aws_api_gateway_integration.submit-patch.id,
-      aws_api_gateway_integration_response.submit-patch.id,
-      aws_api_gateway_method_response.submit-patch.id,
-      aws_api_gateway_method.submit-post.id,
-      aws_api_gateway_integration.submit-post.id,
-      aws_api_gateway_integration_response.submit-post.id,
-      aws_api_gateway_method_response.submit-post.id,
-      # /results_url
-      aws_api_gateway_method.results-url-options.id,
-      aws_api_gateway_integration.results-url-options.id,
-      aws_api_gateway_integration_response.results-url-options.id,
-      aws_api_gateway_method_response.results-url-options.id,
-      aws_api_gateway_method.results-url-get.id,
-      aws_api_gateway_integration.results-url-get.id,
-      aws_api_gateway_integration_response.results-url-get.id,
-      aws_api_gateway_method_response.results-url-get.id,
+      aws_api_gateway_method.submit-options,
+      aws_api_gateway_integration.submit-options,
+      aws_api_gateway_integration_response.submit-options,
+      aws_api_gateway_method_response.submit-options,
+      aws_api_gateway_method.submit-patch,
+      aws_api_gateway_integration.submit-patch,
+      aws_api_gateway_integration_response.submit-patch,
+      aws_api_gateway_method_response.submit-patch,
+      aws_api_gateway_method.submit-post,
+      aws_api_gateway_integration.submit-post,
+      aws_api_gateway_integration_response.submit-post,
+      aws_api_gateway_method_response.submit-post,
+      # /results
+      aws_api_gateway_method.results-options,
+      aws_api_gateway_integration.results-options,
+      aws_api_gateway_integration_response.results-options,
+      aws_api_gateway_method_response.results-options,
+      aws_api_gateway_method.results-get,
+      aws_api_gateway_integration.results-get,
+      aws_api_gateway_integration_response.results-get,
+      aws_api_gateway_method_response.results-get,
     ]))
   }
 }

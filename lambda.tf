@@ -14,14 +14,14 @@ resource "aws_lambda_function_recursion_config" "init_query_recursion" {
 }
 
 #
-# getResultsURL Lambda Function
+# getResults Lambda Function
 #
-resource "aws_lambda_permission" "get_results_url_invoke_permission" {
-  statement_id = "APIGetResultsUrlAllowInvoke"
+resource "aws_lambda_permission" "get_results_invoke_permission" {
+  statement_id = "APIGetResultsAllowInvoke"
   action = "lambda:InvokeFunction"
   function_name = module.lambda-getResultsURL.function_name
   principal = "apigateway.amazonaws.com"
-  source_arn = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.results-url.path_part}"
+  source_arn = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.results.path_part}"
 }
 
 #
