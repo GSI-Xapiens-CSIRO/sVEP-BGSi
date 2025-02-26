@@ -46,7 +46,7 @@ def lambda_handler(event, _):
         results_path = (
             f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
         )
-        index_path = f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}.index.json.gz"
+        index_path = f"{results_path}.index.json.gz"
 
         if index := get_index(index_path):
             chromosomes = list(index.keys())
@@ -61,7 +61,7 @@ def lambda_handler(event, _):
 
             # position takes priority
             if position:
-                entry = search_index_entry(index, chromosome, position)
+                entry = search_index_entry(index, chromosome, int(position))
             else:
                 entry = get_index_page(index, chromosome, int(page))
 
@@ -76,10 +76,11 @@ def lambda_handler(event, _):
                 200,
                 {
                     "url": None,
-                    "pages": [
-                        {chrom: len(index[chrom]["page_start_f"])}
+                    "chromosome": chromosome,
+                    "pages": {
+                        chrom: len(index[chrom]["page_start_f"])
                         for chrom in index.keys()
-                    ],
+                    },
                     "page": entry["page"],
                     "content": content.decode("utf-8"),
                 },
@@ -88,7 +89,7 @@ def lambda_handler(event, _):
             # TODO remove this when we do not need backward compatibility
             result_url = generate_presigned_get_url(
                 RESULT_BUCKET,
-                f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}",
+                results_path,
                 RESULT_DURATION,
             )
             return bundle_response(
@@ -96,6 +97,9 @@ def lambda_handler(event, _):
                 {
                     "url": result_url,
                     "pages": [],
+                    "page": 1,
+                    "content": None,
+                    "chromosome": None,
                 },
             )
     except ValueError:

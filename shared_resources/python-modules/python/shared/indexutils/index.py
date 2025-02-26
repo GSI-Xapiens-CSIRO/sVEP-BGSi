@@ -4,7 +4,7 @@ from typing import Dict, List
 
 
 def create_index(file: io.BytesIO) -> Dict[str, Dict[str, List]]:
-    max_lines_per_page = 10_000
+    max_lines_per_page = 1_000
     max_size_per_page = 10 * 10**6
     index = defaultdict(lambda: defaultdict(list))
     lines_read = 0
