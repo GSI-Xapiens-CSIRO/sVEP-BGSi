@@ -59,7 +59,7 @@ def lambda_handler(event, _):
 
             # position takes priority
             if position:
-                entry = search_index_entry(index, chromosome, position)
+                entry = search_index_entry(index, chromosome, int(position))
             else:
                 entry = get_index_page(index, chromosome, int(page))
 
