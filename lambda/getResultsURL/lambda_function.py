@@ -42,8 +42,10 @@ def lambda_handler(event, _):
 
     try:
         request_id = event["queryStringParameters"]["request_id"]
-        user_id = event["queryStringParameters"]["user_id"]
-        results_path = f"clinic-workflows/{user_id}/{request_id}{RESULT_SUFFIX}"
+        project_name = event["queryStringParameters"]["project_name"]
+        results_path = (
+            f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
+        )
         index_path = f"{results_path}.index.json.gz"
 
         if index := get_index(index_path):

@@ -45,6 +45,7 @@ def lambda_handler(event, _):
     try:
         body_dict = json.loads(event_body)
         request_id = event["requestContext"]["requestId"]
+        project = body_dict["projectName"]
         user_id = body_dict["userId"]
         location = body_dict["location"]
     except ValueError:
@@ -80,7 +81,7 @@ def lambda_handler(event, _):
         CONCAT_STARTER_SNS_TOPIC_ARN,
         {
             "requestId": request_id,
-            "userId": user_id,
+            "project": project,
         },
     )
 
@@ -89,5 +90,6 @@ def lambda_handler(event, _):
         {
             "Response": "Process started",
             "RequestId": request_id,
+            "ProjectName": project,
         },
     )

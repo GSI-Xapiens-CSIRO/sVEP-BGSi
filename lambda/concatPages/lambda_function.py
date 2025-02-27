@@ -27,7 +27,7 @@ def clean_regions(request_id):
         s3.delete_objects(Bucket=SVEP_REGIONS, Delete={"Objects": delete_objects})
 
 
-def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
+def publish_result(request_id, project, all_keys, last_file, page_num, prefix):
     start_time = time.time()
     filename = f"{request_id}{RESULT_SUFFIX}"
     response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=prefix)
@@ -43,12 +43,12 @@ def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
         index = gzip.compress(index)
         s3.put_object(
             Bucket=SVEP_RESULTS,
-            Key=f"clinic-workflows/{user_id}/{filename}",
+            Key=f"projects/{project}/clinical-workflows/{filename}",
             Body=merged_content,
         )
         s3.put_object(
             Bucket=SVEP_RESULTS,
-            Key=f"clinic-workflows/{user_id}/{filename}.index.json.gz",
+            Key=f"projects/{project}/clinical-workflows/{filename}.index.json.gz",
             Body=index,
         )
         print(f"time taken = {(time.time()-start_time) * 1000}")
@@ -69,9 +69,9 @@ def publish_result(request_id, user_id, all_keys, last_file, page_num, prefix):
 def lambda_handler(event, _):
     message = get_sns_event(event)
     request_id = message["requestId"]
-    user_id = message["userId"]
+    project = message["project"]
     all_keys = message["allKeys"]
     last_file = message["lastFile"]
     page_num = message["pageNum"]
     prefix = message["prefix"]
-    publish_result(request_id, user_id, all_keys, last_file, page_num, prefix)
+    publish_result(request_id, project, all_keys, last_file, page_num, prefix)

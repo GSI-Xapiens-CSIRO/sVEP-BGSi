@@ -29,7 +29,7 @@ def append(page_keys, page_num, prefix):
     s3.Object(SVEP_REGIONS, filename).put(Body=(b"\n".join(content)))
 
 
-def publish_result(request_id, user_id, page_keys, page_num, prefix):
+def publish_result(request_id, project, page_keys, page_num, prefix):
     filename = f"{prefix}{page_num}concatenated.tsv"
     print(prefix)
     bucket_len = len(s3_list_objects(SVEP_REGIONS, prefix))
@@ -39,7 +39,7 @@ def publish_result(request_id, user_id, page_keys, page_num, prefix):
             CREATEPAGES_SNS_TOPIC_ARN,
             {
                 "requestId": request_id,
-                "userId": user_id,
+                "project": project,
                 "pageKeys": page_keys,
                 "pageNum": page_num,
                 "prefix": prefix,
@@ -59,7 +59,7 @@ def publish_result(request_id, user_id, page_keys, page_num, prefix):
                 CREATEPAGES_SNS_TOPIC_ARN,
                 {
                     "requestId": request_id,
-                    "userId": user_id,
+                    "project": project,
                     "pageKeys": all_keys[idx - 1],
                     "pageNum": idx,
                     "prefix": new_prefix,
@@ -74,7 +74,7 @@ def publish_result(request_id, user_id, page_keys, page_num, prefix):
             CONCATPAGES_SNS_TOPIC_ARN,
             {
                 "requestId": request_id,
-                "userId": user_id,
+                "project": project,
                 "allKeys": all_keys,
                 "lastFile": filename,
                 "pageNum": page_num,
@@ -83,7 +83,7 @@ def publish_result(request_id, user_id, page_keys, page_num, prefix):
         )
         # trigger another lambda to concat all pages
     elif bucket_len == 1:
-        result_file = f"s3://{SVEP_RESULTS}/clinic-workflows/{user_id}/{filename}"
+        result_file = f"s3://{SVEP_RESULTS}/clinic-workflows/{project}/{filename}"
         prefix_files = s3_list_objects(SVEP_REGIONS, prefix)
         prefix_keys = prefix_files[0]["Key"]
         copy_source = {"Bucket": SVEP_REGIONS, "Key": prefix_keys}
@@ -100,7 +100,7 @@ def publish_result(request_id, user_id, page_keys, page_num, prefix):
                 Key=f"{result_file}.index.json.gz",
                 Body=index,
             )
-        os.remove(f"/tmp/{filename}")   
+        os.remove(f"/tmp/{filename}")
 
 
 def s3_list_objects(bucket, prefix):
@@ -111,7 +111,7 @@ def s3_list_objects(bucket, prefix):
 def lambda_handler(event, _):
     message = get_sns_event(event)
     request_id = message["requestId"]
-    user_id = message["userId"]
+    project = message["project"]
     page_keys = message["pageKeys"]
     page_num = message["pageNum"]
     prefix = message["prefix"]
@@ -120,4 +120,4 @@ def lambda_handler(event, _):
     if dont_append == 0:
         append(page_keys, page_num, prefix)
     if last_page == 1:
-        publish_result(request_id, user_id, page_keys, page_num, prefix)
+        publish_result(request_id, project, page_keys, page_num, prefix)
