@@ -83,6 +83,18 @@ resource "aws_lambda_function_recursion_config" "plugin_consequence_recursion" {
 
 
 #
+# pluginClinvar Lambda Function
+#
+resource "aws_lambda_permission" "plugin_clinvar_invoke_permission" {
+  statement_id = "SNSPluginClinvarAllowInvoke"
+  action = "lambda:InvokeFunction"
+  function_name = module.lambda-pluginClinvar.function_name
+  principal = "sns.amazonaws.com"
+  source_arn = aws_sns_topic.pluginClinvar.arn
+}
+
+
+#
 # pluginUpdownstream Lambda Function
 #
 resource "aws_lambda_permission" "plugin_updownstream_invoke_permission" {

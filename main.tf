@@ -178,6 +178,7 @@ module "lambda-pluginConsequence" {
   environment_variables = {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
+      PLUGIN_CLINVAR_SNS_TOPIC_ARN = aws_sns_topic.pluginClinvar.arn
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       SPLICE_REFERENCE = "sorted_${var.splice_file_base}.gtf.bgz"
       MIRNA_REFERENCE = "sorted_filtered_${var.mirna_file_base}.gff3.bgz"
@@ -208,6 +209,38 @@ module "lambda-pluginUpdownstream" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       REFERENCE_GENOME = "transcripts_${var.gtf_file_base}.gtf.bgz"
+      HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# pluginClinvar Lambda Function
+#
+module "lambda-pluginClinvar" {
+  source = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginClinvar"
+  description = "Add ClinVar annotations to sVEP result rows."
+  handler = "lambda_function.lambda_handler"
+  runtime = "python3.12"
+  memory_size = 2048
+  timeout = 24
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginClinvar.json
+  }
+  source_path = "${path.module}/lambda/pluginClinvar"
+  tags = var.common-tags
+  environment ={
+    variables = {
+      SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
+      SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
+      REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
+      CLINVAR_REFERENCE = "clinvar.bed.gz"
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }

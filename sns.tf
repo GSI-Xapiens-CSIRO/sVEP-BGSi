@@ -48,6 +48,16 @@ resource "aws_sns_topic_subscription" "pluginUpdownstream" {
   endpoint = module.lambda-pluginUpdownstream.function_arn
 }
 
+resource "aws_sns_topic" "pluginClinvar" {
+  name = "svep-backend-pluginClinvar"
+}
+
+resource "aws_sns_topic_subscription" "pluginClinvar" {
+  topic_arn = aws_sns_topic.pluginClinvar.arn
+  protocol = "lambda"
+  endpoint = module.lambda-pluginClinvar.function_arn
+}
+
 resource "aws_sns_topic" "concat" {
   name = "svep-backend-concat"
 }

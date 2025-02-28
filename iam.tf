@@ -175,6 +175,57 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
 data "aws_iam_policy_document" "lambda-pluginConsequence" {
   statement {
     actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.pluginClinvar.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}",
+    ]
+  }
+}
+
+#
+# pluginUpdownstream Lambda Function
+#
+data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
+  statement {
+    actions = [
       "s3:PutObject",
     ]
     resources = [
@@ -211,9 +262,9 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
 }
 
 #
-# pluginUpdownstream Lambda Function
+# pluginClinvar Lambda Function
 #
-data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
+data "aws_iam_policy_document" "lambda-pluginClinvar" {
   statement {
     actions = [
       "s3:PutObject",

@@ -77,12 +77,14 @@ use consequence::TranscriptVariationAllele;
 my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
 my $spliceFile =  $ENV{'SPLICE_REFERENCE'};
+my $pluginClinvarSnsTopicArn =  $ENV{'PLUGIN_CLINVAR_SNS_TOPIC_ARN'};
 my $mirnaFile =  $ENV{'MIRNA_REFERENCE'};
 my $fastaBase =  $ENV{'FASTA_REFERENCE_BASE'};
 my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
 sub handle {
     my ($payload) = @_;
+    simple_truncated_print("Received message: $payload\n");
     my $event = decode_json($payload);
     my $sns = $event->{Records}[0]{Sns};
     ##########################################update
@@ -112,19 +114,57 @@ sub handle {
         }
       }
     }
-    my $filename = "/tmp/".$tempFileName.".tsv";
-    open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
-    print $fh join("\n", @results);
-    close $fh;
+    my %outMessage = (
+      'snsData' => join("\n", @results),
+      'mapping' => $chrom_mapping,
+    );
+    start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
 
-    my $out = 's3://'.$outputLocation.'/';
-    system("/usr/bin/aws s3 cp $filename $out");
-    #print("Done Copying");
     my $tempOut = 's3://'.$tempLocation.'/'.$tempFileName;
     system("/usr/bin/aws s3 rm $tempOut");
     print("Cleaning /tmp/\n");
     system("rm -rf /tmp/*");
     print("Task Complete.\n");
+}
+
+sub create_temp_file {
+  my ($nextTempFile) = @_;
+  print("Creating file: $nextTempFile\n");
+  system("aws", "s3api", "put-object", "--bucket", $tempLocation, "--key",  $nextTempFile, "--content-length", "0");
+}
+
+sub sns_publish {
+  my ($topicArn, $message) = @_;
+  my $jsonMessage = to_json($message);
+  # In order to get around command-line character limits, we must pass the message as a file
+  # https://github.com/aws/aws-cli/issues/1314#issuecomment-515674161
+  my $filename = "/tmp/message.json";
+  print("Saving message to local file $filename\n");
+  open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
+  print $fh $jsonMessage;
+  close $fh;
+  simple_truncated_print("Calling SNS Publish with topicArn: $topicArn and message: $jsonMessage\n");
+  system("aws", "sns", "publish", "--topic-arn", $topicArn, "--message", "file://$filename");
+}
+
+sub start_function {
+  my ($topicArn, $baseFilename, $message) = @_;
+  my $functionName = (split(":", $topicArn))[-1];
+  my $fileName = $baseFilename."_".$functionName;
+  $message->{'tempFileName'} = $fileName;
+  create_temp_file($fileName);
+  sns_publish($topicArn, $message);
+}
+
+sub simple_truncated_print {
+  # This doesn't need to be precise, just good enough
+  my $maxLength = 1000;
+  my ($string) = @_;
+  my $toRemove = length($string) - $maxLength;
+  if($toRemove > 0){
+    $string = substr($string, 0, $maxLength / 2)."<$toRemove bytes>".substr($string, -$maxLength / 2);
+  }
+  print($string);
 }
 
 # parse a line of VCF input into a variation feature object
