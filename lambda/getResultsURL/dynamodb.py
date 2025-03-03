@@ -1,6 +1,5 @@
 import boto3
 import os
-import json
 
 dynamodb_client = boto3.client("dynamodb")
 DYNAMO_PROJECT_USERS_TABLE = os.environ["DYNAMO_PROJECT_USERS_TABLE"]
