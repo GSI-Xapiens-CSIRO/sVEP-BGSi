@@ -45,6 +45,7 @@ module "lambda-initQuery" {
       SLICE_SIZE_MBP = local.slice_size_mbp
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
+      DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
     }
   }
 
