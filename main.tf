@@ -401,6 +401,7 @@ module "lambda-getResultsURL" {
       RESULT_DURATION = local.result_duration
       RESULT_SUFFIX = local.result_suffix
       SVEP_RESULTS = var.data_portal_bucket_name
+      DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
     }
   }
 

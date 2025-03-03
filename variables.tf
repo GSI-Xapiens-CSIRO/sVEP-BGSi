@@ -1,15 +1,15 @@
 variable "region" {
-  type          = string
-  description   = "Deployment region of the webapp."
-  default       = "ap-southeast-2"
+  type        = string
+  description = "Deployment region of the webapp."
+  default     = "ap-southeast-2"
 }
 
 variable "common-tags" {
-    type        = map(string)
-    description = "A set of tags to attach to every created sVEP resource."
-    default = {
-        "PROJECT" = "SVEP"
-    }
+  type        = map(string)
+  description = "A set of tags to attach to every created sVEP resource."
+  default = {
+    "PROJECT" = "SVEP"
+  }
 }
 
 
@@ -70,4 +70,15 @@ variable "web_acl_arn" {
 variable "cognito-user-pool-arn" {
   type        = string
   description = "Cognito user pool ARN"
+}
+
+# external dynamodb tables
+variable "dynamo-project-users-table" {
+  type        = string
+  description = "Dynamo project users table"
+}
+
+variable "dynamo-project-users-table-arn" {
+  type        = string
+  description = "Dynamo project users table ARN"
 }

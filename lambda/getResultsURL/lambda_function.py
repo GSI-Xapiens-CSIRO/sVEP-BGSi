@@ -11,6 +11,7 @@ from shared.utils import (
     generate_presigned_get_url,
 )
 from shared.indexutils import search_index_entry, get_index_page
+from dynamodb import check_user_in_project
 
 
 # Environment variables
@@ -41,12 +42,15 @@ def lambda_handler(event, _):
     print_event(event, max_length=None)
 
     try:
+        sub = event["requestContext"]["authorizer"]["claims"]["sub"]
         request_id = event["queryStringParameters"]["request_id"]
         project_name = event["queryStringParameters"]["project_name"]
         results_path = (
             f"projects/{project_name}/clinical-workflows/{request_id}{RESULT_SUFFIX}"
         )
         index_path = f"{results_path}.index.json.gz"
+
+        check_user_in_project(sub, project_name)
 
         if index := get_index(index_path):
             chromosomes = list(index.keys())

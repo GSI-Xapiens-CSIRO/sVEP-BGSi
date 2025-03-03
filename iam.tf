@@ -457,6 +457,23 @@ data "aws_iam_policy_document" "lambda-getResultsURL" {
       var.data_portal_bucket_arn
     ]
   }
+
+  statement {
+    actions = [
+      "dynamodb:DescribeTable",
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:BatchGetItem",
+    ]
+    resources = [
+      var.dynamo-project-users-table-arn,
+    ]
+  }
 }
 
 #
@@ -493,14 +510,14 @@ data "aws_iam_policy_document" "lambda-updateReferenceFiles" {
   }
 
   statement {
-      actions = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-        "dynamodb:UpdateItem",
-        "dynamodb:DescribeTable",
-      ]
-      resources = [
-        aws_dynamodb_table.svep_references.arn,
-      ]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DescribeTable",
+    ]
+    resources = [
+      aws_dynamodb_table.svep_references.arn,
+    ]
   }
 }
