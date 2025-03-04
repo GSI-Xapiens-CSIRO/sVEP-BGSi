@@ -21,6 +21,7 @@ from .lambda_utils import (
     sns_publish,
     start_function,
     truncated_print,
+    ENV_COGNITO,
 )
 from .reference_utils import (
     truncate_tmp,
