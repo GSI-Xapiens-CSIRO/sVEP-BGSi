@@ -87,3 +87,8 @@ variable "svep-success-email-lambda-function-arn" {
   type        = string
   description = "Lambda function ARN for sending registration emails"
 }
+
+variable "svep-failed-email-lambda-function-arn" {
+  type        = string
+  description = "Lambda function ARN for sending registration emails"
+}
