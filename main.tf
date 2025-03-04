@@ -46,6 +46,7 @@ module "lambda-initQuery" {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
       DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
+      COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA = var.svep-success-email-lambda-function-arn
     }
   }
 

@@ -1,10 +1,19 @@
 import json
 import os
 import subprocess
+import boto3
 
 from shared.apiutils import bad_request, bundle_response
-from shared.utils import chrom_matching, print_event, sns_publish, start_function
+from shared.utils import (
+    chrom_matching,
+    print_event,
+    sns_publish,
+    start_function,
+    ENV_COGNITO,
+)
 from dynamodb import check_user_in_project
+
+lambda_client = boto3.client("lambda")
 
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ["CONCAT_STARTER_SNS_TOPIC_ARN"]
@@ -12,6 +21,7 @@ QUERY_VCF_SNS_TOPIC_ARN = os.environ["QUERY_VCF_SNS_TOPIC_ARN"]
 RESULT_DURATION = int(os.environ["RESULT_DURATION"])
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
+COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA = ENV_COGNITO.COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 REGIONS = chrom_matching.get_regions(SLICE_SIZE_MBP)
@@ -87,11 +97,33 @@ def lambda_handler(event, _):
         },
     )
 
+    payload = {
+        "body": {
+            "email": "fajarsep12@gmail.com",
+            "first_name": "Fajar",
+            "last_name": "Septiawan",
+            "file": "file.vcf",
+            "project_name": "project test",
+        }
+    }
+    response = lambda_client.invoke(
+        FunctionName=COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA,
+        InvocationType="RequestResponse",
+        Payload=json.dumps(payload),
+    )
+    if not (payload_stream := response.get("Payload")):
+        raise Exception("Error invoking email Lambda: No response payload")
+    body = json.loads(payload_stream.read().decode("utf-8"))
+    if not body.get("success", False):
+        raise Exception(f"Error invoking email Lambda: {body.get('message')}")
+    email_sent = body.get("success", False)
+
     return bundle_response(
         200,
         {
             "Response": "Process started",
             "RequestId": request_id,
             "ProjectName": project,
+            "EmailSent": email_sent,
         },
     )

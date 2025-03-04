@@ -71,6 +71,24 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       var.dynamo-project-users-table-arn,
     ]
   }
+
+  statement {
+    actions = [
+      "cognito-idp:*"
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-success-email-lambda-function-arn,
+    ]
+  }
 }
 
 #

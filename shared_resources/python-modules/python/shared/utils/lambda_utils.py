@@ -25,6 +25,12 @@ MAX_SNS_EVENT_PRINT_LENGTH = 2048
 TEMP_FILE_FIELD = "tempFileName"
 
 
+class CognitoEnvironment:
+    @property
+    def COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA(self):
+        return os.environ["COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA"]
+
+
 class Timer:
     def __init__(self, context, buffer_time):
         self.context = context
@@ -113,7 +119,6 @@ def download_to_tmp(bucket, key, raise_on_notfound=False):
     return True
 
 
-
 def download_vcf(bucket, vcf):
     download_to_tmp(bucket, vcf, raise_on_notfound=True)
     if not download_to_tmp(bucket, f"{vcf}.csi"):
@@ -173,3 +178,6 @@ def truncated_print(string, max_length=MAX_PRINT_LENGTH):
         string = _truncate_string(string, max_length)
         assert len(string) <= max_length
     print(string)
+
+
+ENV_COGNITO = CognitoEnvironment()
