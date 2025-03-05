@@ -242,6 +242,7 @@ module "lambda-pluginClinvar" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE = "clinvar.bed.gz"
+      PLUGIN_SIFT_SNS_TOPIC_ARN = ""
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
