@@ -118,6 +118,11 @@ def download_vcf(bucket, vcf):
     download_to_tmp(bucket, vcf, raise_on_notfound=True)
     if not download_to_tmp(bucket, f"{vcf}.csi"):
         download_to_tmp(bucket, f"{vcf}.tbi", raise_on_notfound=True)
+        
+def download_bedfile(bucket, bedfile):
+    download_to_tmp(bucket, bedfile, raise_on_notfound=True)
+    if not download_to_tmp(bucket, f"{bedfile}.csi"):
+        download_to_tmp(bucket, f"{bedfile}.tbi", raise_on_notfound=True)
 
 
 def _create_temp_file(filename):
