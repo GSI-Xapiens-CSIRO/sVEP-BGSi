@@ -1,10 +1,12 @@
 import json
+from pathlib import Path
 import os
 import subprocess
+from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
 from shared.utils import chrom_matching, print_event, sns_publish, start_function
-from dynamodb import check_user_in_project
+from shared.dynamodb import check_user_in_project, update_clinic_job
 
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ["CONCAT_STARTER_SNS_TOPIC_ARN"]
@@ -74,6 +76,7 @@ def lambda_handler(event, _):
         QUERY_VCF_SNS_TOPIC_ARN,
         request_id,
         {
+            "requestId": request_id,
             "regions": vcf_regions,
             "location": location,
             "mapping": chrom_mapping,
@@ -85,6 +88,16 @@ def lambda_handler(event, _):
             "requestId": request_id,
             "project": project,
         },
+    )
+
+    parsed_location = urlparse(location)
+    input_vcf = Path(parsed_location.path.lstrip("/")).name
+    update_clinic_job(
+        job_id=request_id,
+        job_status="pending",
+        project_name=project,
+        input_vcf=input_vcf,
+        user_id=sub,
     )
 
     return bundle_response(

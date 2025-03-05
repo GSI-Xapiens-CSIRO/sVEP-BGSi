@@ -46,6 +46,7 @@ module "lambda-initQuery" {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
       DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     }
   }
 
@@ -80,6 +81,7 @@ module "lambda-queryVCF" {
       QUERY_VCF_SNS_TOPIC_ARN = aws_sns_topic.queryVCF.arn
       QUERY_VCF_SUBMIT_SNS_TOPIC_ARN = aws_sns_topic.queryVCFsubmit.arn
       SLICE_SIZE_MBP = local.slice_size_mbp
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -113,6 +115,7 @@ module "lambda-queryVCFsubmit" {
       SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
       QUERY_GTF_SNS_TOPIC_ARN = aws_sns_topic.queryGTF.arn
       QUERY_VCF_SUBMIT_SNS_TOPIC_ARN = aws_sns_topic.queryVCFsubmit.arn
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     }
   }
 
@@ -145,6 +148,7 @@ module "lambda-queryGTF" {
       PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN = aws_sns_topic.pluginConsequence.arn
       PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN = aws_sns_topic.pluginUpdownstream.arn
       QUERY_GTF_SNS_TOPIC_ARN = aws_sns_topic.queryGTF.arn
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -184,6 +188,7 @@ module "lambda-pluginConsequence" {
       SPLICE_REFERENCE = "sorted_${var.splice_file_base}.gtf.bgz"
       MIRNA_REFERENCE = "sorted_filtered_${var.mirna_file_base}.gff3.bgz"
       FASTA_REFERENCE_BASE = var.fasta_file_base
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
   }
 }
@@ -210,6 +215,7 @@ module "lambda-pluginUpdownstream" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       REFERENCE_GENOME = "transcripts_${var.gtf_file_base}.gtf.bgz"
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -242,6 +248,7 @@ module "lambda-pluginClinvar" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE = "clinvar.bed.gz"
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -274,6 +281,7 @@ module "lambda-concat" {
     variables = {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       CREATEPAGES_SNS_TOPIC_ARN = aws_sns_topic.createPages.arn
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     }
   }
 
@@ -306,6 +314,7 @@ module "lambda-concatStarter" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       CONCAT_SNS_TOPIC_ARN = aws_sns_topic.concat.arn
       CONCAT_STARTER_SNS_TOPIC_ARN = aws_sns_topic.concatStarter.arn
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     }
   }
 
@@ -338,6 +347,7 @@ module "lambda-createPages" {
       SVEP_RESULTS = var.data_portal_bucket_name
       CONCATPAGES_SNS_TOPIC_ARN = aws_sns_topic.concatPages.arn
       CREATEPAGES_SNS_TOPIC_ARN = aws_sns_topic.createPages.arn
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     }
   }
 
@@ -370,6 +380,7 @@ module "lambda-concatPages" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       SVEP_RESULTS = var.data_portal_bucket_name
       CONCATPAGES_SNS_TOPIC_ARN = aws_sns_topic.concatPages.arn
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
     }
   }
 
@@ -423,8 +434,8 @@ module "lambda-updateReferenceFiles" {
   handler             = "lambda_function.lambda_handler"
   memory_size         = 2048
   timeout             = 900
-  attach_policy_jsons = true
   ephemeral_storage_size = 8192
+  attach_policy_jsons    = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-updateReferenceFiles.json
   ]
@@ -447,4 +458,28 @@ module "lambda-updateReferenceFiles" {
     local.binaries_layer,
     local.python_modules_layer,
   ]
+}
+
+module "lambda-clearTempAndRegions" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-clearTempAndRegions"
+  description         = "Clears temp and regions buckets for sVEP executions that fail"
+  runtime             = "python3.12"
+  handler             = "lambda_function.lambda_handler"
+  memory_size         = 2048
+  timeout             = 600 
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-clearTempAndRegions.json
+  ]
+  number_of_policy_jsons = 1
+  source_path = "${path.module}/lambda/clearTempAndRegions"
+  
+  tags = var.common-tags
+  
+  environment_variables = {
+    SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
+    SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
+  }
 }
