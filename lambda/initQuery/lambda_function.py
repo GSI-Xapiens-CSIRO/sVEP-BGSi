@@ -134,7 +134,12 @@ def lambda_handler(event, _):
         user_id=sub,
     )
 
-    send_job_email("completed", project, input_vcf, sub)
+    send_job_email(
+        job_status="completed",
+        project_name=project,
+        input_vcf=input_vcf,
+        user_id=sub,
+    )
 
     return bundle_response(
         200,

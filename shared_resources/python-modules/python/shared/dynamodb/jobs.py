@@ -41,12 +41,12 @@ def dynamodb_update_item(job_id, update_fields: dict):
     print(f"Received response: {json.dumps(response, default=str)}")
 
 
-def get_cognito_user(user_id: str):
+def get_cognito_user(uid):
     cognito_client = boto3.client("cognito-idp")
 
     try:
         response = cognito_client.admin_get_user(
-            UserPoolId=USER_POOL_ID, Username=user_id  # Use Cognito User ID (sub)
+            UserPoolId=USER_POOL_ID, Username=uid  # Use Cognito User ID (sub)
         )
 
         # Extract attributes
@@ -78,7 +78,7 @@ def send_job_email(
         print(f"Skipping email for job status: {job_status}")
         return
 
-    user_info = get_cognito_user(user_id)
+    user_info = get_cognito_user(uid=user_id)
 
     if not user_info:
         print(f"Skipping email, user not found")
