@@ -185,7 +185,7 @@ def truncated_print(string, max_length=MAX_PRINT_LENGTH):
 def handle_failed_execution(job_id, error_message):
     print(error_message)
     job = query_clinic_job(job_id)
-    print(job)
+    print(f"[handle_failed_execution] - query_clinic_job result: {json.dumps(job)}")
     if job.get("job_status").get("S") == "failed":
         return
     job_status = "failed"
@@ -195,4 +195,5 @@ def handle_failed_execution(job_id, error_message):
         job_status=job_status,
         failed_step=failed_step,
         error_message=str(error_message),
+        user_id=job.get("uid").get("S"),
     )

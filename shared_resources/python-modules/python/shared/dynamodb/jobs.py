@@ -51,7 +51,7 @@ def get_cognito_user(uid):
 
         # Check if any user was found
         if not response.get("Users"):
-            print("User not found.")
+            print("[get_cognito_user] - User not found.")
             return None
 
         # Extract attributes correctly
@@ -60,7 +60,7 @@ def get_cognito_user(uid):
             attr["Name"]: attr["Value"] for attr in user.get("Attributes", [])
         }
 
-        print(f"User found: {json.dumps(attributes)}")
+        print(f"[get_cognito_user] - User found: {json.dumps(attributes)}")
 
         return {
             "email": attributes.get("email", ""),
