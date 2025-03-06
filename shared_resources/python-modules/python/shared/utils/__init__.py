@@ -21,6 +21,8 @@ from .lambda_utils import (
     sns_publish,
     start_function,
     truncated_print,
+    handle_failed_execution,
+    download_bedfile
 )
 from .reference_utils import (
     truncate_tmp,

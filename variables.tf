@@ -87,3 +87,17 @@ variable "svep-success-email-lambda-function-arn" {
   type        = string
   description = "Lambda function ARN for sending registration emails"
 }
+variable "dynamo-clinic-jobs-table" {
+  type        = string
+  description = "Dynamo clinic jobs table"
+}
+
+variable "dynamo-clinic-jobs-table-arn" {
+  type        = string
+  description = "Dynamo clinic jobs table ARN"
+}
+
+variable "dynamo-clinic-jobs-stream-arn" {
+  type = string
+  description = "Dynamo clinic jobs stream ARN"
+}

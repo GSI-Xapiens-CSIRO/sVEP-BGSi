@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import os
 import subprocess
 import boto3
@@ -12,6 +13,11 @@ from shared.utils import (
     ENV_COGNITO,
 )
 from dynamodb import check_user_in_project
+from urllib.parse import urlparse
+
+from shared.apiutils import bad_request, bundle_response
+from shared.utils import chrom_matching, print_event, sns_publish, start_function
+from shared.dynamodb import check_user_in_project, update_clinic_job
 
 lambda_client = boto3.client("lambda")
 
@@ -84,6 +90,7 @@ def lambda_handler(event, _):
         QUERY_VCF_SNS_TOPIC_ARN,
         request_id,
         {
+            "requestId": request_id,
             "regions": vcf_regions,
             "location": location,
             "mapping": chrom_mapping,
@@ -97,26 +104,37 @@ def lambda_handler(event, _):
         },
     )
 
-    payload = {
-        "body": {
-            "email": "fajarsep12@gmail.com",
-            "first_name": "Fajar",
-            "last_name": "Septiawan",
-            "file": "file.vcf",
-            "project_name": "project test",
-        }
-    }
-    response = lambda_client.invoke(
-        FunctionName=COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA,
-        InvocationType="RequestResponse",
-        Payload=json.dumps(payload),
+    # payload = {
+    #     "body": {
+    #         "email": "fajarsep12@gmail.com",
+    #         "first_name": "Fajar",
+    #         "last_name": "Septiawan",
+    #         "file": "file.vcf",
+    #         "project_name": "project test",
+    #     }
+    # }
+
+    # response = lambda_client.invoke(
+    #     FunctionName=COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA,
+    #     InvocationType="RequestResponse",
+    #     Payload=json.dumps(payload),
+    # )
+    # if not (payload_stream := response.get("Payload")):
+    #     raise Exception("Error invoking email Lambda: No response payload")
+    # body = json.loads(payload_stream.read().decode("utf-8"))
+    # if not body.get("success", False):
+    #     raise Exception(f"Error invoking email Lambda: {body.get('message')}")
+    # email_sent = body.get("success", False)
+
+    parsed_location = urlparse(location)
+    input_vcf = Path(parsed_location.path.lstrip("/")).name
+    update_clinic_job(
+        job_id=request_id,
+        job_status="pending",
+        project_name=project,
+        input_vcf=input_vcf,
+        user_id=sub,
     )
-    if not (payload_stream := response.get("Payload")):
-        raise Exception("Error invoking email Lambda: No response payload")
-    body = json.loads(payload_stream.read().decode("utf-8"))
-    if not body.get("success", False):
-        raise Exception(f"Error invoking email Lambda: {body.get('message')}")
-    email_sent = body.get("success", False)
 
     return bundle_response(
         200,
@@ -124,6 +142,5 @@ def lambda_handler(event, _):
             "Response": "Process started",
             "RequestId": request_id,
             "ProjectName": project,
-            "EmailSent": email_sent,
         },
     )

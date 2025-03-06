@@ -28,6 +28,11 @@ def read_from_s3(bucket_name, key, at, size):
     return response["Body"].read()
 
 
+def read_size_from_s3(bucket_name, key):
+    response = s3_client.head_object(Bucket=bucket_name, Key=key)
+    return response["ContentLength"]
+
+
 def get_index(key):
     try:
         index = s3_resource.Object(RESULT_BUCKET, key).get()
@@ -51,6 +56,25 @@ def lambda_handler(event, _):
         index_path = f"{results_path}.index.json.gz"
 
         check_user_in_project(sub, project_name)
+
+        if 0 < read_size_from_s3(RESULT_BUCKET, results_path) < 5 * 10**6:
+            # if the file is less than 5MB, return the content directly
+            content = read_from_s3(
+                RESULT_BUCKET,
+                results_path,
+                0,
+                read_size_from_s3(RESULT_BUCKET, results_path),
+            )
+            return bundle_response(
+                200,
+                {
+                    "url": None,
+                    "chromosome": "-",
+                    "pages": {"-": 1},
+                    "page": 1,
+                    "content": content.decode("utf-8"),
+                },
+            )
 
         if index := get_index(index_path):
             chromosomes = list(index.keys())

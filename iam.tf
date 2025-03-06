@@ -71,22 +71,14 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       var.dynamo-project-users-table-arn,
     ]
   }
-
+  
   statement {
     actions = [
-      "cognito-idp:*"
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
     ]
     resources = [
-      var.cognito-user-pool-arn,
-    ]
-  }
-
-  statement {
-    actions = [
-      "lambda:InvokeFunction",
-    ]
-    resources = [
-      var.svep-success-email-lambda-function-arn,
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -133,6 +125,17 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "${var.data_portal_bucket_arn}",
     ]
   }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
 }
 
 #
@@ -155,6 +158,17 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -200,6 +214,17 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
     ]
     resources = [
       "${aws_s3_bucket.svep-references.arn}",
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -253,6 +278,17 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
 }
 
 #
@@ -292,6 +328,17 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
     ]
     resources = [
       "${aws_s3_bucket.svep-references.arn}",
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -335,6 +382,17 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
 }
 
 #
@@ -356,6 +414,17 @@ data "aws_iam_policy_document" "lambda-concat" {
     ]
     resources = [
       aws_s3_bucket.svep-regions.arn,
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -381,6 +450,17 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
     resources = [
       aws_s3_bucket.svep-regions.arn,
       aws_s3_bucket.svep-temp.arn,
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -427,6 +507,17 @@ data "aws_iam_policy_document" "lambda-createPages" {
       aws_s3_bucket.svep-regions.arn,
     ]
   }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
 }
 
 #
@@ -467,6 +558,17 @@ data "aws_iam_policy_document" "lambda-concatPages" {
     ]
     resources = [
       aws_s3_bucket.svep-regions.arn,
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 }
@@ -553,6 +655,43 @@ data "aws_iam_policy_document" "lambda-updateReferenceFiles" {
     ]
     resources = [
       aws_dynamodb_table.svep_references.arn,
+    ]
+  }
+}
+
+#
+# clearTempAndRegions Lambda Function
+#
+data "aws_iam_policy_document" "lambda-clearTempAndRegions" {
+  statement {
+    actions = [
+      "s3:ListBucket"
+    ]
+    resources = [
+      aws_s3_bucket.svep-temp.arn,
+      aws_s3_bucket.svep-regions.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+      "${aws_s3_bucket.svep-regions.arn}/*"
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-stream-arn,
     ]
   }
 }
