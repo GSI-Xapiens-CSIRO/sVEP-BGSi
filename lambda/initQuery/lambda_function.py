@@ -10,7 +10,6 @@ from shared.utils import (
     print_event,
     sns_publish,
     start_function,
-    ENV_COGNITO,
 )
 from dynamodb import check_user_in_project
 from urllib.parse import urlparse
@@ -27,7 +26,6 @@ QUERY_VCF_SNS_TOPIC_ARN = os.environ["QUERY_VCF_SNS_TOPIC_ARN"]
 RESULT_DURATION = int(os.environ["RESULT_DURATION"])
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
-COGNITO_SVEP_JOB_EMAIL_LAMBDA = ENV_COGNITO.COGNITO_SVEP_JOB_EMAIL_LAMBDA
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 REGIONS = chrom_matching.get_regions(SLICE_SIZE_MBP)
