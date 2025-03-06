@@ -22,6 +22,7 @@ from .lambda_utils import (
     start_function,
     truncated_print,
     handle_failed_execution,
+    download_bedfile
 )
 from .reference_utils import (
     truncate_tmp,
