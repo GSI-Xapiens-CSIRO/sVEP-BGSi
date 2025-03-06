@@ -54,6 +54,12 @@ def send_job_email(
     # prevent re querying the job if it's already queried from handle_failed_execution
     # in handle_failed_execution already queried the job using query_clinic_job
     job = {} if is_from_failed_execution else query_clinic_job(job_id)
+
+    if job:
+        job_status = job.get("job_status", {}).get("S", job_status)
+        project_name = job.get("project_name", {}).get("S", project_name)
+        input_vcf = job.get("input_vcf", {}).get("S", input_vcf)
+
     print(f"[send_job_email] - job result : {json.dumps(job)}")
 
     # handle when user_id is not provided
