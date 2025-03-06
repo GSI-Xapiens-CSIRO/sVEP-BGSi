@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
 from shared.utils import chrom_matching, print_event, sns_publish, start_function
-from shared.dynamodb import check_user_in_project, update_clinic_job
+from shared.dynamodb import check_user_in_project, update_clinic_job, send_job_email
 
 lambda_client = boto3.client("lambda")
 
@@ -135,6 +135,8 @@ def lambda_handler(event, _):
         input_vcf=input_vcf,
         user_id=sub,
     )
+
+    send_job_email("completed", project, input_vcf, sub)
 
     return bundle_response(
         200,

@@ -83,7 +83,6 @@ def send_job_email(
     if not user_info:
         print(f"Skipping email, user not found")
         return
-
     payload = {
         "body": {
             "email": "fajarsep12@gmail.com",
@@ -132,6 +131,7 @@ def update_clinic_job(
         update_fields["error_message"] = {"S": error_message}
     if user_id is not None:
         update_fields["uid"] = {"S": user_id}
+
     dynamodb_update_item(job_id, update_fields)
 
 
