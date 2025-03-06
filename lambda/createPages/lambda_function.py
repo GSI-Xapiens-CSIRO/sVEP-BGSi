@@ -4,8 +4,9 @@ import gzip
 
 import boto3
 
-from shared.utils import get_sns_event, sns_publish, s3
+from shared.utils import get_sns_event, sns_publish, s3, handle_failed_execution
 from shared.indexutils import create_index
+from shared.dynamodb import update_clinic_job
 
 
 # AWS clients as s3 is a resource
@@ -83,7 +84,9 @@ def publish_result(request_id, project, page_keys, page_num, prefix):
         )
         # trigger another lambda to concat all pages
     elif bucket_len == 1:
-        result_file = f"s3://{SVEP_RESULTS}/clinic-workflows/{project}/{filename}"
+        result_file = (
+            f"s3://{SVEP_RESULTS}/projects/{project}/clinical-workflows/{filename}"
+        )
         prefix_files = s3_list_objects(SVEP_REGIONS, prefix)
         prefix_keys = prefix_files[0]["Key"]
         copy_source = {"Bucket": SVEP_REGIONS, "Key": prefix_keys}
@@ -102,6 +105,8 @@ def publish_result(request_id, project, page_keys, page_num, prefix):
             )
         os.remove(f"/tmp/{filename}")
 
+        update_clinic_job(request_id, job_status="completed")
+
 
 def s3_list_objects(bucket, prefix):
     response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
@@ -112,12 +117,15 @@ def lambda_handler(event, _):
     message = get_sns_event(event)
     request_id = message["requestId"]
     project = message["project"]
-    page_keys = message["pageKeys"]
-    page_num = message["pageNum"]
-    prefix = message["prefix"]
-    last_page = message["lastPage"]
-    dont_append = message.get("dontAppend", 0)
-    if dont_append == 0:
-        append(page_keys, page_num, prefix)
-    if last_page == 1:
-        publish_result(request_id, project, page_keys, page_num, prefix)
+    try:
+        page_keys = message["pageKeys"]
+        page_num = message["pageNum"]
+        prefix = message["prefix"]
+        last_page = message["lastPage"]
+        dont_append = message.get("dontAppend", 0)
+        if dont_append == 0:
+            append(page_keys, page_num, prefix)
+        if last_page == 1:
+            publish_result(request_id, project, page_keys, page_num, prefix)
+    except Exception as e:
+        handle_failed_execution(request_id, e)

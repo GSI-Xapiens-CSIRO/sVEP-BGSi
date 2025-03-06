@@ -73,6 +73,7 @@ use consequence::VariationFeature;
 use consequence::Transcript;
 use consequence::TranscriptVariation;
 use consequence::TranscriptVariationAllele;
+use Try::Tiny;
 
 my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
@@ -82,6 +83,8 @@ my $mirnaFile =  $ENV{'MIRNA_REFERENCE'};
 my $fastaBase =  $ENV{'FASTA_REFERENCE_BASE'};
 my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
+my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
+my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
 sub handle {
     my ($payload) = @_;
     simple_truncated_print("Received message: $payload\n");
@@ -90,41 +93,130 @@ sub handle {
     ##########################################update
     my $message = decode_json($sns->{'Message'}); #might have to remove decode_json
     my @data = $message->{'snsData'};
+    my $request_id = $message->{'requestId'};
     my $tempFileName = $message->{'tempFileName'};
     my $chrom_mapping = $message->{'mapping'};
     print("tempFileName is - $tempFileName\n");
     #############################################
 
-    my $chr = $data[0][0]->{'chrom'};
-    my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
-    print "Copying fasta reference files.\n";
-    system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$fasta*' 1>/dev/null");
-    print "Copying splice reference files.\n";
-    system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$spliceFile*' 1>/dev/null");
-    my @results;
-    while(@data){
-      my $region = shift @data;
-      foreach my $line (@{$region}){
-        if ( scalar(@{$line->{'data'}}) == 1 && @{$line->{'data'}}[0] eq ''){
-          next;
-        }
-        my $vep = parse_vcf($line, $chrom_mapping);
-        if(length $vep){
-          push @results,$vep;
+    try {
+      my $chr = $data[0][0]->{'chrom'};
+      my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
+      print "Copying fasta reference files.\n";
+      system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$fasta*' 1>/dev/null");
+      print "Copying splice reference files.\n";
+      system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$spliceFile*' 1>/dev/null");
+      my @results;
+      while(@data){
+        my $region = shift @data;
+        foreach my $line (@{$region}){
+          if ( scalar(@{$line->{'data'}}) == 1 && @{$line->{'data'}}[0] eq ''){
+            next;
+          }
+          my $vep = parse_vcf($line, $chrom_mapping);
+          if(length $vep){
+            push @results,$vep;
+          }
         }
       }
-    }
-    my %outMessage = (
-      'snsData' => join("\n", @results),
-      'mapping' => $chrom_mapping,
-    );
-    start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
+      my %outMessage = (
+        'snsData' => join("\n", @results),
+        'mapping' => $chrom_mapping,
+      );
+      start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
 
-    my $tempOut = 's3://'.$tempLocation.'/'.$tempFileName;
-    system("/usr/bin/aws s3 rm $tempOut");
-    print("Cleaning /tmp/\n");
-    system("rm -rf /tmp/*");
-    print("Task Complete.\n");
+      my $tempOut = 's3://'.$tempLocation.'/'.$tempFileName;
+      system("/usr/bin/aws s3 rm $tempOut");
+      print("Cleaning /tmp/\n");
+      system("rm -rf /tmp/*");
+      print("Task Complete.\n");
+    }
+    catch {
+     handle_failed_execution($request_id, $functionName, $_);
+    };
+}
+
+sub create_temp_file {
+  my ($nextTempFile) = @_;
+  print("Creating file: $nextTempFile\n");
+  system("aws", "s3api", "put-object", "--bucket", $tempLocation, "--key",  $nextTempFile, "--content-length", "0");
+}
+
+sub sns_publish {
+  my ($topicArn, $message) = @_;
+  my $jsonMessage = to_json($message);
+  # In order to get around command-line character limits, we must pass the message as a file
+  # https://github.com/aws/aws-cli/issues/1314#issuecomment-515674161
+  my $filename = "/tmp/message.json";
+  print("Saving message to local file $filename\n");
+  open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
+  print $fh $jsonMessage;
+  close $fh;
+  simple_truncated_print("Calling SNS Publish with topicArn: $topicArn and message: $jsonMessage\n");
+  system("aws", "sns", "publish", "--topic-arn", $topicArn, "--message", "file://$filename");
+}
+
+sub start_function {
+  my ($topicArn, $baseFilename, $message) = @_;
+  my $functionName = (split(":", $topicArn))[-1];
+  my $fileName = $baseFilename."_".$functionName;
+  $message->{'tempFileName'} = $fileName;
+  create_temp_file($fileName);
+  sns_publish($topicArn, $message);
+}
+
+sub simple_truncated_print {
+  # This doesn't need to be precise, just good enough
+  my $maxLength = 1000;
+  my ($string) = @_;
+  my $toRemove = length($string) - $maxLength;
+  if($toRemove > 0){
+    $string = substr($string, 0, $maxLength / 2)."<$toRemove bytes>".substr($string, -$maxLength / 2);
+  }
+  print($string);
+}
+
+sub handle_failed_execution {
+    my ($request_id, $failed_step, $error_message) = @_;
+
+    my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"id":{"S":"$request_id"}}' --attributes-to-get job_status 2>&1`;
+    die "Failed to query DynamoDB: $query_result" if $? != 0;
+    my $query_json;
+    eval { $query_json = decode_json($query_result); };
+    if ($@) {
+      warn "Error parsing JSON response: $@";
+      $query_json = {};
+    }
+    # Check if item exists and job_status is already "failed"
+    if (exists $query_json->{Item} && 
+        exists $query_json->{Item}->{job_status} && 
+        $query_json->{Item}->{job_status}->{S} eq "failed") {
+        return;
+    }
+
+    # Prepare the update expression
+    my $update_expression = "SET #job_status = :job_status, #failed_step = :failed_step, #error_message = :error_message";
+    my $expression_attribute_names = encode_json({
+        "#job_status"        => "job_status",
+        "#failed_step"   => "failed_step",
+        "#error_message" => "error_message"
+    });
+    my $expression_attribute_values = encode_json({
+        ":job_status"        => { "S" => "failed" },
+        ":failed_step"   => { "S" => $failed_step },
+        ":error_message" => { "S" => $error_message }
+    });
+
+    # Update the item in DynamoDB
+    my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
+                           "--key '{\"id\":{\"S\":\"$request_id\"}}' " .
+                           "--update-expression \"$update_expression\" " .
+                           "--expression-attribute-names '$expression_attribute_names' " .
+                           "--expression-attribute-values '$expression_attribute_values'");
+
+    die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
+
+    die "$error_message\n";
 }
 
 sub create_temp_file {

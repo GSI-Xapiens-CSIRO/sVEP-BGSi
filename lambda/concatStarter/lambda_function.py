@@ -3,8 +3,8 @@ import time
 
 import boto3
 
-from shared.utils import get_sns_event, sns_publish
-
+from shared.utils import get_sns_event, sns_publish, handle_failed_execution
+from shared.dynamodb import query_clinic_job
 
 # AWS clients and resources
 s3 = boto3.client("s3")
@@ -43,14 +43,22 @@ def lambda_handler(event, _):
     message = get_sns_event(event)
     request_id = message["requestId"]
     project = message["project"]
-    time_started = message.get("timeStarted", time.time())
-    if ready_for_concat(request_id):
-        sns_publish(
-            CONCAT_SNS_TOPIC_ARN,
-            {
-                "requestId": request_id,
-                "project": project,
-            },
-        )
-    else:
-        wait(request_id, project, time_started)
+    try:
+        time_started = message.get("timeStarted", time.time())
+        if ready_for_concat(request_id):
+            job = query_clinic_job(request_id)
+            # do not start concatenation if the job has already failed
+            if job.get("job_status").get("S") == "failed":
+                print(f"Job failed. Aborting")
+                return
+            sns_publish(
+                CONCAT_SNS_TOPIC_ARN,
+                {
+                    "requestId": request_id,
+                    "project": project,
+                },
+            )
+        else:
+            wait(request_id, project, time_started)
+    except Exception as e:
+        handle_failed_execution(request_id, e)

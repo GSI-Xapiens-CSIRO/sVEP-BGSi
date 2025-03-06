@@ -3,7 +3,7 @@ import re
 import shlex
 import subprocess
 
-from shared.utils import download_vcf, Orchestrator, s3
+from shared.utils import download_vcf, Orchestrator, s3, handle_failed_execution
 
 
 # Environment variables
@@ -108,49 +108,55 @@ def lambda_handler(event, _):
     message = orchestrator.message
     sns_data = message["snsData"]
     chrom_mapping = message["mapping"]
-    write_data = []
+    request_id = message["requestId"]
+    try:
+        write_data = []
 
-    for row in sns_data:
-        chrom = row["chrom"]
-        pos = row["pos"]
-        data = row["data"]
-        alt = row["alt"]
-        transcripts = []
-        results = []
-        for dat in data:
-            if dat:
-                transcripts.append(TRANSCRIPT_ID_PATTERN.search(dat).group(1))
-            else:
-                write_data.append(
-                    "\t".join(
-                        (
-                            str(38),
-                            ".",
-                            f"{chrom}:{pos}-{pos}",
-                            alt,
-                            "intergenic_variant",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
+        for row in sns_data:
+            chrom = row["chrom"]
+            pos = row["pos"]
+            data = row["data"]
+            alt = row["alt"]
+            transcripts = []
+            results = []
+            for dat in data:
+                if dat:
+                    transcripts.append(TRANSCRIPT_ID_PATTERN.search(dat).group(1))
+                else:
+                    write_data.append(
+                        "\t".join(
+                            (
+                                str(38),
+                                ".",
+                                f"{chrom}:{pos}-{pos}",
+                                alt,
+                                "intergenic_variant",
+                                "-",
+                                "-",
+                                "-",
+                                "-",
+                                "-",
+                                "-",
+                                "-",
+                                "-",
+                                "-",
+                                "-",
+                            )
                         )
                     )
+                    transcripts = []
+            if transcripts:
+                results = query_updownstream(
+                    chrom, pos, alt, list(set(transcripts)), chrom_mapping
                 )
-                transcripts = []
-        if transcripts:
-            results = query_updownstream(chrom, pos, alt, list(set(transcripts)), chrom_mapping)
-        if results:
-            write_data.append(results)
-    base_filename = orchestrator.temp_file_name
-    filename = f"/tmp/{base_filename}.tsv"
-    with open(filename, "w") as tsv_file:
-        tsv_file.write("\n".join(write_data))
-    s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
-    print("uploaded")
-    orchestrator.mark_completed()
+            if results:
+                write_data.append(results)
+        base_filename = orchestrator.temp_file_name
+        filename = f"/tmp/{base_filename}.tsv"
+        with open(filename, "w") as tsv_file:
+            tsv_file.write("\n".join(write_data))
+        s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
+        print("uploaded")
+        orchestrator.mark_completed()
+    except Exception as e:
+        handle_failed_execution(request_id, e)

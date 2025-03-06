@@ -180,3 +180,20 @@ resource "aws_lambda_function_recursion_config" "update_reference_files_recursio
   function_name = module.lambda-updateReferenceFiles.lambda_function_name
   recursive_loop = "Allow"
 }
+
+#
+# clearTempAndRegions Lambda Function
+#
+resource "aws_lambda_event_source_mapping" "clinic_jobs_stream_event_source" {
+  event_source_arn  = var.dynamo-clinic-jobs-stream-arn
+  function_name     = module.lambda-clearTempAndRegions.lambda_function_name
+  starting_position = "LATEST"
+
+  filter_criteria {
+    filter {
+      pattern = jsonencode({
+        eventName = ["MODIFY"]
+      })
+    }
+  }
+}

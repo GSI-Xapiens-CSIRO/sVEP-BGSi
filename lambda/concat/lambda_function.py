@@ -2,7 +2,7 @@ import os
 
 import boto3
 
-from shared.utils import get_sns_event, sns_publish
+from shared.utils import get_sns_event, sns_publish, handle_failed_execution
 
 
 # AWS clients and resources
@@ -53,4 +53,7 @@ def lambda_handler(event, _):
     message = get_sns_event(event)
     request_id = message["requestId"]
     project = message["project"]
-    concat(request_id, project)
+    try:
+        concat(request_id, project)
+    except Exception as e:
+        handle_failed_execution(request_id, e)
