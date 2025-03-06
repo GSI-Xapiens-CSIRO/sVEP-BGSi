@@ -2,7 +2,7 @@ import json
 import os
 
 import boto3
-from shared.utils.cognito import get_cognito_user_by_id
+from shared.utils.cognito_utils import get_cognito_user_by_id
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
@@ -61,6 +61,10 @@ def send_job_email(
     user_id = user_id or job.get("uid", {}).get("S")
 
     user_info = get_cognito_user_by_id(uid=user_id)
+    if not user_info:
+        print(f"[send_job_email] - Skipping email for job: user not found")
+        return
+
     print(f"[send_job_email] - user_info result : {json.dumps(user_info)}")
 
     payload = {
