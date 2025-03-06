@@ -124,6 +124,8 @@ def download_bedfile(bucket, bedfile):
     if not download_to_tmp(bucket, f"{bedfile}.csi"):
         download_to_tmp(bucket, f"{bedfile}.tbi", raise_on_notfound=True)
 
+def download_sift_database(bucket, siftdb):
+    download_to_tmp(bucket, siftdb, raise_on_notfound=True)
 
 def _create_temp_file(filename):
     print(f"Creating file: {filename}")

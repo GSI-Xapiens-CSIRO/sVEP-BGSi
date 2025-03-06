@@ -12,7 +12,7 @@ PLUGIN_SIFT_SNS_TOPIC_ARN = os.environ["PLUGIN_SIFT_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 # [TODO] : Download siftdb
-download_siftdb(BUCKET_NAME, SIFT_DATABASE_REFERENCE)
+download_sift_database(BUCKET_NAME, SIFT_DATABASE_REFERENCE)
 
 def run_sift_anotator(input, db, output):
     try:
