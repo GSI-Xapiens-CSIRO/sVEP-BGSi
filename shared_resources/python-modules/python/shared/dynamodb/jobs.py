@@ -78,7 +78,7 @@ def send_job_email(
         print(f"Skipping email for job status: {job_status}")
         return
 
-    user_info = get_cognito_user(USER_POOL_ID, user_id)
+    user_info = get_cognito_user(user_id)
 
     if not user_info:
         print(f"Skipping email, user not found")
