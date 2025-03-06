@@ -9,7 +9,7 @@ ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
 
 # Copy files
-COPY lambda_function.py ${LAMBDA_TASK_ROOT}/lambda_function.py
+COPY main.py ${LAMBDA_TASK_ROOT}/main.py
 
 # Define entry point
 ENTRYPOINT ["python3", "main.py"]
