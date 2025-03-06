@@ -82,3 +82,18 @@ variable "dynamo-project-users-table-arn" {
   type        = string
   description = "Dynamo project users table ARN"
 }
+
+variable "dynamo-clinic-jobs-table" {
+  type        = string
+  description = "Dynamo clinic jobs table"
+}
+
+variable "dynamo-clinic-jobs-table-arn" {
+  type        = string
+  description = "Dynamo clinic jobs table ARN"
+}
+
+variable "dynamo-clinic-jobs-stream-arn" {
+  type = string
+  description = "Dynamo clinic jobs stream ARN"
+}
