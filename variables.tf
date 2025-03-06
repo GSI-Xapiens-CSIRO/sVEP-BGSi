@@ -87,7 +87,6 @@ variable "svep-success-email-lambda-function-arn" {
   type        = string
   description = "Lambda function ARN for sending registration emails"
 }
-<<<<<<< HEAD
 variable "dynamo-clinic-jobs-table" {
   type        = string
   description = "Dynamo clinic jobs table"
@@ -101,10 +100,9 @@ variable "dynamo-clinic-jobs-table-arn" {
 variable "dynamo-clinic-jobs-stream-arn" {
   type = string
   description = "Dynamo clinic jobs stream ARN"
-=======
+}
 
 variable "svep-failed-email-lambda-function-arn" {
   type        = string
   description = "Lambda function ARN for sending registration emails"
->>>>>>> 7b6df1e6a49738f8e1167110927143532e8f1ec6
 }
