@@ -22,7 +22,8 @@ from .lambda_utils import (
     start_function,
     truncated_print,
     handle_failed_execution,
-    download_bedfile
+    download_bedfile,
+    ENV_COGNITO,
 )
 from .reference_utils import (
     truncate_tmp,

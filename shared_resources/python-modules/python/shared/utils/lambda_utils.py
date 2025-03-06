@@ -32,6 +32,10 @@ class CognitoEnvironment:
     def COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA(self):
         return os.environ["COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA"]
 
+    @property
+    def COGNITO_SVEP_FAILED_EMAIL_LAMBDA(self):
+        return os.environ["COGNITO_SVEP_FAILED_EMAIL_LAMBDA"]
+
 
 class Timer:
     def __init__(self, context, buffer_time):
