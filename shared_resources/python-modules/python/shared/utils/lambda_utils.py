@@ -27,16 +27,6 @@ MAX_SNS_EVENT_PRINT_LENGTH = 2048
 TEMP_FILE_FIELD = "tempFileName"
 
 
-class CognitoEnvironment:
-    @property
-    def COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA(self):
-        return os.environ["COGNITO_SVEP_SUCCESS_EMAIL_LAMBDA"]
-
-    @property
-    def COGNITO_SVEP_FAILED_EMAIL_LAMBDA(self):
-        return os.environ["COGNITO_SVEP_FAILED_EMAIL_LAMBDA"]
-
-
 class Timer:
     def __init__(self, context, buffer_time):
         self.context = context
@@ -206,6 +196,3 @@ def handle_failed_execution(job_id, error_message):
         failed_step=failed_step,
         error_message=str(error_message),
     )
-
-
-ENV_COGNITO = CognitoEnvironment()

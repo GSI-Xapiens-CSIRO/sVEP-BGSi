@@ -83,10 +83,6 @@ variable "dynamo-project-users-table-arn" {
   description = "Dynamo project users table ARN"
 }
 
-variable "svep-success-email-lambda-function-arn" {
-  type        = string
-  description = "Lambda function ARN for sending registration emails"
-}
 variable "dynamo-clinic-jobs-table" {
   type        = string
   description = "Dynamo clinic jobs table"
@@ -102,7 +98,12 @@ variable "dynamo-clinic-jobs-stream-arn" {
   description = "Dynamo clinic jobs stream ARN"
 }
 
-variable "svep-failed-email-lambda-function-arn" {
+variable "svep-job-email-lambda-function-arn" {
   type        = string
-  description = "Lambda function ARN for sending registration emails"
+  description = "Lambda function ARN for sending SVEP Job emails"
+}
+
+variable "cognito-user-pool-id" {
+  type        = string
+  description = "Cognito user pool Id."
 }
