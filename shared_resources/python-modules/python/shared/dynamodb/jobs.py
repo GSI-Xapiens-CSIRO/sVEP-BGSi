@@ -74,20 +74,18 @@ def get_cognito_user(uid):
 
 
 def send_job_email(
+    job_id,
     job_status,
     project_name=None,
     input_vcf=None,
     user_id=None,
 ):
+    print(f"[send_job_email] - Starting : {job_id}")
     if (job_status == "pending") or (job_status == "expired"):
         print(f"Skipping email for job status: {job_status}")
         return
 
     user_info = get_cognito_user(uid=user_id)
-
-    if not user_info:
-        print(f"Skipping email, user not found")
-        return
 
     payload = {
         "body": {
@@ -99,6 +97,8 @@ def send_job_email(
             "input_vcf": input_vcf,
         }
     }
+
+    print(f"[send_job_email] - payload: {payload}")
 
     response = lambda_client.invoke(
         FunctionName=COGNITO_SVEP_JOB_EMAIL_LAMBDA,
@@ -113,7 +113,7 @@ def send_job_email(
 
     email_sent = body.get("success", False)
 
-    print(f"Email sent: {email_sent}")
+    print(f"[send_job_email] Email sent: {email_sent}")
 
 
 def update_clinic_job(
@@ -141,6 +141,7 @@ def update_clinic_job(
     dynamodb_update_item(job_id, update_fields)
 
     send_job_email(
+        job_id=job_id,
         job_status=job_status,
         project_name=project_name,
         input_vcf=input_vcf,
