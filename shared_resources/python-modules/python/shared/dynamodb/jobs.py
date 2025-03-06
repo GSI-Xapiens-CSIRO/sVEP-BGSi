@@ -2,7 +2,7 @@ import json
 import os
 
 import boto3
-from botocore.exceptions import ClientError
+from shared.utils.cognito import get_cognito_user_by_id
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
@@ -10,9 +10,6 @@ dynamodb_client = boto3.client("dynamodb")
 DYNAMO_CLINIC_JOBS_TABLE = os.environ.get("DYNAMO_CLINIC_JOBS_TABLE", "")
 DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
 COGNITO_SVEP_JOB_EMAIL_LAMBDA = os.environ.get("COGNITO_SVEP_JOB_EMAIL_LAMBDA", "")
-USER_POOL_ID = os.environ.get("USER_POOL_ID", "")
-
-cognito_client = boto3.client("cognito-idp")
 
 
 def query_clinic_job(job_id):
@@ -41,51 +38,30 @@ def dynamodb_update_item(job_id, update_fields: dict):
     print(f"Received response: {json.dumps(response, default=str)}")
 
 
-def get_cognito_user(uid):
-    try:
-        cognito_client = boto3.client("cognito-idp")
-
-        response = cognito_client.list_users(
-            UserPoolId=USER_POOL_ID, Filter=f'sub = "{uid}"', Limit=1
-        )
-
-        # Check if any user was found
-        if not response.get("Users"):
-            print("[get_cognito_user] - User not found.")
-            return None
-
-        # Extract attributes correctly
-        user = response["Users"][0]
-        attributes = {
-            attr["Name"]: attr["Value"] for attr in user.get("Attributes", [])
-        }
-
-        print(f"[get_cognito_user] - User found: {json.dumps(attributes)}")
-
-        return {
-            "email": attributes.get("email", ""),
-            "first_name": attributes.get("given_name", ""),
-            "last_name": attributes.get("family_name", ""),
-        }
-
-    except ClientError as e:
-        print(f"An error occurred: {e.response['Error']['Message']}")
-        return None  # Return None if an error occurs
-
-
 def send_job_email(
     job_id,
     job_status,
     project_name=None,
     input_vcf=None,
     user_id=None,
+    is_from_failed_execution=False,
 ):
     print(f"[send_job_email] - Starting : {job_id}")
     if (job_status == "pending") or (job_status == "expired"):
         print(f"Skipping email for job status: {job_status}")
         return
 
-    user_info = get_cognito_user(uid=user_id)
+    # prevent re querying the job if it's already queried from handle_failed_execution
+    # in handle_failed_execution already queried the job using query_clinic_job
+    job = {} if is_from_failed_execution else query_clinic_job(job_id)
+    print(f"[send_job_email] - job result : {json.dumps(job)}")
+
+    # handle when user_id is not provided
+    # this can happen when the job is created by a lambda function initQuery
+    user_id = user_id or job.get("uid", {}).get("S")
+
+    user_info = get_cognito_user_by_id(uid=user_id)
+    print(f"[send_job_email] - user_info result : {json.dumps(user_info)}")
 
     payload = {
         "body": {
@@ -124,6 +100,7 @@ def update_clinic_job(
     failed_step=None,
     error_message=None,
     user_id=None,
+    is_from_failed_execution=False,
 ):
     job_status = job_status if job_status is not None else "unknown"
     update_fields = {"job_status": {"S": job_status}}
@@ -146,6 +123,7 @@ def update_clinic_job(
         project_name=project_name,
         input_vcf=input_vcf,
         user_id=user_id,
+        is_from_failed_execution=is_from_failed_execution,
     )
 
 

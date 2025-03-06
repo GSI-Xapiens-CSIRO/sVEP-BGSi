@@ -190,10 +190,14 @@ def handle_failed_execution(job_id, error_message):
         return
     job_status = "failed"
     failed_step = os.environ.get("AWS_LAMBDA_FUNCTION_NAME", "unknown")
+
     update_clinic_job(
         job_id,
         job_status=job_status,
         failed_step=failed_step,
         error_message=str(error_message),
-        user_id=job.get("uid").get("S"),
+        project_name=job.get("project_name", {}).get("S"),
+        input_vcf=job.get("input_vcf", {}).get("S"),
+        user_id=job.get("uid", {}).get("S"),
+        is_from_failed_execution=True,
     )
