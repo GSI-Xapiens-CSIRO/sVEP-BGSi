@@ -63,6 +63,7 @@ def lambda_handler(event, _):
         request_id = event["requestContext"]["requestId"]
         project = body_dict["projectName"]
         location = body_dict["location"]
+
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
@@ -102,40 +103,11 @@ def lambda_handler(event, _):
         },
     )
 
-    # payload = {
-    #     "body": {
-    #         "email": "fajarsep12@gmail.com",
-    #         "first_name": "Fajar",
-    #         "last_name": "Septiawan",
-    #         "file": "file.vcf",
-    #         "project_name": "project test",
-    #     }
-    # }
-
-    # response = lambda_client.invoke(
-    #     FunctionName=COGNITO_SVEP_JOB_EMAIL_LAMBDA,
-    #     InvocationType="RequestResponse",
-    #     Payload=json.dumps(payload),
-    # )
-    # if not (payload_stream := response.get("Payload")):
-    #     raise Exception("Error invoking email Lambda: No response payload")
-    # body = json.loads(payload_stream.read().decode("utf-8"))
-    # if not body.get("success", False):
-    #     raise Exception(f"Error invoking email Lambda: {body.get('message')}")
-    # email_sent = body.get("success", False)
-
     parsed_location = urlparse(location)
     input_vcf = Path(parsed_location.path.lstrip("/")).name
     update_clinic_job(
         job_id=request_id,
         job_status="pending",
-        project_name=project,
-        input_vcf=input_vcf,
-        user_id=sub,
-    )
-
-    send_job_email(
-        job_status="completed",
         project_name=project,
         input_vcf=input_vcf,
         user_id=sub,

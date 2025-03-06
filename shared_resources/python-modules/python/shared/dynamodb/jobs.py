@@ -60,6 +60,8 @@ def get_cognito_user(uid):
             attr["Name"]: attr["Value"] for attr in user.get("Attributes", [])
         }
 
+        print(f"User found: {json.dumps(attributes)}")
+
         return {
             "email": attributes.get("email", ""),
             "first_name": attributes.get("given_name", ""),
@@ -86,6 +88,7 @@ def send_job_email(
     if not user_info:
         print(f"Skipping email, user not found")
         return
+
     payload = {
         "body": {
             "email": "fajarsep12@gmail.com",
@@ -136,6 +139,13 @@ def update_clinic_job(
         update_fields["uid"] = {"S": user_id}
 
     dynamodb_update_item(job_id, update_fields)
+
+    send_job_email(
+        job_status=job_status,
+        project_name=project_name,
+        input_vcf=input_vcf,
+        user_id=user_id,
+    )
 
 
 def check_user_in_project(sub, project):
