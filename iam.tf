@@ -93,7 +93,16 @@ data "aws_iam_policy_document" "lambda-initQuery" {
 
   statement {
     actions = [
-      "cognito-idp:ListUsers",
+      "cognito-idp:AdminGetUser",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:*"
     ]
     resources = [
       var.cognito-user-pool-arn,
