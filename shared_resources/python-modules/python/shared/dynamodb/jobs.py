@@ -42,16 +42,22 @@ def dynamodb_update_item(job_id, update_fields: dict):
 
 
 def get_cognito_user(uid):
-    cognito_client = boto3.client("cognito-idp")
-
     try:
-        response = cognito_client.admin_get_user(
-            UserPoolId=USER_POOL_ID, Username=uid  # Use Cognito User ID (sub)
+        cognito_client = boto3.client("cognito-idp")
+
+        response = cognito_client.list_users(
+            UserPoolId=USER_POOL_ID, Filter=f'sub = "{uid}"', Limit=1
         )
 
-        # Extract attributes
+        # Check if any user was found
+        if not response.get("Users"):
+            print("User not found.")
+            return None
+
+        # Extract attributes correctly
+        user = response["Users"][0]
         attributes = {
-            attr["Name"]: attr["Value"] for attr in response["UserAttributes"]
+            attr["Name"]: attr["Value"] for attr in user.get("Attributes", [])
         }
 
         return {
@@ -61,11 +67,8 @@ def get_cognito_user(uid):
         }
 
     except ClientError as e:
-        if e.response["Error"]["Code"] == "UserNotFoundException":
-            print("User not found.")
-        else:
-            print(f"An error occurred: {e.response['Error']['Message']}")
-        return None  # Return None when user is not found or an error occurs
+        print(f"An error occurred: {e.response['Error']['Message']}")
+        return None  # Return None if an error occurs
 
 
 def send_job_email(
