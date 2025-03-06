@@ -34,7 +34,7 @@ def add_clinvar_columns(in_rows, chrom_mapping):
             encoding="ascii",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
-        is_matched = False 
+        is_matched = False
         for data in main_data:
             metadata = data.split("\t")
             if len(metadata) >= 3:
@@ -42,7 +42,7 @@ def add_clinvar_columns(in_rows, chrom_mapping):
                 new_row = in_row
                 # TODO add validation for ref allele
                 if alt == alt_allele:
-                    new_row = in_row = clinvar_data
+                    new_row += clinvar_data
                     results.append(new_row)
                     is_matched = True
         if not is_matched:
