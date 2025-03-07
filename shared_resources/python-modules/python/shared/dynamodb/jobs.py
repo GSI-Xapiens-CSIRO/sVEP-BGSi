@@ -75,7 +75,7 @@ def send_job_email(
 
     payload = {
         "body": {
-            "email": "fajarsep12@gmail.com",
+            "email": user_info["email"],
             "first_name": user_info["first_name"],
             "last_name": user_info["last_name"],
             "job_status": job_status,
