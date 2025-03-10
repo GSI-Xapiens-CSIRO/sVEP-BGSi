@@ -58,6 +58,16 @@ resource "aws_sns_topic_subscription" "pluginClinvar" {
   endpoint = module.lambda-pluginClinvar.function_arn
 }
 
+resource "aws_sns_topic" "pluginSift" {
+  name = "svep-backend-pluginSift"
+}
+
+resource "aws_sns_topic_subscription" "pluginSift" {
+  topic_arn = aws_sns_topic.pluginSift.arn
+  protocol = "lambda"
+  endpoint = module.lambda-pluginSift.function_arn
+}
+
 resource "aws_sns_topic" "concat" {
   name = "svep-backend-concat"
 }

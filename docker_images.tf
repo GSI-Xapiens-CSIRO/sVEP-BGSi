@@ -46,3 +46,43 @@ module "docker_image_pluginConsequence_lambda" {
 
     platform = "linux/amd64"
 }
+
+
+#
+# pluginSift docker image
+#
+data "external" "pluginSift_lambda_source_hash" {
+    program = ["python", "lambda/pluginSift/docker_prep.py"]
+    working_dir = path.module
+}
+
+module "docker_image_pluginSift_lambda" {
+    source = "terraform-aws-modules/lambda/aws//modules/docker-build"
+
+    create_ecr_repo = true
+    ecr_repo        = "svep-pluginSift-lambda-containers"
+    ecr_repo_lifecycle_policy = jsonencode({
+        "rules" : [
+        {
+            "rulePriority" : 1,
+            "description" : "Keep only the last 1 images",
+            "selection" : {
+            "tagStatus" : "any",
+            "countType" : "imageCountMoreThan",
+            "countNumber" : 1
+            },
+            "action" : {
+            "type" : "expire"
+            }
+        }
+        ]
+    })
+    use_image_tag = false
+    source_path   = "${path.module}/lambda/pluginSift"
+
+    triggers = {
+        dir_sha = data.external.pluginSift_lambda_source_hash.result.hash
+    }
+
+    platform = "linux/amd64"
+}

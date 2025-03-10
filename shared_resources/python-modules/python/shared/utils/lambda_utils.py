@@ -7,6 +7,8 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
+from shared.dynamodb import query_clinic_job, update_clinic_job
+
 # Optional environment variables
 SVEP_TEMP = os.environ.get("SVEP_TEMP")
 REGION = os.environ.get("REGION")
@@ -113,7 +115,6 @@ def download_to_tmp(bucket, key, raise_on_notfound=False):
     return True
 
 
-
 def download_vcf(bucket, vcf):
     download_to_tmp(bucket, vcf, raise_on_notfound=True)
     if not download_to_tmp(bucket, f"{vcf}.csi"):
@@ -124,6 +125,8 @@ def download_bedfile(bucket, bedfile):
     if not download_to_tmp(bucket, f"{bedfile}.csi"):
         download_to_tmp(bucket, f"{bedfile}.tbi", raise_on_notfound=True)
 
+def download_sift_database(bucket, siftdb):
+    download_to_tmp(bucket, siftdb, raise_on_notfound=True)
 
 def _create_temp_file(filename):
     print(f"Creating file: {filename}")
@@ -178,3 +181,19 @@ def truncated_print(string, max_length=MAX_PRINT_LENGTH):
         string = _truncate_string(string, max_length)
         assert len(string) <= max_length
     print(string)
+
+
+def handle_failed_execution(job_id, error_message):
+    print(error_message)
+    job = query_clinic_job(job_id)
+    print(job)
+    if job.get("job_status").get("S") == "failed":
+        return
+    job_status = "failed"
+    failed_step = os.environ.get("AWS_LAMBDA_FUNCTION_NAME", "unknown")
+    update_clinic_job(
+        job_id,
+        job_status=job_status,
+        failed_step=failed_step,
+        error_message=str(error_message),
+    )

@@ -6,8 +6,13 @@ import gzip
 
 import boto3
 
-from shared.utils import get_sns_event, sns_publish
+from shared.utils import (
+    get_sns_event,
+    sns_publish,
+    handle_failed_execution,
+)
 from shared.indexutils import create_index
+from shared.dynamodb import update_clinic_job
 
 # AWS S3 client
 s3 = boto3.client("s3")
@@ -54,6 +59,7 @@ def publish_result(request_id, project, all_keys, last_file, page_num, prefix):
         print(f"time taken = {(time.time()-start_time) * 1000}")
         print("Done concatenating")
         clean_regions(request_id)
+        update_clinic_job(request_id, job_status="completed")
     else:
         print("createPages failed to create one of the page")
         sns_publish(
@@ -70,8 +76,11 @@ def lambda_handler(event, _):
     message = get_sns_event(event)
     request_id = message["requestId"]
     project = message["project"]
-    all_keys = message["allKeys"]
-    last_file = message["lastFile"]
-    page_num = message["pageNum"]
-    prefix = message["prefix"]
-    publish_result(request_id, project, all_keys, last_file, page_num, prefix)
+    try:
+        all_keys = message["allKeys"]
+        last_file = message["lastFile"]
+        page_num = message["pageNum"]
+        prefix = message["prefix"]
+        publish_result(request_id, project, all_keys, last_file, page_num, prefix)
+    except Exception as e:
+        handle_failed_execution(request_id, e)
