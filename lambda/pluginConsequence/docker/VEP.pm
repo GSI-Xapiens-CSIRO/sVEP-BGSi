@@ -179,34 +179,34 @@ sub simple_truncated_print {
   print($string);
 }
 
-sub get_cognito_user_by_id {
-    my ($uid) = @_;
-    print "[get_cognito_user] - Looking up user with UID: $uid\n";
+# sub get_cognito_user_by_id {
+#     my ($uid) = @_;
+#     print "[get_cognito_user] - Looking up user with UID: $uid\n";
     
-    my $cmd = qq{/usr/bin/aws cognito-idp list-users --user-pool-id $USER_POOL_ID --filter 'sub = "$uid"' --limit 1 --output json 2>&1};
+#     my $cmd = qq{/usr/bin/aws cognito-idp list-users --user-pool-id $USER_POOL_ID --filter 'sub = "$uid"' --limit 1 --output json 2>&1};
 
-    my $output = `$cmd`;
+#     my $output = `$cmd`;
     
-    if ($? != 0) {
-        warn "[get_cognito_user] - AWS CLI error: $output\n";
-        return undef;
-    }
+#     if ($? != 0) {
+#         warn "[get_cognito_user] - AWS CLI error: $output\n";
+#         return undef;
+#     }
 
-    my $response = try { decode_json($output) } catch { warn "[get_cognito_user] - JSON decode error: $_"; return undef; };
+#     my $response = try { decode_json($output) } catch { warn "[get_cognito_user] - JSON decode error: $_"; return undef; };
     
-    return undef unless $response && ref($response->{Users}) eq 'ARRAY' && @{$response->{Users}} > 0;
+#     return undef unless $response && ref($response->{Users}) eq 'ARRAY' && @{$response->{Users}} > 0;
 
-    my $user = $response->{Users}[0];
-    my %attributes = map { $_->{Name} => $_->{Value} } @{ $user->{Attributes} };
+#     my $user = $response->{Users}[0];
+#     my %attributes = map { $_->{Name} => $_->{Value} } @{ $user->{Attributes} };
 
-    print "[get_cognito_user] - User found: " . encode_json(\%attributes) . "\n";
+#     print "[get_cognito_user] - User found: " . encode_json(\%attributes) . "\n";
 
-    return {
-        email      => $attributes{'email'} // '',
-        first_name => $attributes{'given_name'} // '',
-        last_name  => $attributes{'family_name'} // '',
-    };
-}
+#     return {
+#         email      => $attributes{'email'} // '',
+#         first_name => $attributes{'given_name'} // '',
+#         last_name  => $attributes{'family_name'} // '',
+#     };
+# }
 
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
