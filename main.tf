@@ -194,7 +194,7 @@ module "lambda-pluginConsequence" {
 }
 
 #
-# pluginConsequence Lambda Function
+# pluginSift Lambda Function
 #
 # TODO: update source to github.com/bhosking/terraform-aws-lambda once docker support is added
 module "lambda-pluginSift" {
@@ -285,37 +285,6 @@ module "lambda-pluginClinvar" {
       CLINVAR_REFERENCE         = "clinvar.bed.gz"
       PLUGIN_SIFT_SNS_TOPIC_ARN = ""
       HTS_S3_HOST               = "s3.${var.region}.amazonaws.com"
-    }
-  }
-
-  layers = [
-    local.binaries_layer,
-    local.python_modules_layer,
-  ]
-}
-
-#
-# pluginSift Lambda Function
-#
-module "lambda-pluginSift" {
-  source        = "github.com/bhosking/terraform-aws-lambda"
-  function_name = "svep-backend-pluginSift"
-  description   = "Add Sift annotations to sVEP result rows."
-  handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.12"
-  memory_size   = 2048
-  timeout       = 24
-  policy = {
-    json = data.aws_iam_policy_document.lambda-pluginSift.json
-  }
-  source_path = "${path.module}/lambda/pluginSift"
-  tags        = var.common-tags
-  environment = {
-    variables = {
-      SVEP_TEMP          = aws_s3_bucket.svep-temp.bucket
-      SVEP_REGIONS       = aws_s3_bucket.svep-regions.bucket
-      REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
-      HTS_S3_HOST        = "s3.${var.region}.amazonaws.com"
     }
   }
 

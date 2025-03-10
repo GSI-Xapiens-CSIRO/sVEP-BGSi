@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       var.dynamo-project-users-table-arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:PutItem",
@@ -125,7 +125,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "${var.data_portal_bucket_arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -160,7 +160,7 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
       "${aws_s3_bucket.svep-temp.arn}/*",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -216,7 +216,7 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -278,7 +278,7 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -340,7 +340,7 @@ data "aws_iam_policy_document" "lambda-pluginSift" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -392,7 +392,7 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -445,7 +445,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -479,7 +479,7 @@ data "aws_iam_policy_document" "lambda-concat" {
       aws_s3_bucket.svep-regions.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -515,7 +515,7 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
       aws_s3_bucket.svep-temp.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -570,7 +570,7 @@ data "aws_iam_policy_document" "lambda-createPages" {
       aws_s3_bucket.svep-regions.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -623,7 +623,7 @@ data "aws_iam_policy_document" "lambda-concatPages" {
       aws_s3_bucket.svep-regions.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -745,7 +745,7 @@ data "aws_iam_policy_document" "lambda-clearTempAndRegions" {
       "${aws_s3_bucket.svep-regions.arn}/*"
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetRecords",
