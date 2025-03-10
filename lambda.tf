@@ -99,7 +99,7 @@ resource "aws_lambda_permission" "plugin_clinvar_invoke_permission" {
 resource "aws_lambda_permission" "plugin_sift_invoke_permission" {
   statement_id  = "SNSPluginSiftAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-pluginSift.function_name
+  function_name = module.lambda-pluginSift.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pluginSift.arn
 }
