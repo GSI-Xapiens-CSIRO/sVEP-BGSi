@@ -134,6 +134,7 @@ sub handle {
       print("Task Complete.\n");
     }
     catch {
+     print("START handle_failed_execution from VEP.pm")
      handle_failed_execution($request_id, $functionName, $_);
     };
 }
@@ -239,12 +240,12 @@ sub handle_failed_execution {
         ":error_message" => { "S" => $error_message }
     });
 
-    my $uid = $query_result->{Item}->{uid}->{S} // undef;
+    # my $uid = $query_result->{Item}->{uid}->{S} // undef;
     
-    my $user = get_cognito_user_by_id($uid);
-    die "Failed to get user information for UID: $uid" unless $user;
+    # my $user = get_cognito_user_by_id($uid);
+    # die "Failed to get user information for UID: $uid" unless $user;
 
-    print "User: " . encode_json($user) . "\n";
+    # print "User: " . encode_json($user) . "\n";
 
     # Update the item in DynamoDB
     my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .

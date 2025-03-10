@@ -53,7 +53,15 @@ def send_job_email(
 
     # prevent re querying the job if it's already queried from handle_failed_execution
     # in handle_failed_execution already queried the job using query_clinic_job
-    job = {} if is_from_failed_execution else query_clinic_job(job_id)
+    job = (
+        {
+            "job_status": {"S": job_status},
+            "project_name": {"S": project_name},
+            "input_vcf": {"S": input_vcf},
+        }
+        if is_from_failed_execution
+        else query_clinic_job(job_id)
+    )
 
     if job:
         job_status = job.get("job_status", {}).get("S", job_status)
