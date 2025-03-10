@@ -300,7 +300,7 @@ data "aws_iam_policy_document" "lambda-pluginSift" {
       "SNS:Publish",
     ]
     resources = [
-      aws_sns_topic.pluginClinvar.arn,
+      aws_sns_topic.pluginSift.arn,
     ]
   }
 
