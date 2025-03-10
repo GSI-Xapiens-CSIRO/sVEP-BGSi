@@ -2,11 +2,23 @@ import json
 from pathlib import Path
 import os
 import subprocess
+import boto3
+
+from shared.apiutils import bad_request, bundle_response
+from shared.utils import (
+    chrom_matching,
+    print_event,
+    sns_publish,
+    start_function,
+)
+from dynamodb import check_user_in_project
 from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
 from shared.utils import chrom_matching, print_event, sns_publish, start_function
-from shared.dynamodb import check_user_in_project, update_clinic_job
+from shared.dynamodb import check_user_in_project, update_clinic_job, send_job_email
+
+lambda_client = boto3.client("lambda")
 
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ["CONCAT_STARTER_SNS_TOPIC_ARN"]
@@ -51,6 +63,7 @@ def lambda_handler(event, _):
         request_id = event["requestContext"]["requestId"]
         project = body_dict["projectName"]
         location = body_dict["location"]
+
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
