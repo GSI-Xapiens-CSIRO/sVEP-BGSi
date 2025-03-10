@@ -292,6 +292,68 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
 }
 
 #
+# pluginSift Lambda Function
+#
+data "aws_iam_policy_document" "lambda-pluginSift" {
+  statement {
+    actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.pluginClinvar.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}",
+    ]
+  }
+  
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+}
+
+#
 # pluginUpdownstream Lambda Function
 #
 data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
@@ -342,6 +404,7 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
     ]
   }
 }
+
 
 #
 # pluginClinvar Lambda Function

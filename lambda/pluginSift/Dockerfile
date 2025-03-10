@@ -9,7 +9,7 @@ ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
 
 # Copy files
-COPY main.py ${LAMBDA_TASK_ROOT}/main.py
+COPY ./docker/main.py ./docker/SIFT4G_Annotator.jar ${LAMBDA_TASK_ROOT}/
 
 # Define entry point
 ENTRYPOINT ["python3", "main.py"]

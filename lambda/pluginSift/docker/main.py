@@ -8,7 +8,6 @@ from shared.utils import Orchestrator, s3, download_sift_database
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 SIFT_DATABASE_REFERENCE = os.environ["SIFT_DATABASE_REFERENCE"]
-PLUGIN_SIFT_SNS_TOPIC_ARN = os.environ["PLUGIN_SIFT_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 # [TODO] : Download siftdb

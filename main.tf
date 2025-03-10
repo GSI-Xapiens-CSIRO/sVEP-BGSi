@@ -194,6 +194,42 @@ module "lambda-pluginConsequence" {
 }
 
 #
+# pluginConsequence Lambda Function
+#
+# TODO: update source to github.com/bhosking/terraform-aws-lambda once docker support is added
+module "lambda-pluginSift" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name = "svep-backend-pluginSift"
+  description = "Queries VCF for a specified variant."
+  create_package = false
+  image_uri = module.docker_image_pluginSift_lambda.image_uri
+  package_type = "Image"
+  memory_size = 2048
+  timeout = 60
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-pluginSift.json
+  ]
+  number_of_policy_jsons = 1
+  source_path = "${path.module}/lambda/pluginSift"
+  tags = var.common-tags
+  environment_variables = {
+      SVEP_TEMP = aws_s3_bucket.svep-temp.bucket
+      SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
+      REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
+      DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
+      SIFT_DATABASE_REFERENCE = "GRCh38.83.chr"
+      HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
 # pluginUpdownstream Lambda Function
 #
 module "lambda-pluginUpdownstream" {
@@ -248,7 +284,7 @@ module "lambda-pluginClinvar" {
       SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE = "clinvar.bed.gz"
-      PLUGIN_SIFT_SNS_TOPIC_ARN = ""
+      PLUGIN_SIFT_SNS_TOPIC_ARN = aws_sns_topic.pluginSift.arn
       DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
       HTS_S3_HOST = "s3.${var.region}.amazonaws.com"
     }
