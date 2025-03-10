@@ -111,6 +111,7 @@ def update_clinic_job(
     error_message=None,
     user_id=None,
     is_from_failed_execution=False,
+    skip_email=False,
 ):
     job_status = job_status if job_status is not None else "unknown"
     update_fields = {"job_status": {"S": job_status}}
@@ -126,6 +127,9 @@ def update_clinic_job(
         update_fields["uid"] = {"S": user_id}
 
     dynamodb_update_item(job_id, update_fields)
+
+    if skip_email:
+        print(f"[update_clinic_job] - Skipping email for job: {job_id}")
 
     send_job_email(
         job_id=job_id,
