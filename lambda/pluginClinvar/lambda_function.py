@@ -1,6 +1,6 @@
 import os
 import subprocess
-
+import urllib.parse
 from shared.utils import Orchestrator, s3, download_bedfile, start_function
 
 
@@ -18,8 +18,9 @@ download_bedfile(BUCKET_NAME, CLINVAR_REFERENCE)
 def add_clinvar_columns(in_rows, chrom_mapping):
     results = []
     for in_row in in_rows:
-        loc = in_row[2]
+        chrom, positions = in_row[2].split(":")
         alt = in_row[3]
+        loc = f"{chrom_mapping[chrom]}:{positions}"
         local_file = f"/tmp/{CLINVAR_REFERENCE}"
         args = [
             "tabix",
@@ -39,13 +40,14 @@ def add_clinvar_columns(in_rows, chrom_mapping):
             metadata = data.split("\t")
             if len(metadata) >= 3:
                 (ref_allele, alt_allele, *clinvar_data) = metadata[3].split(";")
-                new_row = in_row
                 # TODO add validation for ref allele
                 if alt == alt_allele:
-                    new_row += clinvar_data
+                    in_row[2] = loc
+                    new_row = in_row + [urllib.parse.unquote(item) for item in clinvar_data]
                     results.append(new_row)
                     is_matched = True
         if not is_matched:
+            in_row[2] = loc
             new_row = in_row + ["-", "-", "-", "-", "-", "-", "-"]
             results.append(new_row)
     return results
