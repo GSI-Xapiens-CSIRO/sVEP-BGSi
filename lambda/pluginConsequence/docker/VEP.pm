@@ -183,7 +183,8 @@ sub simple_truncated_print {
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
 
-    print ("[handle_failed_execution] - Failed to execute $failed_step: $error_message\n");
+    print ("[handle_failed_execution] - table $dynamoClinicJobsTable\n");
+    print ("[handle_failed_execution] - params request_id: $request_id, failed_step: $failed_step, error_message: $error_message\n");
 
     my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"id":{"S":"$request_id"}}' --attributes-to-get job_status 2>&1`;
     die "Failed to query DynamoDB: $query_result" if $? != 0;
