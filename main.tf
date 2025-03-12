@@ -49,7 +49,7 @@ module "lambda-initQuery" {
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     }
   }
 
@@ -60,7 +60,7 @@ module "lambda-initQuery" {
 }
 
 #
-# sendJobEmail Lambda Function
+# initQuery Lambda Function
 #
 module "lambda-sendJobEmail" {
   source = "github.com/bhosking/terraform-aws-lambda"
@@ -119,7 +119,7 @@ module "lambda-queryVCF" {
       DYNAMO_CLINIC_JOBS_TABLE       = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA  = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                   = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN             = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN             = aws_sns_topic.sendJobEmail.arn
       HTS_S3_HOST                    = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -156,7 +156,7 @@ module "lambda-queryVCFsubmit" {
       DYNAMO_CLINIC_JOBS_TABLE       = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA  = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                   = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN             = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN             = aws_sns_topic.sendJobEmail.arn
     }
   }
 
@@ -192,7 +192,7 @@ module "lambda-queryGTF" {
       DYNAMO_CLINIC_JOBS_TABLE          = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA     = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                      = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN                = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN                = aws_sns_topic.sendJobEmail.arn
       HTS_S3_HOST                       = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -234,7 +234,7 @@ module "lambda-pluginConsequence" {
     FASTA_REFERENCE_BASE          = var.fasta_file_base
     DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
     COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
-    SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+    SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     USER_POOL_ID                  = var.cognito-user-pool-id
     HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
   }
@@ -265,7 +265,7 @@ module "lambda-pluginUpdownstream" {
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
       HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -302,7 +302,7 @@ module "lambda-pluginClinvar" {
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
       HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
     }
   }
@@ -338,7 +338,7 @@ module "lambda-concat" {
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     }
   }
 
@@ -374,7 +374,7 @@ module "lambda-concatStarter" {
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     }
   }
 
@@ -410,7 +410,7 @@ module "lambda-createPages" {
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     }
   }
 
@@ -446,7 +446,7 @@ module "lambda-concatPages" {
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = module.lambda-sendJobEmail.function_arn
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     }
   }
 

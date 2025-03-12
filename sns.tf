@@ -107,3 +107,13 @@ resource "aws_sns_topic_subscription" "updateReferenceFiles" {
   protocol  = "lambda"
   endpoint  = module.lambda-updateReferenceFiles.lambda_function_arn
 }
+
+resource "aws_sns_topic" "sendJobEmail" {
+  name = "svep-backend-sendJobEmail"
+}
+
+resource "aws_sns_topic_subscription" "sendJobEmail" {
+  topic_arn = aws_sns_topic.sendJobEmail.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-sendJobEmail.function_arn
+}
