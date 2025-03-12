@@ -103,8 +103,6 @@ sub handle {
     #############################################
 
     try {
-      die "Intentional exception: Simulating error in pluginConsequence\n";
-
       my $chr = $data[0][0]->{'chrom'};
       my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
       print "Copying fasta reference files.\n";
@@ -185,9 +183,6 @@ sub simple_truncated_print {
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
 
-    print ("[handle_failed_execution] - table $dynamoClinicJobsTable\n");
-    print ("[handle_failed_execution] - params request_id: $request_id, failed_step: $failed_step, error_message: $error_message\n");
-
     my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"job_id":{"S":"$request_id"}}' --output json 2>&1`;
     die "Failed to query DynamoDB: $query_result" if $? != 0;
     my $query_json;
@@ -197,13 +192,10 @@ sub handle_failed_execution {
       $query_json = {};
     }
 
-    print("[handle_failed_execution] - query_json: " . encode_json($query_json) . "\n");
-
     # Check if item exists and job_status is already "failed"
     if (exists $query_json->{Item} && 
         exists $query_json->{Item}->{job_status} && 
         $query_json->{Item}->{job_status}->{S} eq "failed") {
-        print("[handle_failed_execution] - Job already marked as failed, skipping update\n");
         return;
     }
 
@@ -230,8 +222,6 @@ sub handle_failed_execution {
 
     die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
     
-    print("[handle_failed_execution] - sns_publish: " . encode_json($query_json) . "\n");
-
     # Send SNS Email Job notification
     sns_publish($sendJobEmailArn, {
         job_id           => $request_id,
