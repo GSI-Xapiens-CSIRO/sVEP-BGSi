@@ -4,6 +4,7 @@ import boto3
 
 from shared.dynamodb import query_clinic_job
 from shared.utils.cognito_utils import get_cognito_user_by_id
+from shared.utils import get_sns_event
 
 lambda_client = boto3.client("lambda")
 
@@ -11,14 +12,16 @@ COGNITO_SVEP_JOB_EMAIL_LAMBDA = os.environ.get("COGNITO_SVEP_JOB_EMAIL_LAMBDA", 
 
 
 def lambda_handler(event, _):
-    print(f"[send_job_email] - Starting Event received: {json.dumps(event)}")
+    message = get_sns_event(event)
 
-    job_id = event.get("job_id")
-    job_status = event.get("job_status")
-    project_name = event.get("project_name", None)
-    input_vcf = event.get("input_vcf", None)
-    user_id = event.get("user_id", None)
-    is_from_failed_execution = event.get("is_from_failed_execution", False)
+    print(f"[send_job_email] - Starting message received: {json.dumps(message)}")
+
+    job_id = message["job_id"]
+    job_status = message["job_status"]
+    project_name = message.get("project_name", None)
+    input_vcf = message.get("input_vcf", None)
+    user_id = message.get("user_id", None)
+    is_from_failed_execution = message.get("is_from_failed_execution", False)
 
     if (job_status == "pending") or (job_status == "expired"):
         print(f"Skipping email for job status: {job_status}")
