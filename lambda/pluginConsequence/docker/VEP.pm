@@ -103,6 +103,7 @@ sub handle {
     print("tempFileName is - $tempFileName\n");
     #############################################
 
+    print("Request id = $request_id \n");
     try {
       # TODO: Remove this line
       die "Intentional error for testing!";
@@ -139,7 +140,6 @@ sub handle {
       print("Task Complete.\n");
     }
     catch {
-     print("START handle_failed_execution from VEP.pm");
      handle_failed_execution($request_id, $functionName, $_);
     };
 }
@@ -251,6 +251,8 @@ sub get_cognito_user_by_id {
 
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
+
+    print("START handle_failed_execution from VEP.pm");
 
     my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"id":{"S":"$request_id"}}' --attributes-to-get job_status 2>&1`;
     die "Failed to query DynamoDB: $query_result" if $? != 0;
