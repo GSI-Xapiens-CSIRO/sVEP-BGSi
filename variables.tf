@@ -94,7 +94,7 @@ variable "dynamo-clinic-jobs-table-arn" {
 }
 
 variable "dynamo-clinic-jobs-stream-arn" {
-  type = string
+  type        = string
   description = "Dynamo clinic jobs stream ARN"
 }
 
@@ -107,3 +107,4 @@ variable "cognito-user-pool-id" {
   type        = string
   description = "Cognito user pool Id."
 }
+
