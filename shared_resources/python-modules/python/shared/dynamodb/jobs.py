@@ -2,15 +2,13 @@ import json
 import os
 
 import boto3
-from shared.utils.cognito_utils import get_cognito_user_by_id
-from shared.utils import sns_publish
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
+sns = boto3.client("sns")
 
 DYNAMO_CLINIC_JOBS_TABLE = os.environ.get("DYNAMO_CLINIC_JOBS_TABLE", "")
 DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
-COGNITO_SVEP_JOB_EMAIL_LAMBDA = os.environ.get("COGNITO_SVEP_JOB_EMAIL_LAMBDA", "")
 SEND_JOB_EMAIL_ARN = os.environ.get("SEND_JOB_EMAIL_ARN", "")
 
 
@@ -59,7 +57,12 @@ def send_job_email(
 
     print(f"[send_job_email] - payload: {payload}")
 
-    sns_publish(SEND_JOB_EMAIL_ARN, payload)
+    kwargs = {
+        "TopicArn": SEND_JOB_EMAIL_ARN,
+        "Message": json.dumps(payload, separators=(",", ":")),
+    }
+
+    sns.publish(**kwargs)
 
 
 def update_clinic_job(
