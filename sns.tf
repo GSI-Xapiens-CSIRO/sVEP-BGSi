@@ -115,6 +115,6 @@ resource "aws_sns_topic" "sendJobEmail" {
 resource "aws_sns_topic_subscription" "sendJobEmail" {
   topic_arn = aws_sns_topic.sendJobEmail.arn
   protocol  = "lambda"
-  endpoint  = module.lambda-sendJobEmail.lambda_function_arn
+  endpoint  = module.lambda-sendJobEmail.function_arn
 }
 
