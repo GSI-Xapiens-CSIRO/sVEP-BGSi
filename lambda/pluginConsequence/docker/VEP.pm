@@ -201,6 +201,8 @@ sub handle_failed_execution {
         return;
     }
 
+    print("handle_failed_execution] - query_json: $query_json\n");
+
     # Prepare the update expression
     my $update_expression = "SET #job_status = :job_status, #failed_step = :failed_step, #error_message = :error_message";
     my $expression_attribute_names = encode_json({
@@ -216,7 +218,7 @@ sub handle_failed_execution {
 
     # Update the item in DynamoDB
     my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
-                           "--key '{\"id\":{\"S\":\"$request_id\"}}' " .
+                           "--key '{\"job_id\":{\"S\":\"$request_id\"}}' " .
                            "--update-expression \"$update_expression\" " .
                            "--expression-attribute-names '$expression_attribute_names' " .
                            "--expression-attribute-values '$expression_attribute_values'");
