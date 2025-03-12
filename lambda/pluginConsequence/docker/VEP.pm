@@ -229,6 +229,8 @@ sub handle_failed_execution {
                            "--expression-attribute-values '$expression_attribute_values'");
 
     die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
+    
+    print("[handle_failed_execution] - sns_publish: " . encode_json($query_json) . "\n");
 
     # Send SNS Email Job notification
     sns_publish($cognitoSvepJobEmailLambda, {
