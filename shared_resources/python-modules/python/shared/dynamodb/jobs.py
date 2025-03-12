@@ -3,7 +3,7 @@ import os
 
 import boto3
 from shared.utils.cognito_utils import get_cognito_user_by_id
-from shared.utils.lambda_utils import sns_publish
+from shared.utils import sns_publish
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
