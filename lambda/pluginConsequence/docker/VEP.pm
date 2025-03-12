@@ -101,6 +101,8 @@ sub handle {
     #############################################
 
     try {
+      die "Intentional exception: Simulating error in pluginConsequence\n";
+
       my $chr = $data[0][0]->{'chrom'};
       my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
       print "Copying fasta reference files.\n";
@@ -180,6 +182,8 @@ sub simple_truncated_print {
 
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
+
+    print "[handle_failed_execution] - Failed to execute $failed_step: $error_message\n";
 
     my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"id":{"S":"$request_id"}}' --attributes-to-get job_status 2>&1`;
     die "Failed to query DynamoDB: $query_result" if $? != 0;
