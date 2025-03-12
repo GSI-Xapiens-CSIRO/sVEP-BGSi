@@ -138,7 +138,7 @@ sub handle {
       print("Task Complete.\n");
     }
     catch {
-     handle_failed_execution($request_id, $functionName, $_);z
+     handle_failed_execution($request_id, $functionName, $_);
     };
 }
 
