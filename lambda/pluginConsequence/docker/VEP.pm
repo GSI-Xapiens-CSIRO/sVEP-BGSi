@@ -261,7 +261,7 @@ sub handle_failed_execution {
     print ("[handle_failed_execution] - table $dynamoClinicJobsTable\n");
     print ("[handle_failed_execution] - params request_id: $request_id, failed_step: $failed_step, error_message: $error_message\n");
 
-    my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"job_id":{"S":"$request_id"}}' --attributes-to-get job_status 2>&1`;
+    my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"job_id":{"S":"$request_id"}}' --output json 2>&1`;
     die "Failed to query DynamoDB: $query_result" if $? != 0;
     my $query_json;
     eval { $query_json = decode_json($query_result); };
