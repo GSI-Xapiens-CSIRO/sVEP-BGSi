@@ -74,6 +74,7 @@ use consequence::Transcript;
 use consequence::TranscriptVariation;
 use consequence::TranscriptVariationAllele;
 use Try::Tiny;
+use File::Temp qw(tempfile);
 
 my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
@@ -86,6 +87,7 @@ my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
 my $userPoolId = $ENV{'USER_POOL_ID'};
+my $cognitoSvepJobEmailLambda = $env{'COGNITO_SVEP_JOB_EMAIL_LAMBDA'}
 
 sub handle {
     my ($payload) = @_;
@@ -102,6 +104,9 @@ sub handle {
     #############################################
 
     try {
+      # TODO: Remove this line
+      die "Intentional error for testing!";
+
       my $chr = $data[0][0]->{'chrom'};
       my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
       print "Copying fasta reference files.\n";
@@ -179,34 +184,70 @@ sub simple_truncated_print {
   print($string);
 }
 
-# sub get_cognito_user_by_id {
-#     my ($uid) = @_;
-#     print "[get_cognito_user] - Looking up user with UID: $uid\n";
+sub send_job_email {
+    my ($payload) = @_;
     
-#     my $cmd = qq{/usr/bin/aws cognito-idp list-users --user-pool-id $USER_POOL_ID --filter 'sub = "$uid"' --limit 1 --output json 2>&1};
+    # Convert payload to JSON
+    my $json_payload = encode_json($payload);
 
-#     my $output = `$cmd`;
+    # Create a temporary file to store the response
+    my ($fh, $temp_filename) = tempfile();
+
+    # Invoke Lambda function using AWS CLI
+    my $cmd = qq(/usr/bin/aws lambda invoke --function-name $cognitoSvepJobEmailLambda --invocation-type RequestResponse --payload '$json_payload' $temp_filename 2>&1);
+
+    my $output = `$cmd`;  # Execute command and capture output
+    my $exit_code = $? >> 8;  # Get exit code
+
+    if ($exit_code != 0) {
+        die "Error invoking email Lambda: $output";
+    }
+
+    # Read response from the temp file
+    open my $fh_result, '<', $temp_filename or die "Could not open response file: $!";
+    my $response_json = do { local $/; <$fh_result> };
+    close $fh_result;
+    unlink $temp_filename;  # Clean up temp file
+
+    # Decode JSON response
+    my $response = decode_json($response_json);
+
+    # Check for success
+    if (!$response->{'success'}) {
+        die "Error invoking email Lambda: " . ($response->{'message'} // 'Unknown error');
+    }
+
+    print "[send_job_email] Email sent: " . ($response->{'success'} ? "true" : "false") . "\n";
+}
+
+sub get_cognito_user_by_id {
+    my ($uid) = @_;
+    print "[get_cognito_user] - Looking up user with UID: $uid\n";
     
-#     if ($? != 0) {
-#         warn "[get_cognito_user] - AWS CLI error: $output\n";
-#         return undef;
-#     }
+    my $cmd = qq{/usr/bin/aws cognito-idp list-users --user-pool-id $USER_POOL_ID --filter 'sub = "$uid"' --limit 1 --output json 2>&1};
 
-#     my $response = try { decode_json($output) } catch { warn "[get_cognito_user] - JSON decode error: $_"; return undef; };
+    my $output = `$cmd`;
     
-#     return undef unless $response && ref($response->{Users}) eq 'ARRAY' && @{$response->{Users}} > 0;
+    if ($? != 0) {
+        warn "[get_cognito_user] - AWS CLI error: $output\n";
+        return undef;
+    }
 
-#     my $user = $response->{Users}[0];
-#     my %attributes = map { $_->{Name} => $_->{Value} } @{ $user->{Attributes} };
+    my $response = try { decode_json($output) } catch { warn "[get_cognito_user] - JSON decode error: $_"; return undef; };
+    
+    return undef unless $response && ref($response->{Users}) eq 'ARRAY' && @{$response->{Users}} > 0;
 
-#     print "[get_cognito_user] - User found: " . encode_json(\%attributes) . "\n";
+    my $user = $response->{Users}[0];
+    my %attributes = map { $_->{Name} => $_->{Value} } @{ $user->{Attributes} };
 
-#     return {
-#         email      => $attributes{'email'} // '',
-#         first_name => $attributes{'given_name'} // '',
-#         last_name  => $attributes{'family_name'} // '',
-#     };
-# }
+    print "[get_cognito_user] - User found: " . encode_json(\%attributes) . "\n";
+
+    return {
+        email      => $attributes{'email'} // '',
+        first_name => $attributes{'given_name'} // '',
+        last_name  => $attributes{'family_name'} // '',
+    };
+}
 
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
@@ -229,23 +270,34 @@ sub handle_failed_execution {
     # Prepare the update expression
     my $update_expression = "SET #job_status = :job_status, #failed_step = :failed_step, #error_message = :error_message";
     my $expression_attribute_names = encode_json({
-        "#job_status"        => "job_status",
+        "#job_status"    => "job_status",
         "#failed_step"   => "failed_step",
         "#error_message" => "error_message"
     });
 
     my $expression_attribute_values = encode_json({
-        ":job_status"        => { "S" => "failed" },
+        ":job_status"    => { "S" => "failed" },
         ":failed_step"   => { "S" => $failed_step },
         ":error_message" => { "S" => $error_message }
     });
 
-    # my $uid = $query_result->{Item}->{uid}->{S} // undef;
+    my $uid = $query_result->{Item}->{uid}->{S} // undef;
     
-    # my $user = get_cognito_user_by_id($uid);
-    # die "Failed to get user information for UID: $uid" unless $user;
+    my $user = get_cognito_user_by_id($uid);
+    die "Failed to get user information for UID: $uid" unless $user;
 
-    # print "User: " . encode_json($user) . "\n";
+    print "User: " . encode_json($user) . "\n";
+
+    my %payload = (
+        body => {
+            email        => $user->{email},
+            first_name   => $user->{first_name},
+            last_name    => $user->{last_name},
+            job_status   => $query_json->{Item}->{job_status}->{S},
+            project_name => $query_json->{Item}->{project_name}->{S},
+            input_vcf    => $query_json->{Item}->{input_vcf}->{S},
+        }
+    );
 
     # Update the item in DynamoDB
     my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
