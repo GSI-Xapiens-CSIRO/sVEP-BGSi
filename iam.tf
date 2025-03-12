@@ -99,6 +99,15 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       var.cognito-user-pool-arn,
     ]
   }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
+    ]
+  }
 }
 
 #
@@ -131,6 +140,15 @@ data "aws_iam_policy_document" "lambda-sendJobEmail" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
     ]
   }
 }
@@ -206,6 +224,15 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       var.cognito-user-pool-arn,
     ]
   }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
+    ]
+  }
 }
 
 #
@@ -274,6 +301,15 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
     ]
   }
 }
@@ -347,6 +383,15 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
     ]
   }
 }
@@ -429,6 +474,15 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
       var.cognito-user-pool-arn,
     ]
   }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
+    ]
+  }
 }
 
 #
@@ -497,6 +551,15 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
     ]
   }
 }
@@ -569,6 +632,15 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       var.cognito-user-pool-arn,
     ]
   }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
+    ]
+  }
 }
 
 #
@@ -629,6 +701,15 @@ data "aws_iam_policy_document" "lambda-concat" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
     ]
   }
 }
@@ -694,6 +775,15 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
     ]
   }
 }
@@ -769,6 +859,15 @@ data "aws_iam_policy_document" "lambda-createPages" {
       var.cognito-user-pool-arn,
     ]
   }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
+    ]
+  }
 }
 
 #
@@ -838,6 +937,15 @@ data "aws_iam_policy_document" "lambda-concatPages" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      module.lambda-sendJobEmail.function_arn,
     ]
   }
 }
