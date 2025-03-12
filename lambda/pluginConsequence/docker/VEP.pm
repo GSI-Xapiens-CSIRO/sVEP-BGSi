@@ -75,6 +75,7 @@ use consequence::TranscriptVariation;
 use consequence::TranscriptVariationAllele;
 use Try::Tiny;
 use File::Temp qw(tempfile);
+use Encode qw(encode);
 
 my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
@@ -216,7 +217,7 @@ sub send_job_email {
     my ($payload) = @_;
 
     # Convert payload to JSON
-    my $json_payload = encode_json($payload);
+    my $json_payload = encode('UTF-8', encode_json($payload));
 
     print("[send_job_email] - Sending email with payload: $json_payload\n");
 
@@ -303,9 +304,8 @@ sub handle_failed_execution {
 
     die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
 
-    my $uid = $query_json->{Item}->{uid}->{S};
+    my $uid = $query_json->{Item}->{uid}->{S};    
     my $user = get_cognito_user_by_id($uid);
-
     print("[handle_failed_execution] - user: " . encode_json($user) . "\n");
 
     my %payload = (
