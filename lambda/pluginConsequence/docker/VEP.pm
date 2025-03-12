@@ -91,8 +91,8 @@ sub handle {
     my $event = decode_json($payload);
     my $sns = $event->{Records}[0]{Sns};
     ##########################################update
-    # my $message = decode_json($sns->{'Message'}); #might have to remove decode_json
-    my $message = decode_json('{ invalid_json '); # Invalid JSON format
+    my $message = decode_json($sns->{'Message'}); #might have to remove decode_json
+    # my $message = decode_json('{ invalid_json '); # Invalid JSON format
     my @data = $message->{'snsData'};
     my $request_id = $message->{'requestId'};
     my $tempFileName = $message->{'tempFileName'};
