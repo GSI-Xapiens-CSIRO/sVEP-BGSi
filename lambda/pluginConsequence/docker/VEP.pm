@@ -87,7 +87,7 @@ my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
-my $cognitoSvepJobEmailLambda = $ENV{'COGNITO_SVEP_JOB_EMAIL_LAMBDA'};
+my $sendJobEmailArn = $ENV{'SEND_JOB_EMAIL_ARN'};
 sub handle {
     my ($payload) = @_;
     simple_truncated_print("Received message: $payload\n");
@@ -233,7 +233,7 @@ sub handle_failed_execution {
     print("[handle_failed_execution] - sns_publish: " . encode_json($query_json) . "\n");
 
     # Send SNS Email Job notification
-    sns_publish($cognitoSvepJobEmailLambda, {
+    sns_publish($sendJobEmailArn, {
         job_id           => $request_id,
         job_status       => "failed",
         project_name     => $query_json->{Item}->{project_name}->{S},
