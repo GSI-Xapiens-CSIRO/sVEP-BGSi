@@ -1,16 +1,17 @@
-FROM public.ecr.aws/lambda/provided:al2-x86_64
+FROM public.ecr.aws/lambda/provided:al2023-x86_64
 
 # Install system packages and perl
-RUN yum update -y && \
-    yum install -y perl perl-App-cpanminus aws-cli gcc make perl-devel \
+RUN dnf update -y && \
+    dnf install -y perl perl-CPAN aws-cli gcc make perl-devel \
                    tar gzip \
                    openssl-devel \
                    libcurl-devel \
                    ncurses-compat-libs && \
-    yum clean all
+    dnf clean all
 
 # Install perl packages
-RUN cpanm --notest JSON Digest::MD5 IO::Socket::SSL Try::Tiny
+RUN cpan -T App::cpanminus && \
+    cpanm --notest JSON Digest::MD5 IO::Socket::SSL Try::Tiny
 
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}

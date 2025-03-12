@@ -48,7 +48,7 @@ def add_clinvar_columns(in_rows, chrom_mapping):
                 new_row = in_row
                 # TODO add validation for ref allele
                 if alt == alt_allele:
-                    new_row = in_row = clinvar_data
+                    new_row += clinvar_data
                     results.append(new_row)
                     is_matched = True
         if not is_matched:
