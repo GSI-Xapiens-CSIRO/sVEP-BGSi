@@ -85,8 +85,6 @@ my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
-my $userPoolId = $ENV{'USER_POOL_ID'};
-my $cognitoSvepJobEmailLambda = $ENV{'COGNITO_SVEP_JOB_EMAIL_LAMBDA'}
 sub handle {
     my ($payload) = @_;
     simple_truncated_print("Received message: $payload\n");
@@ -102,9 +100,6 @@ sub handle {
     #############################################
 
     try {
-      # TODO: Remove this line
-      die "Intentional error for testing!";
-
       my $chr = $data[0][0]->{'chrom'};
       my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
       print "Copying fasta reference files.\n";
@@ -183,8 +178,6 @@ sub simple_truncated_print {
 
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
-
-    print("START handle_failed_execution from VEP.pm");
 
     my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"id":{"S":"$request_id"}}' --attributes-to-get job_status 2>&1`;
     die "Failed to query DynamoDB: $query_result" if $? != 0;
