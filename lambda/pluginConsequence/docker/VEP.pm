@@ -105,7 +105,7 @@ sub handle {
     #############################################
 
     try {
-      die "Intentional exception: Simulating error in pluginConsequence\n";
+      # die "Intentional exception: Simulating error in pluginConsequence\n";
 
       my $chr = $data[0][0]->{'chrom'};
       my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
@@ -308,18 +308,18 @@ sub handle_failed_execution {
     my $user = get_cognito_user_by_id($uid);
     print("[handle_failed_execution] - user: " . encode_json($user) . "\n");
 
-    my %payload = (
-      body => {
-          email        => $user->{email},
-          first_name   => $user->{first_name},
-          last_name    => $user->{last_name},
-          job_status   => $query_json->{Item}->{job_status}->{S},
-          project_name => $query_json->{Item}->{project_name}->{S},
-          input_vcf    => $query_json->{Item}->{input_vcf}->{S},
-      }
-    );
+    # my %payload = (
+    #   body => {
+    #       email        => $user->{email},
+    #       first_name   => $user->{first_name},
+    #       last_name    => $user->{last_name},
+    #       job_status   => $query_json->{Item}->{job_status}->{S},
+    #       project_name => $query_json->{Item}->{project_name}->{S},
+    #       input_vcf    => $query_json->{Item}->{input_vcf}->{S},
+    #   }
+    # );
 
-    send_job_email(\%payload);
+    # send_job_email(\%payload);
 
     die "$error_message\n";
 }

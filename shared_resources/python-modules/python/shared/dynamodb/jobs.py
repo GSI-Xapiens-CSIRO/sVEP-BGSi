@@ -10,6 +10,7 @@ dynamodb_client = boto3.client("dynamodb")
 DYNAMO_CLINIC_JOBS_TABLE = os.environ.get("DYNAMO_CLINIC_JOBS_TABLE", "")
 DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
 COGNITO_SVEP_JOB_EMAIL_LAMBDA = os.environ.get("COGNITO_SVEP_JOB_EMAIL_LAMBDA", "")
+SEND_JOB_EMAIL_ARN = os.environ.get("SEND_JOB_EMAIL_ARN", "")
 
 
 def query_clinic_job(job_id):
@@ -46,61 +47,24 @@ def send_job_email(
     user_id=None,
     is_from_failed_execution=False,
 ):
-    print(f"[send_job_email] - Starting : {job_id}")
-    if (job_status == "pending") or (job_status == "expired"):
-        print(f"Skipping email for job status: {job_status}")
-        return
-
-    # prevent re querying the job if it's already queried from handle_failed_execution
-    # in handle_failed_execution already queried the job using query_clinic_job
-    job = (
-        {
-            "job_status": {"S": job_status},
-            "project_name": {"S": project_name},
-            "input_vcf": {"S": input_vcf},
-        }
-        if is_from_failed_execution
-        else query_clinic_job(job_id)
-    )
-
-    if job:
-        job_status = job.get("job_status", {}).get("S", job_status)
-        project_name = job.get("project_name", {}).get("S", project_name)
-        input_vcf = job.get("input_vcf", {}).get("S", input_vcf)
-
-    print(f"[send_job_email] - job result : {json.dumps(job)}")
-
-    # handle when user_id is not provided
-    # this can happen when the job is created by a lambda function initQuery
-    user_id = user_id or job.get("uid", {}).get("S")
-
-    user_info = get_cognito_user_by_id(uid=user_id)
-    if not user_info:
-        print(f"[send_job_email] - Skipping email for job: user not found")
-        return
-
-    print(f"[send_job_email] - user_info result : {json.dumps(user_info)}")
-
     payload = {
-        "body": {
-            "email": user_info["email"],
-            "first_name": user_info["first_name"],
-            "last_name": user_info["last_name"],
-            "job_status": job_status,
-            "project_name": project_name,
-            "input_vcf": input_vcf,
-        }
+        "job_id": job_id,
+        "job_status": job_status,
+        "project_name": project_name,
+        "input_vcf": input_vcf,
+        "user_id": user_id,
+        "is_from_failed_execution": is_from_failed_execution,
     }
 
     print(f"[send_job_email] - payload: {payload}")
 
     response = lambda_client.invoke(
-        FunctionName=COGNITO_SVEP_JOB_EMAIL_LAMBDA,
+        FunctionName=SEND_JOB_EMAIL_ARN,
         InvocationType="RequestResponse",
         Payload=json.dumps(payload),
     )
     if not (payload_stream := response.get("Payload")):
-        raise Exception("Error invoking email Lambda: No response payload")
+        raise Exception("Error invoking SEND_JOB_EMAIL_ARN Lambda: No response payload")
     body = json.loads(payload_stream.read().decode("utf-8"))
     if not body.get("success", False):
         raise Exception(f"Error invoking email Lambda: {body.get('message')}")

@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
 from shared.utils import chrom_matching, print_event, sns_publish, start_function
-from shared.dynamodb import check_user_in_project, update_clinic_job, send_job_email
+from shared.dynamodb import check_user_in_project, update_clinic_job
 
 lambda_client = boto3.client("lambda")
 
@@ -50,7 +50,7 @@ def get_sample_count(location):
         ["bcftools", "query", "-l", location],
         check=True,
         capture_output=True,
-        text=True
+        text=True,
     )
     return len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
 

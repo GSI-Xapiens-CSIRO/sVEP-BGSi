@@ -102,6 +102,40 @@ data "aws_iam_policy_document" "lambda-initQuery" {
 }
 
 #
+# initQuery Lambda Function
+#
+data "aws_iam_policy_document" "lambda-sendJobEmail" {
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
+    ]
+  }
+}
+
+#
 # queryVCF Lambda Function
 #
 data "aws_iam_policy_document" "lambda-queryVCF" {
