@@ -96,7 +96,6 @@ sub handle {
     my $sns = $event->{Records}[0]{Sns};
     ##########################################update
     my $message = decode_json($sns->{'Message'}); #might have to remove decode_json
-    # my $message = decode_json('{ invalid_json '); # Invalid JSON format
     my @data = $message->{'snsData'};
     my $request_id = $message->{'requestId'};
     my $tempFileName = $message->{'tempFileName'};
@@ -213,48 +212,6 @@ sub get_cognito_user_by_id {
     };
 }
 
-sub send_job_email {
-    my ($payload) = @_;
-
-    # Convert payload to JSON
-    my $json_payload = encode('UTF-8', encode_json($payload));
-
-    print("[send_job_email] - Sending email with payload: $json_payload\n");
-
-    # Create a temporary file to store the response
-    my ($fh, $temp_filename) = tempfile();
-
-    # Invoke Lambda function using AWS CLI
-    my $exit_code = system(
-        "/usr/bin/aws", "lambda", "invoke",
-        "--function-name", $cognitoSvepJobEmailLambda,
-        "--invocation-type", "RequestResponse",
-        "--payload", $json_payload,
-        $temp_filename
-    );
-
-    $exit_code = $exit_code >> 8;  # Extract actual exit code
-
-    if ($exit_code != 0) {
-        die "Error invoking email Lambda (exit code: $exit_code)";
-    }
-
-    # Read response from the temp file
-    open my $fh_result, '<', $temp_filename or die "Could not open response file: $!";
-    my $response_json = do { local $/; <$fh_result> };
-    close $fh_result;
-    unlink $temp_filename;  # Clean up temp file
-
-    # Decode JSON response
-    my $response = decode_json($response_json);
-
-    # Check for success
-    if (!$response->{'success'}) {
-        die "Error invoking email Lambda: " . ($response->{'message'} // 'Unknown error');
-    }
-
-    print "[send_job_email] Email sent: " . ($response->{'success'} ? "true" : "false") . "\n";
-}
 
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
@@ -307,19 +264,6 @@ sub handle_failed_execution {
     my $uid = $query_json->{Item}->{uid}->{S};    
     my $user = get_cognito_user_by_id($uid);
     print("[handle_failed_execution] - user: " . encode_json($user) . "\n");
-
-    # my %payload = (
-    #   body => {
-    #       email        => $user->{email},
-    #       first_name   => $user->{first_name},
-    #       last_name    => $user->{last_name},
-    #       job_status   => $query_json->{Item}->{job_status}->{S},
-    #       project_name => $query_json->{Item}->{project_name}->{S},
-    #       input_vcf    => $query_json->{Item}->{input_vcf}->{S},
-    #   }
-    # );
-
-    # send_job_email(\%payload);
 
     die "$error_message\n";
 }
