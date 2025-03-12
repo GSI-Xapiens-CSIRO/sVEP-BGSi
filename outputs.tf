@@ -4,6 +4,6 @@ output "api_url" {
 }
 
 output "send_job_email_lambda_function_arn" {
-  value       = module.lambda-sendJobEmail.lambda_function_arn
+  value       = module.lambda-sendJobEmail.function_arn
   description = "Lambda function ARN for sending Jobs email"
 }
