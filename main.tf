@@ -236,7 +236,6 @@ module "lambda-pluginConsequence" {
     COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
     SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     USER_POOL_ID                  = var.cognito-user-pool-id
-    SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
   }
 }
