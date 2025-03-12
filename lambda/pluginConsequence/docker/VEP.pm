@@ -74,6 +74,7 @@ use consequence::Transcript;
 use consequence::TranscriptVariation;
 use consequence::TranscriptVariationAllele;
 use Try::Tiny;
+use File::Temp qw(tempfile);
 
 my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
@@ -85,6 +86,8 @@ my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
+my $userPoolId = $ENV{'USER_POOL_ID'};
+my $cognitoSvepJobEmailLambda = $ENV{'COGNITO_SVEP_JOB_EMAIL_LAMBDA'};
 sub handle {
     my ($payload) = @_;
     simple_truncated_print("Received message: $payload\n");
@@ -180,6 +183,35 @@ sub simple_truncated_print {
   print($string);
 }
 
+sub get_cognito_user_by_id {
+    my ($uid) = @_;
+    print "[get_cognito_user] - Looking up user with UID: $uid\n";
+    
+    my $cmd = qq{/usr/bin/aws cognito-idp list-users --user-pool-id $userPoolId --filter 'sub = "$uid"' --limit 1 --output json 2>&1};
+
+    my $output = `$cmd`;
+    
+    if ($? != 0) {
+        warn "[get_cognito_user] - AWS CLI error: $output\n";
+        return undef;
+    }
+
+    my $response = try { decode_json($output) } catch { warn "[get_cognito_user] - JSON decode error: $_"; return undef; };
+    
+    return undef unless $response && ref($response->{Users}) eq 'ARRAY' && @{$response->{Users}} > 0;
+
+    my $user = $response->{Users}[0];
+    my %attributes = map { $_->{Name} => $_->{Value} } @{ $user->{Attributes} };
+
+    print "[get_cognito_user] - User found: " . encode_json(\%attributes) . "\n";
+
+    return {
+        email      => $attributes{'email'} // '',
+        first_name => $attributes{'given_name'} // '',
+        last_name  => $attributes{'family_name'} // '',
+    };
+}
+
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
 
@@ -201,7 +233,12 @@ sub handle_failed_execution {
         return;
     }
 
-    print("handle_failed_execution] - query_json: $query_json\n");
+    print("[handle_failed_execution] - query_json: " . encode_json($query_json) . "\n");
+
+    my $uid = $query_json->{Item}->{uid}->{S};
+    my $user = get_cognito_user_by_id($uid);
+
+    print("[handle_failed_execution] - user: " . encode_json($user) . "\n");
 
     # Prepare the update expression
     my $update_expression = "SET #job_status = :job_status, #failed_step = :failed_step, #error_message = :error_message";
