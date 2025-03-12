@@ -87,7 +87,7 @@ my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
 my $userPoolId = $ENV{'USER_POOL_ID'};
-my $cognitoSvepJobEmailLambda = $env{'COGNITO_SVEP_JOB_EMAIL_LAMBDA'}
+my $cognitoSvepJobEmailLambda = $ENV{'COGNITO_SVEP_JOB_EMAIL_LAMBDA'}
 
 sub handle {
     my ($payload) = @_;
