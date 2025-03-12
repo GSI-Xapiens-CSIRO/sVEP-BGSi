@@ -87,7 +87,6 @@ my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
-my $userPoolId = $ENV{'USER_POOL_ID'};
 my $cognitoSvepJobEmailLambda = $ENV{'COGNITO_SVEP_JOB_EMAIL_LAMBDA'};
 sub handle {
     my ($payload) = @_;
@@ -104,7 +103,7 @@ sub handle {
     #############################################
 
     try {
-      # die "Intentional exception: Simulating error in pluginConsequence\n";
+      die "Intentional exception: Simulating error in pluginConsequence\n";
 
       my $chr = $data[0][0]->{'chrom'};
       my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
@@ -139,7 +138,7 @@ sub handle {
       print("Task Complete.\n");
     }
     catch {
-     handle_failed_execution($request_id, $functionName, $_);
+     handle_failed_execution($request_id, $functionName, $_);z
     };
 }
 
@@ -182,36 +181,6 @@ sub simple_truncated_print {
   }
   print($string);
 }
-
-sub get_cognito_user_by_id {
-    my ($uid) = @_;
-    print "[get_cognito_user] - Looking up user with UID: $uid\n";
-    
-    my $cmd = qq{/usr/bin/aws cognito-idp list-users --user-pool-id $userPoolId --filter 'sub = "$uid"' --limit 1 --output json 2>&1};
-
-    my $output = `$cmd`;
-    
-    if ($? != 0) {
-        warn "[get_cognito_user] - AWS CLI error: $output\n";
-        return undef;
-    }
-
-    my $response = try { decode_json($output) } catch { warn "[get_cognito_user] - JSON decode error: $_"; return undef; };
-    
-    return undef unless $response && ref($response->{Users}) eq 'ARRAY' && @{$response->{Users}} > 0;
-
-    my $user = $response->{Users}[0];
-    my %attributes = map { $_->{Name} => $_->{Value} } @{ $user->{Attributes} };
-
-    print "[get_cognito_user] - User found: " . encode_json(\%attributes) . "\n";
-
-    return {
-        email      => $attributes{'email'} // '',
-        first_name => $attributes{'given_name'} // '',
-        last_name  => $attributes{'family_name'} // '',
-    };
-}
-
 
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
@@ -261,9 +230,15 @@ sub handle_failed_execution {
 
     die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
 
-    my $uid = $query_json->{Item}->{uid}->{S};    
-    my $user = get_cognito_user_by_id($uid);
-    print("[handle_failed_execution] - user: " . encode_json($user) . "\n");
+    # Send SNS Email Job notification
+    sns_publish($cognitoSvepJobEmailLambda, {
+        job_id           => $request_id,
+        job_status       => "failed",
+        project_name     => $query_json->{Item}->{project_name}->{S},
+        input_vcf        => $query_json->{Item}->{input_vcf}->{S},
+        user_id          => $query_json->{Item}->{uid}->{S},
+        is_from_failed_execution => JSON::true
+    });   
 
     die "$error_message\n";
 }
