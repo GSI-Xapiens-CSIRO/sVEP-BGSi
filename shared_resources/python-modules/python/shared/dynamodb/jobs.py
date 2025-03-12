@@ -3,6 +3,7 @@ import os
 
 import boto3
 from shared.utils.cognito_utils import get_cognito_user_by_id
+from shared.utils.lambda_utils import sns_publish
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
@@ -58,20 +59,7 @@ def send_job_email(
 
     print(f"[send_job_email] - payload: {payload}")
 
-    response = lambda_client.invoke(
-        FunctionName=SEND_JOB_EMAIL_ARN,
-        InvocationType="RequestResponse",
-        Payload=json.dumps(payload),
-    )
-    if not (payload_stream := response.get("Payload")):
-        raise Exception("Error invoking SEND_JOB_EMAIL_ARN Lambda: No response payload")
-    body = json.loads(payload_stream.read().decode("utf-8"))
-    if not body.get("success", False):
-        raise Exception(f"Error invoking email Lambda: {body.get('message')}")
-
-    email_sent = body.get("success", False)
-
-    print(f"[send_job_email] Email sent: {email_sent}")
+    sns_publish(SEND_JOB_EMAIL_ARN, payload)
 
 
 def update_clinic_job(
