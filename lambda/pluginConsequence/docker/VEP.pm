@@ -139,7 +139,7 @@ sub handle {
       print("Task Complete.\n");
     }
     catch {
-     print("START handle_failed_execution from VEP.pm")
+     print("START handle_failed_execution from VEP.pm");
      handle_failed_execution($request_id, $functionName, $_);
     };
 }
@@ -298,6 +298,9 @@ sub handle_failed_execution {
             input_vcf    => $query_json->{Item}->{input_vcf}->{S},
         }
     );
+
+    print ("Sending email to user: " . encode_json(\%payload) . "\n");
+    send_job_email(\%payload);
 
     # Update the item in DynamoDB
     my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
