@@ -269,6 +269,9 @@ sub handle_failed_execution {
       warn "Error parsing JSON response: $@";
       $query_json = {};
     }
+
+    print("[handle_failed_execution] - query_json: " . encode_json($query_json) . "\n");
+
     # Check if item exists and job_status is already "failed"
     if (exists $query_json->{Item} && 
         exists $query_json->{Item}->{job_status} && 
@@ -277,7 +280,6 @@ sub handle_failed_execution {
         return;
     }
 
-    print("[handle_failed_execution] - query_json: " . encode_json($query_json) . "\n");
 
     # Prepare the update expression
     my $update_expression = "SET #job_status = :job_status, #failed_step = :failed_step, #error_message = :error_message";
