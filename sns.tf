@@ -64,8 +64,8 @@ resource "aws_sns_topic" "pluginSift" {
 
 resource "aws_sns_topic_subscription" "pluginSift" {
   topic_arn = aws_sns_topic.pluginSift.arn
-  protocol = "lambda"
-  endpoint = module.lambda-pluginSift.lambda_function_arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-pluginSift.lambda_function_arn
 }
 
 resource "aws_sns_topic" "concat" {
