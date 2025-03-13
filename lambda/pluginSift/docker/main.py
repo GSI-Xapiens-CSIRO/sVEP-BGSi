@@ -1,5 +1,6 @@
 import os
 import subprocess
+import zipfile
 
 from shared.utils import Orchestrator, s3, download_sift_database
 
@@ -100,10 +101,16 @@ def main(event, _):
     with open(sns_data_filename, "w") as sns_file:
         sns_file.write(sns_data)
 
+    # Unzip the SIFT database
+    sift_db_zip_path = f"/tmp/{SIFT_DATABASE_REFERENCE}"
+    sift_db_extract_path = f"/tmp/{SIFT_DATABASE_REFERENCE}/DB"
+    with zipfile.ZipFile(sift_db_zip_path, 'r') as zip_ref:
+        zip_ref.extractall(sift_db_extract_path)
+
     # Run the SIFT annotator
     result = run_sift_anotator(
         sns_data_filename,
-        f"/tmp/{SIFT_DATABASE_REFERENCE}",
+        f"/tmp/{SIFT_DATABASE_REFERENCE}/DB",
         orchestrator.temp_file_name,
     )
 
