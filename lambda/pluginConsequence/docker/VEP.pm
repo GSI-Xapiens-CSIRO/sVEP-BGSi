@@ -74,6 +74,8 @@ use consequence::Transcript;
 use consequence::TranscriptVariation;
 use consequence::TranscriptVariationAllele;
 use Try::Tiny;
+use File::Temp qw(tempfile);
+use Encode qw(encode);
 
 my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
@@ -85,8 +87,7 @@ my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
-my $userPoolId = $ENV{'USER_POOL_ID'};
-
+my $sendJobEmailArn = $ENV{'SEND_JOB_EMAIL_ARN'};
 sub handle {
     my ($payload) = @_;
     simple_truncated_print("Received message: $payload\n");
@@ -124,6 +125,7 @@ sub handle {
       my %outMessage = (
         'snsData' => join("\n", @results),
         'mapping' => $chrom_mapping,
+        'requestId' => $request_id,
       );
       start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
 
@@ -178,39 +180,10 @@ sub simple_truncated_print {
   print($string);
 }
 
-sub get_cognito_user_by_id {
-    my ($uid) = @_;
-    print "[get_cognito_user] - Looking up user with UID: $uid\n";
-    
-    my $cmd = qq{/usr/bin/aws cognito-idp list-users --user-pool-id $USER_POOL_ID --filter 'sub = "$uid"' --limit 1 --output json 2>&1};
-
-    my $output = `$cmd`;
-    
-    if ($? != 0) {
-        warn "[get_cognito_user] - AWS CLI error: $output\n";
-        return undef;
-    }
-
-    my $response = try { decode_json($output) } catch { warn "[get_cognito_user] - JSON decode error: $_"; return undef; };
-    
-    return undef unless $response && ref($response->{Users}) eq 'ARRAY' && @{$response->{Users}} > 0;
-
-    my $user = $response->{Users}[0];
-    my %attributes = map { $_->{Name} => $_->{Value} } @{ $user->{Attributes} };
-
-    print "[get_cognito_user] - User found: " . encode_json(\%attributes) . "\n";
-
-    return {
-        email      => $attributes{'email'} // '',
-        first_name => $attributes{'given_name'} // '',
-        last_name  => $attributes{'family_name'} // '',
-    };
-}
-
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
 
-    my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"id":{"S":"$request_id"}}' --attributes-to-get job_status 2>&1`;
+    my $query_result = `/usr/bin/aws dynamodb get-item --table-name $dynamoClinicJobsTable --key '{"job_id":{"S":"$request_id"}}' --output json 2>&1`;
     die "Failed to query DynamoDB: $query_result" if $? != 0;
     my $query_json;
     eval { $query_json = decode_json($query_result); };
@@ -218,12 +191,14 @@ sub handle_failed_execution {
       warn "Error parsing JSON response: $@";
       $query_json = {};
     }
+
     # Check if item exists and job_status is already "failed"
     if (exists $query_json->{Item} && 
         exists $query_json->{Item}->{job_status} && 
         $query_json->{Item}->{job_status}->{S} eq "failed") {
         return;
     }
+
 
     # Prepare the update expression
     my $update_expression = "SET #job_status = :job_status, #failed_step = :failed_step, #error_message = :error_message";
@@ -232,28 +207,30 @@ sub handle_failed_execution {
         "#failed_step"   => "failed_step",
         "#error_message" => "error_message"
     });
-
     my $expression_attribute_values = encode_json({
         ":job_status"        => { "S" => "failed" },
         ":failed_step"   => { "S" => $failed_step },
         ":error_message" => { "S" => $error_message }
     });
 
-    my $uid = $query_result->{Item}->{uid}->{S} // undef;
-    
-    my $user = get_cognito_user_by_id($uid);
-    die "Failed to get user information for UID: $uid" unless $user;
-
-    print "User: " . encode_json($user) . "\n";
-
     # Update the item in DynamoDB
     my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
-                           "--key '{\"id\":{\"S\":\"$request_id\"}}' " .
+                           "--key '{\"job_id\":{\"S\":\"$request_id\"}}' " .
                            "--update-expression \"$update_expression\" " .
                            "--expression-attribute-names '$expression_attribute_names' " .
                            "--expression-attribute-values '$expression_attribute_values'");
 
     die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
+    
+    # Send SNS Email Job notification
+    sns_publish($sendJobEmailArn, {
+        job_id           => $request_id,
+        job_status       => "failed",
+        project_name     => $query_json->{Item}->{project_name}->{S},
+        input_vcf        => $query_json->{Item}->{input_vcf}->{S},
+        user_id          => $query_json->{Item}->{uid}->{S},
+        is_from_failed_execution => JSON::true
+    });   
 
     die "$error_message\n";
 }

@@ -104,7 +104,6 @@ resource "aws_lambda_permission" "plugin_sift_invoke_permission" {
   source_arn    = aws_sns_topic.pluginSift.arn
 }
 
-
 #
 # pluginUpdownstream Lambda Function
 #
@@ -207,4 +206,15 @@ resource "aws_lambda_event_source_mapping" "clinic_jobs_stream_event_source" {
       })
     }
   }
+}
+
+#
+# pluginClinvar Lambda Function
+#
+resource "aws_lambda_permission" "plugin_send_job_email_invoke_permission" {
+  statement_id  = "SNSSendJobEmailAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-sendJobEmail.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.sendJobEmail.arn
 }
