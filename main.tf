@@ -266,7 +266,7 @@ module "lambda-pluginSift" {
     SVEP_REGIONS             = aws_s3_bucket.svep-regions.bucket
     REFERENCE_LOCATION       = aws_s3_bucket.svep-references.bucket
     DYNAMO_CLINIC_JOBS_TABLE = var.dynamo-clinic-jobs-table
-    SIFT_DATABASE_REFERENCE  = "GRCh38.83.chr"
+    SIFT_DATABASE_REFERENCE  = "GRCh38.83.chr.zip"
     SEND_JOB_EMAIL_ARN       = aws_sns_topic.sendJobEmail.arn
     USER_POOL_ID             = var.cognito-user-pool-id
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
