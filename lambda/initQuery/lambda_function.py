@@ -2,11 +2,23 @@ import json
 from pathlib import Path
 import os
 import subprocess
+import boto3
+
+from shared.apiutils import bad_request, bundle_response
+from shared.utils import (
+    chrom_matching,
+    print_event,
+    sns_publish,
+    start_function,
+)
+from dynamodb import check_user_in_project
 from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
 from shared.utils import chrom_matching, print_event, sns_publish, start_function
 from shared.dynamodb import check_user_in_project, update_clinic_job
+
+lambda_client = boto3.client("lambda")
 
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ["CONCAT_STARTER_SNS_TOPIC_ARN"]
@@ -38,7 +50,7 @@ def get_sample_count(location):
         ["bcftools", "query", "-l", location],
         check=True,
         capture_output=True,
-        text=True
+        text=True,
     )
     return len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
 
@@ -55,6 +67,7 @@ def lambda_handler(event, _):
         request_id = event["requestContext"]["requestId"]
         project = body_dict["projectName"]
         location = body_dict["location"]
+
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")

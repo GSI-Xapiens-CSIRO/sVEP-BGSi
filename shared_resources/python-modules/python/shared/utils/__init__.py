@@ -22,7 +22,7 @@ from .lambda_utils import (
     start_function,
     truncated_print,
     handle_failed_execution,
-    download_bedfile
+    download_bedfile,
 )
 from .reference_utils import (
     truncate_tmp,
@@ -40,3 +40,4 @@ from .reference_utils import (
     _bgzip,
     _tabix_index,
 )
+from .cognito_utils import get_cognito_user_by_id

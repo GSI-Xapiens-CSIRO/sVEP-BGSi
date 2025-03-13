@@ -25,6 +25,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
     resources = [
       aws_sns_topic.concatStarter.arn,
       aws_sns_topic.queryVCF.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -71,7 +72,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       var.dynamo-project-users-table-arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:PutItem",
@@ -79,6 +80,24 @@ data "aws_iam_policy_document" "lambda-initQuery" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -95,6 +114,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       aws_sns_topic.queryGTF.arn,
       aws_sns_topic.queryVCF.arn,
       aws_sns_topic.queryVCFsubmit.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -125,7 +145,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "${var.data_portal_bucket_arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -134,6 +154,24 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -148,6 +186,7 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
     ]
     resources = [
       aws_sns_topic.queryGTF.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -160,7 +199,7 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
       "${aws_s3_bucket.svep-temp.arn}/*",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -169,6 +208,41 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -186,6 +260,7 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
       aws_sns_topic.pluginConsequence.arn,
       aws_sns_topic.pluginUpdownstream.arn,
       aws_sns_topic.queryGTF.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -216,7 +291,7 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -225,6 +300,23 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -239,6 +331,7 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
     ]
     resources = [
       aws_sns_topic.pluginClinvar.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -278,7 +371,7 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -287,6 +380,24 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -297,6 +408,15 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
 data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
   statement {
     actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.sendJobEmail.arn,
+    ]
+  }
+
+  statement {
+    actions = [
       "s3:PutObject",
     ]
     resources = [
@@ -330,7 +450,7 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -339,6 +459,24 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -349,6 +487,15 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
 data "aws_iam_policy_document" "lambda-pluginClinvar" {
   statement {
     actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.sendJobEmail.arn,
+    ]
+  }
+
+  statement {
+    actions = [
       "s3:PutObject",
     ]
     resources = [
@@ -382,7 +529,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "${aws_s3_bucket.svep-references.arn}",
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -391,6 +538,24 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -405,6 +570,7 @@ data "aws_iam_policy_document" "lambda-concat" {
     ]
     resources = [
       aws_sns_topic.createPages.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -416,7 +582,7 @@ data "aws_iam_policy_document" "lambda-concat" {
       aws_s3_bucket.svep-regions.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -425,6 +591,34 @@ data "aws_iam_policy_document" "lambda-concat" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -440,6 +634,7 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
     resources = [
       aws_sns_topic.concat.arn,
       aws_sns_topic.concatStarter.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -452,7 +647,7 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
       aws_s3_bucket.svep-temp.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -461,6 +656,35 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -476,6 +700,7 @@ data "aws_iam_policy_document" "lambda-createPages" {
     resources = [
       aws_sns_topic.concatPages.arn,
       aws_sns_topic.createPages.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -507,7 +732,7 @@ data "aws_iam_policy_document" "lambda-createPages" {
       aws_s3_bucket.svep-regions.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -516,6 +741,24 @@ data "aws_iam_policy_document" "lambda-createPages" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -530,6 +773,7 @@ data "aws_iam_policy_document" "lambda-concatPages" {
     ]
     resources = [
       aws_sns_topic.concatPages.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -560,7 +804,7 @@ data "aws_iam_policy_document" "lambda-concatPages" {
       aws_s3_bucket.svep-regions.arn,
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetItem",
@@ -569,6 +813,24 @@ data "aws_iam_policy_document" "lambda-concatPages" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }
@@ -670,6 +932,7 @@ data "aws_iam_policy_document" "lambda-clearTempAndRegions" {
     resources = [
       aws_s3_bucket.svep-temp.arn,
       aws_s3_bucket.svep-regions.arn,
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
@@ -682,7 +945,7 @@ data "aws_iam_policy_document" "lambda-clearTempAndRegions" {
       "${aws_s3_bucket.svep-regions.arn}/*"
     ]
   }
-  
+
   statement {
     actions = [
       "dynamodb:GetRecords",
@@ -692,6 +955,40 @@ data "aws_iam_policy_document" "lambda-clearTempAndRegions" {
     ]
     resources = [
       var.dynamo-clinic-jobs-stream-arn,
+    ]
+  }
+}
+
+#
+# initQuery Lambda Function
+#
+data "aws_iam_policy_document" "lambda-sendJobEmail" {
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
     ]
   }
 }

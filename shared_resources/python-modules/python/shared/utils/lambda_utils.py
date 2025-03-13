@@ -119,7 +119,8 @@ def download_vcf(bucket, vcf):
     download_to_tmp(bucket, vcf, raise_on_notfound=True)
     if not download_to_tmp(bucket, f"{vcf}.csi"):
         download_to_tmp(bucket, f"{vcf}.tbi", raise_on_notfound=True)
-        
+
+
 def download_bedfile(bucket, bedfile):
     download_to_tmp(bucket, bedfile, raise_on_notfound=True)
     if not download_to_tmp(bucket, f"{bedfile}.csi"):
@@ -184,14 +185,18 @@ def truncated_print(string, max_length=MAX_PRINT_LENGTH):
 def handle_failed_execution(job_id, error_message):
     print(error_message)
     job = query_clinic_job(job_id)
-    print(job)
     if job.get("job_status").get("S") == "failed":
         return
     job_status = "failed"
     failed_step = os.environ.get("AWS_LAMBDA_FUNCTION_NAME", "unknown")
+
     update_clinic_job(
         job_id,
         job_status=job_status,
         failed_step=failed_step,
         error_message=str(error_message),
+        project_name=job.get("project_name", {}).get("S"),
+        input_vcf=job.get("input_vcf", {}).get("S"),
+        user_id=job.get("uid", {}).get("S"),
+        is_from_failed_execution=True,
     )
