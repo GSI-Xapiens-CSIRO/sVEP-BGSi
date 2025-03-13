@@ -26,6 +26,7 @@ def add_clinvar_columns(in_rows, chrom_mapping):
     results = []
     for in_row in in_rows:
         chrom, positions = in_row[2].split(":")
+        row_start, row_end = positions.split("-")
         alt = in_row[3]
         loc = f"{chrom_mapping[chrom]}:{positions}"
         local_file = f"/tmp/{CLINVAR_REFERENCE}"
@@ -42,23 +43,25 @@ def add_clinvar_columns(in_rows, chrom_mapping):
             encoding="ascii",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
-        is_matched = False
+        # is_matched = False
         for data in main_data:
             metadata = data.split("\t")
             if len(metadata) >= 3:
+                bed_start = f"{int(metadata[1])+1}"
+                bed_end = metadata[2]
                 (ref_allele, alt_allele, *clinvar_data) = metadata[3].split(";")
-                # TODO add validation for ref allele
-                if alt == alt_allele:
-                    in_row[2] = loc
+                if alt == alt_allele and (
+                    bed_start == row_start and bed_end == row_end
+                ):
                     new_row = in_row + [
                         urllib.parse.unquote(item) for item in clinvar_data
                     ]
                     results.append(new_row)
-                    is_matched = True
-        if not is_matched:
-            in_row[2] = loc
-            new_row = in_row + ["-", "-", "-", "-", "-", "-", "-"]
-            results.append(new_row)
+                    # is_matched = True
+        # if not is_matched:
+        #     in_row[2] = loc
+        #     new_row = in_row + ["-", "-", "-", "-", "-", "-", "-"]
+        #     results.append(new_row)
     return results
 
 
