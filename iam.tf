@@ -564,11 +564,13 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
     ]
     resources = [
       "${aws_s3_bucket.svep-regions.arn}/*",
+
     ]
   }
 
   statement {
     actions = [
+      "s3:PutObject",
       "s3:DeleteObject",
     ]
     resources = [
