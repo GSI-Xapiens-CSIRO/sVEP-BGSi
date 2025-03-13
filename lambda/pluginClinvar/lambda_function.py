@@ -84,10 +84,10 @@ def lambda_handler(event, _):
             },
         )
         # TODO Delete upload result function to SVEP_REGIONS (Latest plugin will upload the result)
-        filename = f"/tmp/{base_filename}.tsv"
-        with open(filename, "w") as tsv_file:
-            tsv_file.write(sns_data)
-        s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
-        orchestrator.mark_completed()
+        # filename = f"/tmp/{base_filename}.tsv"
+        # with open(filename, "w") as tsv_file:
+        #     tsv_file.write(sns_data)
+        # s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
+        # orchestrator.mark_completed()
     except Exception as e:
         handle_failed_execution(request_id, e)
