@@ -46,9 +46,13 @@ def get_translated_regions_and_mapping(location):
 
 
 def get_sample_count(location):
-    cmd = f'bcftools query -l "{location}" | wc -l'
-    result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)
-    return int(result.stdout.strip())
+    result = subprocess.run(
+        ["bcftools", "query", "-l", location],
+        check=True,
+        capture_output=True,
+        text=True
+    )
+    return len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
 
 
 def lambda_handler(event, _):
