@@ -3,6 +3,7 @@ FROM public.ecr.aws/lambda/provided:al2-x86_64
 # Install system packages and perl
 RUN yum update -y && \
     yum install -y java-21-openjdk python3 && \
+    yum install -y aws-cli && \
     yum clean all
 
 ENV LAMBDA_TASK_ROOT=/var/task

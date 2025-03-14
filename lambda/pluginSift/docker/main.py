@@ -113,7 +113,7 @@ def handler(event):
     temp_file_name = message['tempFileName']
     chrom_mapping = message['mapping']
 
-    print(f"Data: {data}")
+    # print(f"Data: {data}")
     print(f"Request ID: {request_id}")
     print(f"Temp File Name: {temp_file_name}")
     print(f"Chrom Mapping: {chrom_mapping}")
@@ -121,7 +121,7 @@ def handler(event):
 
     # Save original SNS data to a temporary VCF file
     sns_data_filename = f"/tmp/{temp_file_name}_sns_data.vcf"
-    print(f"Saving SNS data to a temporary VCF file... {temp_file_name}")
+    print(f"Saving SNS data to a temporary VCF file... {sns_data_filename}")
     with open(sns_data_filename, "w") as sns_file:
         sns_file.write(data)
 
@@ -130,7 +130,7 @@ def handler(event):
         total_lines = sum(1 for line in file)
     print(f"Total lines in SNS data file: {total_lines}")    
 
-    print(f"Downloading SIFT database... from {BUCKET_NAME} to {SIFT_DATABASE_REFERENCE}")
+    print(f"Downloading SIFT database... from {BUCKET_NAME}/{SIFT_DATABASE_REFERENCE}")
     download_to_tmp(BUCKET_NAME, SIFT_DATABASE_REFERENCE, raise_on_notfound=True)
 
     # Unzip the SIFT database
