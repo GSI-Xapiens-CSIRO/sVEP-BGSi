@@ -14,11 +14,22 @@ SIFT_DATABASE_REFERENCE = os.environ["SIFT_DATABASE_REFERENCE"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 
-def download_to_tmp(bucket, key, local_file_name):
+def download_and_unzip_from_s3(bucket, key, extract_to):
     s3 = boto3.client('s3')
     try:
-        with open(local_file_name, 'wb') as f:
-            s3.download_fileobj(bucket, key, f)
+        # Create an in-memory bytes buffer
+        buffer = io.BytesIO()
+        
+        # Download the file from S3 into the buffer
+        s3.download_fileobj(bucket, key, buffer)
+        
+        # Seek to the beginning of the buffer
+        buffer.seek(0)
+        
+        # Unzip the file from the buffer
+        with zipfile.ZipFile(buffer, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+        
         return True
     except botocore.exceptions.ClientError as error:
         print(f"Error downloading file from S3: {error}")
@@ -130,19 +141,9 @@ def handler(event):
             total_lines = sum(1 for line in file)
         print(f"Total lines in SNS data file: {total_lines}")    
 
-        print(f"Downloading SIFT database... from {BUCKET_NAME}/{SIFT_DATABASE_REFERENCE}")
-        local_file_name = f"/tmp/{SIFT_DATABASE_REFERENCE}"
-        download_to_tmp(BUCKET_NAME, SIFT_DATABASE_REFERENCE, local_file_name)
-
-
-        # Unzip the SIFT database
-        sift_db_zip_path = f"/tmp/{SIFT_DATABASE_REFERENCE}"
+        print(f"Downloading and unzipping SIFT database... from {BUCKET_NAME}/{SIFT_DATABASE_REFERENCE}")
         sift_db_extract_path = f"/tmp/{SIFT_DATABASE_REFERENCE}/DB"
-
-        print(f"Unzipping SIFT database... {sift_db_zip_path} to {sift_db_extract_path}")
-        with zipfile.ZipFile(sift_db_zip_path, 'r') as zip_ref:
-            zip_ref.extractall(sift_db_extract_path)
-
+        download_and_unzip_from_s3(BUCKET_NAME, SIFT_DATABASE_REFERENCE, sift_db_extract_path)
 
         # List contents of /tmp directory
         print("Contents of /tmp directory before running SIFT annotator:\n" + "\n".join(os.listdir("/tmp")))
@@ -151,7 +152,7 @@ def handler(event):
         print(f"Running SIFT annotator... {sns_data_filename} /tmp/{SIFT_DATABASE_REFERENCE}/DB /tmp")
         result = run_sift_anotator(
             sns_data_filename,
-            f"/tmp/{SIFT_DATABASE_REFERENCE}/DB",
+            sift_db_extract_path,
             f"/tmp",
         )
 
