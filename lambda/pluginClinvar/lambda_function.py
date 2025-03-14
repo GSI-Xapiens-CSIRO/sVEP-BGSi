@@ -88,6 +88,6 @@ def lambda_handler(event, _):
         # with open(filename, "w") as tsv_file:
         #     tsv_file.write(sns_data)
         # s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
-        # orchestrator.mark_completed()
+        orchestrator.mark_completed()
     except Exception as e:
         handle_failed_execution(request_id, e)

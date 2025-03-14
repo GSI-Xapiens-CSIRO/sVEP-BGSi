@@ -94,16 +94,16 @@ os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 def main(payload):
     print(f"Received message: {payload}")
-    event = json.loads(payload)
-    sns = event['Records'][0]['Sns']
-    message = json.loads(sns['Message'])
-    data = message['snsData']
-    request_id = message['requestId']
+    # event = json.loads(payload)
+    # sns = event['Records'][0]['Sns']
+    # message = json.loads(sns['Message'])
+    # data = message['snsData']
+    # request_id = message['requestId']
 
-    print(f"Data: {data}")
-    print(f"Request ID: {request_id}")
-    print("Processing SIFT data...")
-    return {"statusCode": 200, "body": "Success"}
+    # print(f"Data: {data}")
+    # print(f"Request ID: {request_id}")
+    # print("Processing SIFT data...")
+    # return {"statusCode": 200, "body": "Success"}
 
     # orchestrator = Orchestrator(event)
     # message = orchestrator.message
