@@ -1,8 +1,8 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/provided:al2-x86_64
 
-# Install Java
+# Install system packages and perl
 RUN yum update -y && \
-    yum install -y java-21-openjdk && \
+    yum install -y java-21-openjdk python3 && \
     yum clean all
 
 ENV LAMBDA_TASK_ROOT=/var/task
@@ -16,4 +16,4 @@ COPY ./docker/bootstrap /var/runtime/bootstrap
 RUN chmod +x /var/runtime/bootstrap
 
 # Define entry point
-ENTRYPOINT ["/var/runtime/bootstrap"]
+ENTRYPOINT ["/lambda-entrypoint.sh", "main.handler"]
