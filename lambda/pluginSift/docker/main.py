@@ -94,17 +94,23 @@ os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 def handler(event):
     print(f"Received message: {event}")
-    jsondata = json.loads(event)
-    sns = jsondata['Records'][0]['Sns']
-    message = json.loads(sns['Message'])
+    sns = event['Records'][0]['Sns']
+    message = json.loads(sns['Message'])  # Parse the JSON string in the 'Message' field
     data = message['snsData']
     request_id = message['requestId']
+    temp_file_name = message['tempFileName']
+    chrom_mapping = message['mapping']
 
     print(f"Data: {data}")
     print(f"Request ID: {request_id}")
+    print(f"Temp File Name: {temp_file_name}")
+    print(f"Chrom Mapping: {chrom_mapping}")
     print("Processing SIFT data...")
-    # return {"statusCode": 200, "body": "Success"}
 
+    sns_data_filename = f"/tmp/{temp_file_name}_sns_data.vcf"
+    with open(sns_data_filename, "w") as sns_file:
+        sns_file.write(data)
+        
     # orchestrator = Orchestrator(event)
     # message = orchestrator.message
     # sns_data = message["snsData"]
