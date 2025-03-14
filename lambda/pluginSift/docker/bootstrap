@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# filepath: /Users/titusadiprasetyo/Code/sVEP-BGSi/lambda/pluginSift/docker/bootstrap
+set -euo pipefail
+
+# Start the Lambda function
+exec /var/lang/bin/python3 /var/task/main.py
