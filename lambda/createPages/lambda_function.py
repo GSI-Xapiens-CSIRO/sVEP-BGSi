@@ -105,7 +105,7 @@ def publish_result(request_id, project, page_keys, page_num, prefix):
             )
         os.remove(f"/tmp/{filename}")
 
-        update_clinic_job(request_id, job_status="completed")
+        update_clinic_job(request_id, job_status="completed", skip_email=True)
 
 
 def s3_list_objects(bucket, prefix):
