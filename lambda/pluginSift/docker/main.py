@@ -4,6 +4,7 @@ import subprocess
 import zipfile
 import boto3
 import botocore
+import io
 
 # Environment variables
 SVEP_TEMP = os.environ.get("SVEP_TEMP")
