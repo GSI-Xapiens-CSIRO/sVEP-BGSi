@@ -253,7 +253,7 @@ module "lambda-pluginSift" {
   image_uri           = module.docker_image_pluginSift_lambda.image_uri
   package_type        = "Image"
   memory_size         = 3000
-  timeout             = 60
+  timeout             = 600
   ephemeral_storage_size = 10240
   attach_policy_jsons = true
   policy_jsons = [
