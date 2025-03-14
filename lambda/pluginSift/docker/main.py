@@ -92,8 +92,9 @@ os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 #     return updated_data
 
 
-def main(event, _):
+def handler(event, context):
     print(f"Received message: {event}")
+    print(f"Received context: {context}")
     # event = json.loads(payload)
     # sns = event['Records'][0]['Sns']
     # message = json.loads(sns['Message'])

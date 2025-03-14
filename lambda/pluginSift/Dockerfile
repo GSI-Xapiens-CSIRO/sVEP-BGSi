@@ -12,4 +12,5 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 COPY ./docker/main.py ./docker/SIFT4G_Annotator.jar ${LAMBDA_TASK_ROOT}/
 
 # Define entry point
-ENTRYPOINT ["python3", "main.py"]
+# ENTRYPOINT ["python3", "main.py"]
+CMD ["main.handler"]
