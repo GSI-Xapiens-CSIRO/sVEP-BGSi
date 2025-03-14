@@ -2,6 +2,8 @@ import os
 import json
 import subprocess
 import zipfile
+import boto3
+import botocore
 
 # Environment variables
 SVEP_TEMP = os.environ.get("SVEP_TEMP")
@@ -12,21 +14,15 @@ SIFT_DATABASE_REFERENCE = os.environ["SIFT_DATABASE_REFERENCE"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 
-def download_to_tmp(bucket, key, raise_on_notfound=False):
-    local_file_name = f"/tmp/{key}"
+def download_to_tmp(bucket, key, local_file_name):
+    s3 = boto3.client('s3')
     try:
-        result = subprocess.run(
-            ["aws", "s3", "cp", f"s3://{bucket}/{key}", local_file_name],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        with open(local_file_name, 'wb') as f:
+            s3.download_fileobj(bucket, key, f)
         return True
-    except subprocess.CalledProcessError as error:
-        print(f"Command '{error.cmd}' returned non-zero exit status {error.returncode}.")
-        print(f"stdout: {error.stdout}")
-        print(f"stderr: {error.stderr}")
-        if "404" in error.stderr and not raise_on_notfound:
+    except botocore.exceptions.ClientError as error:
+        print(f"Error downloading file from S3: {error}")
+        if error.response['Error']['Code'] == '404':
             return False
         else:
             raise error
@@ -135,7 +131,9 @@ def handler(event):
         print(f"Total lines in SNS data file: {total_lines}")    
 
         print(f"Downloading SIFT database... from {BUCKET_NAME}/{SIFT_DATABASE_REFERENCE}")
-        download_to_tmp(BUCKET_NAME, SIFT_DATABASE_REFERENCE, raise_on_notfound=True)
+        local_file_name = f"/tmp/{SIFT_DATABASE_REFERENCE}"
+        download_to_tmp(BUCKET_NAME, SIFT_DATABASE_REFERENCE, local_file_name)
+
 
         # Unzip the SIFT database
         sift_db_zip_path = f"/tmp/{SIFT_DATABASE_REFERENCE}"

@@ -6,6 +6,15 @@ RUN yum update -y && \
     yum install -y aws-cli && \
     yum clean all
 
+# Install pip
+RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
+    python3 get-pip.py && \
+    rm get-pip.py
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
 
