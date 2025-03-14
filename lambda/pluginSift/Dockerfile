@@ -4,12 +4,8 @@ FROM public.ecr.aws/lambda/provided:al2-x86_64
 RUN yum update -y && \
     yum install -y java-21-openjdk python3 && \
     yum install -y aws-cli && \
+    yum install -y python3-pip && \
     yum clean all
-
-# Install pip
-RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
-    python3 get-pip.py && \
-    rm get-pip.py
 
 # Install Python dependencies
 COPY requirements.txt .
