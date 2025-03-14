@@ -254,6 +254,7 @@ module "lambda-pluginSift" {
   package_type        = "Image"
   memory_size         = 2048
   timeout             = 60
+  ephemeral_storage_size = 10240
   attach_policy_jsons = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-pluginSift.json
