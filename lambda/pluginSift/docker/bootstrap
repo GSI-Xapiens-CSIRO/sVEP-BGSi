@@ -15,9 +15,10 @@ do
     REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
   
     echo "SIFT Event Received: $REQUEST_ID" >&2
+    echo "SIFT Event Data: $EVENT_DATA" >&2
 
     # Run Python and write response to a file
-    python3 -c '
+    RESPONSE_FILE="$RESPONSE_FILE" EVENT_DATA="$EVENT_DATA" python3 -c '
 import os
 import json
 import sys
