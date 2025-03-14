@@ -1,5 +1,5 @@
 import os
-# import json
+import json
 # import subprocess
 # import zipfile
 
@@ -92,18 +92,17 @@ os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 #     return updated_data
 
 
-def handler(event, context):
+def handler(event):
     print(f"Received message: {event}")
-    print(f"Received context: {context}")
-    # event = json.loads(payload)
-    # sns = event['Records'][0]['Sns']
-    # message = json.loads(sns['Message'])
-    # data = message['snsData']
-    # request_id = message['requestId']
+    jsondata = json.loads(event)
+    sns = jsondata['Records'][0]['Sns']
+    message = json.loads(sns['Message'])
+    data = message['snsData']
+    request_id = message['requestId']
 
-    # print(f"Data: {data}")
-    # print(f"Request ID: {request_id}")
-    # print("Processing SIFT data...")
+    print(f"Data: {data}")
+    print(f"Request ID: {request_id}")
+    print("Processing SIFT data...")
     # return {"statusCode": 200, "body": "Success"}
 
     # orchestrator = Orchestrator(event)
