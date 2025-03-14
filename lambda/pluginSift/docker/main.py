@@ -23,6 +23,9 @@ def download_to_tmp(bucket, key, raise_on_notfound=False):
         )
         return True
     except subprocess.CalledProcessError as error:
+        print(f"Command '{error.cmd}' returned non-zero exit status {error.returncode}.")
+        print(f"stdout: {error.stdout}")
+        print(f"stderr: {error.stderr}")
         if "404" in error.stderr and not raise_on_notfound:
             return False
         else:
@@ -105,64 +108,76 @@ def merge_sift_annotations(original_data, sift_annotations):
 
 
 def handler(event):
-    print(f"Received message: {event}")
-    sns = event['Records'][0]['Sns']
-    message = json.loads(sns['Message'])  # Parse the JSON string in the 'Message' field
-    data = message['snsData']
-    request_id = message['requestId']
-    temp_file_name = message['tempFileName']
-    chrom_mapping = message['mapping']
+    try:
+        print(f"Received message: {event}")
+        sns = event['Records'][0]['Sns']
+        message = json.loads(sns['Message'])  # Parse the JSON string in the 'Message' field
+        data = message['snsData']
+        request_id = message['requestId']
+        temp_file_name = message['tempFileName']
+        chrom_mapping = message['mapping']
 
-    # print(f"Data: {data}")
-    print(f"Request ID: {request_id}")
-    print(f"Temp File Name: {temp_file_name}")
-    print(f"Chrom Mapping: {chrom_mapping}")
-    print("Processing SIFT data...")
+        # print(f"Data: {data}")
+        print(f"Request ID: {request_id}")
+        print(f"Temp File Name: {temp_file_name}")
+        print(f"Chrom Mapping: {chrom_mapping}")
+        print("Processing SIFT data...")
 
-    # Save original SNS data to a temporary VCF file
-    sns_data_filename = f"/tmp/{temp_file_name}_sns_data.vcf"
-    print(f"Saving SNS data to a temporary VCF file... {sns_data_filename}")
-    with open(sns_data_filename, "w") as sns_file:
-        sns_file.write(data)
+        # Save original SNS data to a temporary VCF file
+        sns_data_filename = f"/tmp/{temp_file_name}_sns_data.vcf"
+        print(f"Saving SNS data to a temporary VCF file... {sns_data_filename}")
+        with open(sns_data_filename, "w") as sns_file:
+            sns_file.write(data)
 
-    # Count total lines of sns_data_filename
-    with open(sns_data_filename, "r") as file:
-        total_lines = sum(1 for line in file)
-    print(f"Total lines in SNS data file: {total_lines}")    
+        # Count total lines of sns_data_filename
+        with open(sns_data_filename, "r") as file:
+            total_lines = sum(1 for line in file)
+        print(f"Total lines in SNS data file: {total_lines}")    
 
-    print(f"Downloading SIFT database... from {BUCKET_NAME}/{SIFT_DATABASE_REFERENCE}")
-    download_to_tmp(BUCKET_NAME, SIFT_DATABASE_REFERENCE, raise_on_notfound=True)
+        print(f"Downloading SIFT database... from {BUCKET_NAME}/{SIFT_DATABASE_REFERENCE}")
+        download_to_tmp(BUCKET_NAME, SIFT_DATABASE_REFERENCE, raise_on_notfound=True)
 
-    # Unzip the SIFT database
-    sift_db_zip_path = f"/tmp/{SIFT_DATABASE_REFERENCE}"
-    sift_db_extract_path = f"/tmp/{SIFT_DATABASE_REFERENCE}/DB"
+        # Unzip the SIFT database
+        sift_db_zip_path = f"/tmp/{SIFT_DATABASE_REFERENCE}"
+        sift_db_extract_path = f"/tmp/{SIFT_DATABASE_REFERENCE}/DB"
 
-    print(f"Unzipping SIFT database... {sift_db_zip_path} to {sift_db_extract_path}")
+        print(f"Unzipping SIFT database... {sift_db_zip_path} to {sift_db_extract_path}")
+        with zipfile.ZipFile(sift_db_zip_path, 'r') as zip_ref:
+            zip_ref.extractall(sift_db_extract_path)
 
-    with zipfile.ZipFile(sift_db_zip_path, 'r') as zip_ref:
-        zip_ref.extractall(sift_db_extract_path)
 
-    # # Run the SIFT annotator
-    # result = run_sift_anotator(
-    #     sns_data_filename,
-    #     f"/tmp/{SIFT_DATABASE_REFERENCE}/DB",
-    #     orchestrator.temp_file_name,
-    # )
+        # List contents of /tmp directory
+        print("Contents of /tmp directory before running SIFT annotator:\n" + "\n".join(os.listdir("/tmp")))
 
-    # # Parse SIFT output from `stdout`
-    # sift_annotations = parse_sift_output(result["body"])
+        # Run the SIFT annotator
+        print(f"Running SIFT annotator... {sns_data_filename} /tmp/{SIFT_DATABASE_REFERENCE}/DB /tmp")
+        result = run_sift_anotator(
+            sns_data_filename,
+            f"/tmp/{SIFT_DATABASE_REFERENCE}/DB",
+            f"/tmp",
+        )
 
-    # # Merge original data with SIFT annotations
-    # original_rows = [row.split("\t") for row in sns_data.split("\n") if row]
-    # enriched_rows = merge_sift_annotations(original_rows, sift_annotations)
+        # List contents of /tmp directory
+        print("Contents of /tmp directory after running SIFT annotator:\n" + "\n".join(os.listdir("/tmp")))
 
-    # # Write enriched data to a TSV file
-    # base_filename = orchestrator.temp_file_name
-    # tsv_filename = f"/tmp/{base_filename}.tsv"
+        # # Parse SIFT output from `stdout`
+        # sift_annotations = parse_sift_output(result["body"])
 
-    # with open(tsv_filename, "w") as tsv_file:
-    #     for row in enriched_rows:
-    #         tsv_file.write("\t".join(row) + "\n")
+        # # Merge original data with SIFT annotations
+        # original_rows = [row.split("\t") for row in sns_data.split("\n") if row]
+        # enriched_rows = merge_sift_annotations(original_rows, sift_annotations)
 
-    # s3.Bucket(SVEP_REGIONS).upload_file(tsv_filename, f"{base_filename}.tsv")
-    # orchestrator.mark_completed()
+        # # Write enriched data to a TSV file
+        # base_filename = orchestrator.temp_file_name
+        # tsv_filename = f"/tmp/{base_filename}.tsv"
+
+        # with open(tsv_filename, "w") as tsv_file:
+        #     for row in enriched_rows:
+        #         tsv_file.write("\t".join(row) + "\n")
+
+        # s3.Bucket(SVEP_REGIONS).upload_file(tsv_filename, f"{base_filename}.tsv")
+        # orchestrator.mark_completed()
+        return {"statusCode": 200, "body": "Success"}
+    except Exception as e:
+        print(f"Error: {e}")
+        return {"statusCode": 500, "body": f"Error: {str(e)}"}
