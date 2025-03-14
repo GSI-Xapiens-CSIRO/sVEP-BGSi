@@ -1,8 +1,5 @@
 import os
 import json
-import boto3
-from botocore.config import Config
-from botocore.exceptions import ClientError
 import subprocess
 import zipfile
 
@@ -14,25 +11,22 @@ BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 SIFT_DATABASE_REFERENCE = os.environ["SIFT_DATABASE_REFERENCE"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
-# AWS clients and resources
-s3 = boto3.resource("s3")
-sns = boto3.client("sns")
-s3_client = boto3.client(
-    "s3",
-    region_name=REGION,
-    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
-)
 
 def download_to_tmp(bucket, key, raise_on_notfound=False):
     local_file_name = f"/tmp/{key}"
     try:
-        s3.Bucket(bucket).download_file(key, local_file_name)
-    except ClientError as error:
-        if error.response["Error"]["Code"] == "404" and not raise_on_notfound:
+        result = subprocess.run(
+            ["aws", "s3", "cp", f"s3://{bucket}/{key}", local_file_name],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return True
+    except subprocess.CalledProcessError as error:
+        if "404" in error.stderr and not raise_on_notfound:
             return False
         else:
             raise error
-    return True
 
 def run_sift_anotator(input, db, output):
     try:
