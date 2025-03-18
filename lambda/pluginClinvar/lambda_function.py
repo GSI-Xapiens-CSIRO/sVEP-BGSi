@@ -2,7 +2,6 @@ import os
 import subprocess
 
 
-import urllib.parse
 from shared.utils import (
     Orchestrator,
     s3,
@@ -23,6 +22,7 @@ download_bedfile(BUCKET_NAME, CLINVAR_REFERENCE)
 
 
 def add_clinvar_columns(in_rows, chrom_mapping):
+    num_rows_hit = 0
     results = []
     for in_row in in_rows:
         chrom, positions = in_row[2].split(":")
@@ -43,25 +43,23 @@ def add_clinvar_columns(in_rows, chrom_mapping):
             encoding="ascii",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
-        # is_matched = False
+        is_matched = False
         for data in main_data:
-            metadata = data.split("\t")
-            if len(metadata) >= 3:
-                bed_start = f"{int(metadata[1])+1}"
-                bed_end = metadata[2]
-                (ref_allele, alt_allele, *clinvar_data) = metadata[3].split(";")
-                if alt == alt_allele and (
-                    bed_start == row_start and bed_end == row_end
-                ):
-                    new_row = in_row + [
-                        urllib.parse.unquote(item) for item in clinvar_data
-                    ]
-                    results.append(new_row)
-                    # is_matched = True
-        # if not is_matched:
-        #     in_row[2] = loc
-        #     new_row = in_row + ["-", "-", "-", "-", "-", "-", "-"]
-        #     results.append(new_row)
+            if not data:
+                continue
+            _, bed_start, bed_end, _, bed_alt, *clinvar_data = data.split("\t")
+            if (
+                bed_alt == alt
+                and bed_end == row_end
+                and int(bed_start) + 1 == int(row_start)
+            ):
+                is_matched = True
+                results.append(in_row + list(clinvar_data))
+        if is_matched:
+            num_rows_hit += 1
+    print(
+        f"Matched {len(results)} rows in clinvar from {num_rows_hit} matching input rows"
+    )
     return results
 
 
