@@ -332,6 +332,8 @@ module "lambda-pluginGnomad" {
   tags        = var.common-tags
   environment = {
     variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
       GNOMAD_GENOMES_S3_PATH        = "s3://gnomad-public-us-east-1/release/4.1/ht/genomes/gnomad.genomes.v4.1.sites.ht"
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
