@@ -50,14 +50,16 @@ module "python_modules_layer" {
   s3_bucket   = aws_s3_bucket.lambda-layers-bucket.bucket
 }
 
+# Archive Hail Layer
 data "archive_file" "hail_layer" {
   type        = "zip"
   source_dir  = "${path.module}/layers/hail/"
   output_path = "${path.module}/hail.zip"
 
-  depends_on = [null_resource.init_script]
+  depends_on = [null_resource.init_gnomad_script]
 }
 
+# Create Hail Lambda Layer
 resource "aws_lambda_layer_version" "hail_layer" {
   filename         = data.archive_file.hail_layer.output_path
   layer_name       = "hail-layer"
@@ -65,4 +67,6 @@ resource "aws_lambda_layer_version" "hail_layer" {
   source_code_hash = filebase64sha256(data.archive_file.hail_layer.output_path)
 
   compatible_runtimes = ["python3.12"]
+
+  depends_on = [data.archive_file.hail_layer]
 }
