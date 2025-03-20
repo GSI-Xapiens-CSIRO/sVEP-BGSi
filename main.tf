@@ -16,7 +16,7 @@ locals {
   binaries_layer = "${aws_lambda_layer_version.binaries_layer.layer_arn}:${aws_lambda_layer_version.binaries_layer.version}"
   // python_libraries_layer = module.python_libraries_layer.lambda_layer_arn
   python_modules_layer = module.python_modules_layer.lambda_layer_arn
-  hail_layer = "${aws_lambda_layer_version.hail_layer.layer_arn}:${aws_lambda_layer_version.hail_layer.version}"
+  # hail_layer = "${aws_lambda_layer_version.hail_layer.layer_arn}:${aws_lambda_layer_version.hail_layer.version}"
 }
 
 #
@@ -343,7 +343,7 @@ module "lambda-pluginGnomad" {
   layers = [
     local.binaries_layer,
     local.python_modules_layer,
-    local.hail_layer
+    # local.hail_layer
   ]
 }
 

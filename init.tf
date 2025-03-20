@@ -8,12 +8,12 @@ resource "null_resource" "init_script" {
   }
 }
 
-resource "null_resource" "init_gnomad_script" {
-  triggers = {
-    script_hash = filesha1("${path.module}/lambda/pluginGnomad/init.sh")
-  }
+# resource "null_resource" "init_gnomad_script" {
+#   triggers = {
+#     script_hash = filesha1("${path.module}/lambda/pluginGnomad/init.sh")
+#   }
 
-  provisioner "local-exec" {
-    command = "bash ${path.module}/lambda/pluginGnomad/init.sh"
-  }
-}
+#   provisioner "local-exec" {
+#     command = "bash ${path.module}/lambda/pluginGnomad/init.sh"
+#   }
+# }

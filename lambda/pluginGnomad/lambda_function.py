@@ -1,5 +1,4 @@
 import json
-import hail as hl
 import os
 
 from shared.utils import (
@@ -8,8 +7,6 @@ from shared.utils import (
     handle_failed_execution,
 )
 
-
-hl.init()
 
 GNOMAD_GENOMES_PATH = os.environ["GNOMAD_GENOMES_PATH"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
