@@ -342,6 +342,7 @@ module "lambda-pluginGnomad" {
   layers = [
     local.binaries_layer,
     local.python_modules_layer,
+    local.hail_layer
   ]
 }
 

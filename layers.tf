@@ -49,3 +49,12 @@ module "python_modules_layer" {
   store_on_s3 = true
   s3_bucket   = aws_s3_bucket.lambda-layers-bucket.bucket
 }
+
+resource "aws_lambda_layer_version" "hail_layer" {
+  filename         = data.archive_file.hail_layer.output_path
+  layer_name       = "hail-layer"
+  description      = "Hail library for genomics"
+  source_code_hash = filebase64sha256(data.archive_file.hail_layer.output_path)
+
+  compatible_runtimes = ["python3.12"]
+}
