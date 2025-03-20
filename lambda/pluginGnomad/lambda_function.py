@@ -5,14 +5,13 @@ import os
 from shared.utils import (
     Orchestrator,
     s3,
-    download_bedfile,
     handle_failed_execution,
 )
 
 
 hl.init()
 
-GNOMAD_GENOMES_PATH = os.environ["SVEP_REGIONS"]
+GNOMAD_GENOMES_PATH = os.environ["GNOMAD_GENOMES_PATH"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 
 
