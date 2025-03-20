@@ -213,7 +213,7 @@ resource "aws_lambda_permission" "plugin_send_job_email_invoke_permission" {
 # pluginGnomad Lambda Function
 #
 resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
-  statement_id  = "SNSSendJobEmailAllowInvoke"
+  statement_id  = "SNSPluginGnomadAllowInvoke"
   action        = "lambda:InvokeFunction"
   function_name = module.lambda-pluginGnomad.function_name
   principal     = "sns.amazonaws.com"

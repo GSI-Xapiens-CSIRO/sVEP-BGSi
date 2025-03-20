@@ -319,7 +319,7 @@ module "lambda-pluginClinvar" {
 module "lambda-pluginGnomad" {
   source        = "github.com/bhosking/terraform-aws-lambda"
   function_name = "svep-backend-pluginGnomad"
-  description   = "Add ClinVar annotations to sVEP result rows."
+  description   = "Add Gnomad annotations to sVEP result rows."
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
