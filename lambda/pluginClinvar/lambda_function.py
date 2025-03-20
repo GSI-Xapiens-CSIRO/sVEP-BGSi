@@ -84,7 +84,7 @@ def lambda_handler(event, _):
                 "requestId": request_id,
             },
         )
-        # TODO Delete upload result function to SVEP_REGIONS (Latest plugin will upload the result)
+
         filename = f"/tmp/{base_filename}.tsv"
         with open(filename, "w") as tsv_file:
             tsv_file.write(sns_data)

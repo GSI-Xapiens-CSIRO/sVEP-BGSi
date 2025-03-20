@@ -491,6 +491,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
     ]
     resources = [
       aws_sns_topic.sendJobEmail.arn,
+      aws_sns_topic.pluginGnomad.arn
     ]
   }
 
