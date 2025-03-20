@@ -314,6 +314,38 @@ module "lambda-pluginClinvar" {
 }
 
 #
+# pluginGnomad Lambda Function
+#
+module "lambda-pluginGnomad" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginGnomad"
+  description   = "Add ClinVar annotations to sVEP result rows."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 24
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginGnomad.json
+  }
+  source_path = "${path.module}/lambda/pluginGnomad"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      GNOMAD_GENOMES_S3_PATH        = "s3://gnomad-public-us-east-1/release/4.1/ht/genomes/gnomad.genomes.v4.1.sites.ht"
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
 # concat Lambda Function
 #
 module "lambda-concat" {
