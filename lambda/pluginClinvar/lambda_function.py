@@ -14,7 +14,7 @@ from shared.utils import (
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 CLINVAR_REFERENCE = os.environ["CLINVAR_REFERENCE"]
-PLUGIN_SIFT_SNS_TOPIC_ARN = os.environ["PLUGIN_SIFT_SNS_TOPIC_ARN"]
+PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 # Download reference genome and index
@@ -75,14 +75,15 @@ def lambda_handler(event, _):
         new_rows = add_clinvar_columns(rows, chrom_mapping)
         base_filename = orchestrator.temp_file_name
         sns_data = "\n".join("\t".join(row) for row in new_rows)
-        # start_function(
-        #     topic_arn=PLUGIN_SIFT_SNS_TOPIC_ARN,
-        #     base_filename=base_filename,
-        #     message={
-        #         "snsData": sns_data,
-        #         "mapping": chrom_mapping,
-        #     },
-        # )
+        start_function(
+            topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
+            base_filename=base_filename,
+            message={
+                "snsData": sns_data,
+                "mapping": chrom_mapping,
+                "requestId": request_id,
+            },
+        )
         # TODO Delete upload result function to SVEP_REGIONS (Latest plugin will upload the result)
         filename = f"/tmp/{base_filename}.tsv"
         with open(filename, "w") as tsv_file:

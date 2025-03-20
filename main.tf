@@ -298,7 +298,7 @@ module "lambda-pluginClinvar" {
       SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE             = "clinvar.bed.gz"
-      PLUGIN_SIFT_SNS_TOPIC_ARN     = ""
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
