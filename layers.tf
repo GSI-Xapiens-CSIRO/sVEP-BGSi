@@ -50,6 +50,14 @@ module "python_modules_layer" {
   s3_bucket   = aws_s3_bucket.lambda-layers-bucket.bucket
 }
 
+data "archive_file" "hail_layer" {
+  type        = "zip"
+  source_dir  = "${path.module}/layers/hail/"
+  output_path = "${path.module}/hail.zip"
+
+  depends_on = [null_resource.init_script]
+}
+
 resource "aws_lambda_layer_version" "hail_layer" {
   filename         = data.archive_file.hail_layer.output_path
   layer_name       = "hail-layer"
