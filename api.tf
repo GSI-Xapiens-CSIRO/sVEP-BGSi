@@ -315,7 +315,7 @@ resource "aws_api_gateway_integration" "vcfstats-post" {
   resource_id            = aws_api_gateway_method.vcfstats-post.resource_id
   http_method            = aws_api_gateway_method.vcfstats-post.http_method
   type                   = "AWS_PROXY"
-  uri                    = module.lambda-qcFigures.function_invoke_arn
+  uri                    = module.lambda-qcFigures.lambda_function_invoke_arn
   integration_http_method = "POST"
 }
 
