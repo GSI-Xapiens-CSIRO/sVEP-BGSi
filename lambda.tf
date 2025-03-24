@@ -224,10 +224,10 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
 #
 # vcfstatsGraphic Lambda Function
 #
-resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
-  statement_id  = "SNSVcfstatsGraphicAllowInvoke"
+resource "aws_lambda_permission" "qc_figures_invoke_permission" {
+  statement_id  = "APIQcFiguresAllowInvoke"
   action        = "lambda:InvokeFunction"
   function_name = module.lambda-qcFigures.function_name
-  principal     = "sns.amazonaws.com"
+  principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.vcfstats.path_part}"
 }
