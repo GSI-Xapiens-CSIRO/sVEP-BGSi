@@ -218,4 +218,16 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
   function_name = module.lambda-pluginGnomad.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pluginGnomad.arn
+
+}
+
+#
+# vcfstatsGraphic Lambda Function
+#
+resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
+  statement_id  = "SNSVcfstatsGraphicAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-qcFigures.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.vcfstats.path_part}"
 }

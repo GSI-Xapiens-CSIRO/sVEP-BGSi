@@ -81,6 +81,12 @@ def print_bed_lines(child, skipped, processed_produced):
         omim_id = simple_allele.find("XRefList").find('XRef[@DB="OMIM"]').attrib["ID"]
     except AttributeError as e:
         omim_id = "-"
+    try:
+        rs_id = simple_allele.find("XRefList").find('XRef[@DB="dbSNP"]').attrib["ID"]
+        if not rs_id.startswith("rs"):
+            rs_id = f"rs{rs_id}"
+    except AttributeError as e:
+        rs_id = "-"
     rsv_tuples = []
     pubmed = (
         ",".join(
@@ -161,6 +167,7 @@ def print_bed_lines(child, skipped, processed_produced):
                         ref,
                         location["alternateAlleleVCF"],
                         variation_id,
+                        rs_id,
                         omim_id,
                         rsv.classification,
                         rsv.conditions,
