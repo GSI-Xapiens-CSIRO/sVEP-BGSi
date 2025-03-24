@@ -16,6 +16,7 @@ locals {
   binaries_layer = "${aws_lambda_layer_version.binaries_layer.layer_arn}:${aws_lambda_layer_version.binaries_layer.version}"
   // python_libraries_layer = module.python_libraries_layer.lambda_layer_arn
   python_modules_layer = module.python_modules_layer.lambda_layer_arn
+  # hail_layer = "${aws_lambda_layer_version.hail_layer.layer_arn}:${aws_lambda_layer_version.hail_layer.version}"
 }
 
 #
@@ -298,7 +299,7 @@ module "lambda-pluginClinvar" {
       SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE             = "clinvar.bed.gz"
-      PLUGIN_SIFT_SNS_TOPIC_ARN     = ""
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
@@ -310,6 +311,41 @@ module "lambda-pluginClinvar" {
   layers = [
     local.binaries_layer,
     local.python_modules_layer,
+  ]
+}
+
+#
+# pluginGnomad Lambda Function
+#
+module "lambda-pluginGnomad" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginGnomad"
+  description   = "Add Gnomad annotations to sVEP result rows."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 24
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginGnomad.json
+  }
+  source_path = "${path.module}/lambda/pluginGnomad"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
+      GNOMAD_GENOMES_S3_PATH        = "s3://gnomad-public-us-east-1/release/4.1/ht/genomes/gnomad.genomes.v4.1.sites.ht"
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+    # local.hail_layer
   ]
 }
 
