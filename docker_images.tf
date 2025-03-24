@@ -59,7 +59,7 @@ module "docker_image_qcFigures_lambda" {
     source = "terraform-aws-modules/lambda/aws//modules/docker-build"
 
     create_ecr_repo = true
-    ecr_repo        = "svep-qcFigures-lambda-containers"
+    ecr_repo        = "svep-qcfigures-lambda-containers"
     ecr_repo_lifecycle_policy = jsonencode({
         "rules" : [
         {
