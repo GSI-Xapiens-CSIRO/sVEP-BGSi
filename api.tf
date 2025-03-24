@@ -279,6 +279,60 @@ resource "aws_api_gateway_integration_response" "results-get" {
 }
 
 #
+# Vcfstats
+#
+
+resource "aws_api_gateway_resource" "vcfstats" {
+  rest_api_id = aws_api_gateway_rest_api.VPApi.id
+  parent_id   = aws_api_gateway_rest_api.VPApi.root_resource_id
+  path_part   = "vcfstats"
+}
+
+resource "aws_api_gateway_method" "vcfstats-post" {
+  rest_api_id = aws_api_gateway_rest_api.VPApi.id
+  resource_id = aws_api_gateway_resource.vcfstats.id
+  http_method = "POST"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+}
+resource "aws_api_gateway_method_response" "vcfstats-post" {
+  rest_api_id = aws_api_gateway_method.vcfstats-post.rest_api_id
+  resource_id = aws_api_gateway_method.vcfstats-post.resource_id
+  http_method = aws_api_gateway_method.vcfstats-post.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin" = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration" "vcfstats-post" {
+  rest_api_id             = aws_api_gateway_method.vcfstats-post.rest_api_id
+  resource_id            = aws_api_gateway_method.vcfstats-post.resource_id
+  http_method            = aws_api_gateway_method.vcfstats-post.http_method
+  type                   = "AWS_PROXY"
+  uri                    = module.lambda-qcFigures.function_invoke_arn
+  integration_http_method = "POST"
+}
+
+resource "aws_api_gateway_integration_response" "vcfstats-post" {
+  rest_api_id = aws_api_gateway_method.vcfstats-post.rest_api_id
+  resource_id = aws_api_gateway_method.vcfstats-post.resource_id
+  http_method = aws_api_gateway_method.vcfstats-post.http_method
+  status_code = aws_api_gateway_method_response.vcfstats-post.status_code
+
+  response_templates ={
+    "application/json" = ""
+  }
+
+  depends_on = [aws_api_gateway_integration.vcfstats-post]
+}
+
+#
 # Deployment
 #
 resource "aws_api_gateway_deployment" "VPApi" {
@@ -314,6 +368,11 @@ resource "aws_api_gateway_deployment" "VPApi" {
       aws_api_gateway_integration.results-get,
       aws_api_gateway_integration_response.results-get,
       aws_api_gateway_method_response.results-get,
+      # /vcfstats
+      aws_api_gateway_method.vcfstats-post,
+      aws_api_gateway_method_response.vcfstats-post,
+      aws_api_gateway_integration.vcfstats-post,
+      aws_api_gateway_integration_response.vcfstats-post,
     ]))
   }
 }
