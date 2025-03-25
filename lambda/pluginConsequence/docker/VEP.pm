@@ -466,6 +466,8 @@ sub parse_vcf {
           my $location = $chrom_mapping->{$chr}.':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
           my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chrom_mapping->{$chr}.'.fa.bgz';
           my $file = '/tmp/'.$fasta;
+          $vf->{'fasta_file'} = $file;
+          $vf->{'gtf_file'} = "/tmp/".$spliceFile;
           my @result = `./samtools faidx $file $location`;
           shift @result;
           $seq = join "", @result;

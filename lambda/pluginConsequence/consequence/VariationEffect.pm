@@ -680,19 +680,101 @@ sub complex_indel {
     return @{ $bvfo->cds_coords } > 1;
 }
 
+sub get_adjacent_exon_nucleotides {
+    my ($feat, $bvf) = @_;
+    my $chr = $bvf->{'chr'};
+    my $fasta_file = $bvf->{'fasta_file'};
+    my $gtf_file = $bvf->{'gtf_file'};
+    my $transcript_start = $feat->{'start'};
+    my $transcript_end = $feat->{'end'};
+    my $transcript_id = $feat->{'stable_id'};
+    my $cdna_start = $feat->{'cdna_coding_start'};
+    my $cdna_end = $feat->{'cdna_coding_end'};
+    if ($cdna_end - $cdna_start <= 3){
+        die "CDS is so short as to trigger edge cases. Will need to rework this code.";
+    }
+    my $position = $feat->{'position'};
+    my $tabix_result = `./tabix $gtf_file $chr:$transcript_start-$transcript_end`;
+    my @cds_coords = ();
+    my $exon_index = undef;
+    for my $record (split /[\r\n]+/, $tabix_result){
+        my @info = (split '\t', $record);
+        if ($info[2] eq "CDS" && $info[7] eq $transcript_id){
+            if ($info[3] eq $cdna_start && $info[4] eq $cdna_end){
+                $exon_index = @cds_coords;
+            }
+            push @cds_coords, [$info[3], $info[4]];
+        }
+    }
+    die "CDS not found in gtf file" unless defined $exon_index;
+    my ($query_start, $query_end) = undef;
+    # This will need reworking if we have a CDS that is less than 4 nucleotides long
+    if ($position - $cdna_start < 3){
+        my $prev_end_coords = $cds_coords[$exon_index-1][1];
+        ($query_start, $query_end) = ($prev_end_coords-1, $prev_end_coords);
+    } else {
+        my $next_start_coords = $cds_coords[$exon_index+1][0];
+        ($query_start, $query_end) = ($next_start_coords, $next_start_coords+1);
+    }
+    my $faidx_result = `./samtools faidx $fasta_file $chr:$query_start-$query_end`;
+    my @faidx_lines = split(/\n/, $faidx_result);
+    return $faidx_lines[1];
+}
+
 sub _get_peptide_alleles {
     my ($bvfoa, $feat, $bvfo, $bvf) = @_;
     my $cache = $bvfoa->{_predicate_cache} ||= {};
     my @alleles = ();
-    #print Dumper $feat;
     my $ref_seq = $feat->{'seq'};
-    my $alt_seq = $ref_seq;
-    #print("$feat->{'strand'}");
-    #print($feat->{stable_id},"\n");
 
     my $ref_allele = $feat->{'ref_allele'};
     my $alt_allele = $feat->{'alt_allele'};
+    my $frame = $feat->{'cds_frame'};  # This should be between 0 and 2
     my $var_loc =  $feat->{'position'} - $feat->{'cdna_coding_start'};
+    my $strand = $feat->{'strand'};
+
+    my $seq_length = $feat->{'seq_length'};
+    my $trailing_bases = ($seq_length - $frame) % 3;
+    my $rev_var_loc = $seq_length - $var_loc - 1;
+    my $pad_start = 0;
+    my $reset_frame = 0;
+    my $extra_bases = undef;
+    if ($strand == 1) {
+        if ($var_loc < $frame) {
+            # Need to look at previous exon to create codon
+            $extra_bases = $frame;
+            $reset_frame = 1;
+            $pad_start = 1;
+        } elsif ($rev_var_loc < $trailing_bases) {
+            # Need to look at next exon to create codon
+            $extra_bases = $trailing_bases;
+        }
+    } else {
+        if ($var_loc < $trailing_bases) {
+            # Need to look at previous exon to create codon
+            $extra_bases = $trailing_bases;
+            $pad_start = 1;
+        } elsif ($rev_var_loc < $frame) {
+            # Need to look at next exon to create codon
+            $extra_bases = $frame;
+            $reset_frame = 1;
+        }
+    }
+    if (defined $extra_bases) {
+        my $padding_bases = get_adjacent_exon_nucleotides($feat, $bvf);
+        my $num_padding = 3 - $extra_bases;
+        if ($pad_start) {
+            $ref_seq = substr($padding_bases, -$num_padding, $num_padding).$ref_seq;
+            $var_loc += $num_padding;
+        } else {
+            $ref_seq = $ref_seq.substr($padding_bases, $num_padding-1, $num_padding);
+        }
+        if ($reset_frame) {
+            $frame = 0;
+        }
+    }
+    my $alt_seq = $ref_seq;
+
     if($ref_seq =~"^TGA\$|^TAA\$|^TAG\$"){#This is for stop retained variant where you want to check the original ref for stop
       #print("\nSTOP REFFFF - $ref_seq\n");
       $feat->{stop_ref} = $ref_seq;
@@ -714,9 +796,6 @@ sub _get_peptide_alleles {
       substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;
       substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
     }
-
-    my $strand = $feat->{'strand'};
-    my $frame = $feat->{'cds_frame'};
     if($strand == -1){
       reverse_comp(\$ref_seq);
       reverse_comp(\$alt_seq);
@@ -731,6 +810,7 @@ sub _get_peptide_alleles {
       $alt_pep_allele = $ref_pep_allele;
     }
     if(length $ref_pep_allele != 3 && length $alt_pep_allele != 3){
+      print("\nFailed2!\n");
       $feat->{warning} = "Codon is out of CDS range.";
     }
 
@@ -739,6 +819,7 @@ sub _get_peptide_alleles {
 
 
     if(!length $ref_pep_allele &&  !length $alt_pep_allele) {
+      print("\nFailed!\n");
       $feat->{warning} = "Frame removes the variant position out of equation";
       $bvfo->{startRef} = substr($ref_seq, $frame, 3);
       $bvfo->{startAlt} = substr($alt_seq, $frame, 3);
