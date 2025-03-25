@@ -19,10 +19,10 @@ RUN rustc --version && cargo --version
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}/
 
-COPY requirements.txt ${LAMBDA_TASK_ROOT}/
+# COPY requirements.txt ${LAMBDA_TASK_ROOT}/
 
-RUN pip install --upgrade pip wheel setuptools \
-    && pip install -r requirements.txt --verbose
+RUN pip install --upgrade pip wheel setuptools --verbose
+# && pip install -r requirements.txt --verbose
 
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
 
