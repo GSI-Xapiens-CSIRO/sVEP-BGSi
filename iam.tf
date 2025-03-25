@@ -578,6 +578,7 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
   statement {
     actions = [
       "s3:PutObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-regions.arn}/*",
@@ -587,6 +588,7 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
   statement {
     actions = [
       "s3:DeleteObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
