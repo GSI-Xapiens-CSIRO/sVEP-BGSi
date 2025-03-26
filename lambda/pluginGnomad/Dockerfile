@@ -15,6 +15,8 @@ RUN dnf update -y && dnf install -y \
 ENV JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
+RUN java -version
+
 # Set Lambda task root
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
