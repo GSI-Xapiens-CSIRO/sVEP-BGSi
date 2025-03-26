@@ -9,12 +9,12 @@ do
     HEADERS=$(mktemp "$TEMP_DIR/headers.XXXXXX")
     RESPONSE_FILE=$(mktemp "$TEMP_DIR/response.XXXXXX")
 
-    echo "Fetching SIFT next invocation event..." >&2
+    echo "Fetching GNOMAD next invocation event..." >&2
     EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
     REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
   
-    echo "SIFT Event Received: $REQUEST_ID" >&2
-    echo "SIFT Event Data: $EVENT_DATA" >&2
+    echo "GNOMAD Event Received: $REQUEST_ID" >&2
+    echo "GNOMAD Event Data: $EVENT_DATA" >&2
 
     # Run Python and write response to a file
     echo "Running Python script..." >&2
