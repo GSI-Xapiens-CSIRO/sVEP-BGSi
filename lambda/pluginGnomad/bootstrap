@@ -1,0 +1,46 @@
+#!/bin/sh
+
+set -euo pipefail
+
+while true
+do
+    TEMP_DIR="/tmp/bootstrap"
+    mkdir -p "$TEMP_DIR"
+    HEADERS=$(mktemp "$TEMP_DIR/headers.XXXXXX")
+    RESPONSE_FILE=$(mktemp "$TEMP_DIR/response.XXXXXX")
+
+    echo "Fetching SIFT next invocation event..." >&2
+    EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
+    REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
+  
+    echo "SIFT Event Received: $REQUEST_ID" >&2
+    echo "SIFT Event Data: $EVENT_DATA" >&2
+
+    # Run Python and write response to a file
+    echo "Running Python script..." >&2
+    RESPONSE_FILE="$RESPONSE_FILE" EVENT_DATA="$EVENT_DATA" python3 -c '
+import os
+import json
+import sys
+from main import handler
+
+event_data = os.environ["EVENT_DATA"]
+try:
+    result = handler(json.loads(event_data))
+except Exception as e:
+    print(f"Python error: {e}", file=sys.stderr)
+    result = {"error": str(e)}
+
+with open(os.environ["RESPONSE_FILE"], "w") as f:
+    f.write(json.dumps(result))
+    ' RESPONSE_FILE="$RESPONSE_FILE" EVENT_DATA="$EVENT_DATA"
+
+    echo "Python script completed." >&2
+
+    rm -rf "/tmp/*"
+
+    # Send the response
+    echo "Sending response..." >&2
+    curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response" -d @"$RESPONSE_FILE"
+    echo "Response sent." >&2
+done

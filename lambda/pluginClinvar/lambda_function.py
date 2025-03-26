@@ -1,6 +1,7 @@
 import os
 import subprocess
-
+import gzip
+import base64
 
 from shared.utils import (
     Orchestrator,
@@ -63,6 +64,11 @@ def add_clinvar_columns(in_rows, chrom_mapping):
     return results
 
 
+def compress_sns_data(data):
+    compressed = gzip.compress(data.encode("utf-8"))  # Compress string
+    return base64.b64encode(compressed).decode("utf-8")  # Encode to Base64 string
+
+
 def lambda_handler(event, _):
     orchestrator = Orchestrator(event)
     message = orchestrator.message
@@ -75,11 +81,16 @@ def lambda_handler(event, _):
         new_rows = add_clinvar_columns(rows, chrom_mapping)
         base_filename = orchestrator.temp_file_name
         sns_data = "\n".join("\t".join(row) for row in new_rows)
+
+        print("📢 Before Compression:", len(sns_data), "bytes")
+        compressed_sns_data = compress_sns_data(sns_data)
+        print("✅ After Compression:", len(compressed_sns_data), "bytes")
+
         start_function(
             topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
             base_filename=base_filename,
             message={
-                "snsData": sns_data,
+                "snsData": compressed_sns_data,
                 "mapping": chrom_mapping,
                 "requestId": request_id,
             },
