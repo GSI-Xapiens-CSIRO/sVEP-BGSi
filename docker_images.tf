@@ -120,7 +120,8 @@ module "docker_image_pluginGnomad_lambda" {
   source_path   = "${path.module}/lambda/pluginGnomad"
 
   triggers = {
-    dir_sha = data.external.pluginGnomad_lambda_source_hash.result.hash
+    dir_sha      = data.external.pluginGnomad_lambda_source_hash.result.hash
+    always_build = "${timestamp()}"
   }
 
   platform = "linux/amd64"
