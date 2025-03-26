@@ -328,7 +328,7 @@ module "lambda-pluginGnomad" {
   memory_size         = 2048
   timeout             = 60
   attach_policy_jsons = true
-  policy = [
+  policy_jsons = [
     data.aws_iam_policy_document.lambda-pluginGnomad.json
   ]
   source_path = "${path.module}/lambda/pluginGnomad"
