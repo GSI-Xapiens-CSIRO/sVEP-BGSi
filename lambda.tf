@@ -219,10 +219,6 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pluginGnomad.arn
 }
-resource "aws_lambda_function_recursion_config" "plugin_gnomad_recursion" {
-  function_name  = module.lambda-pluginGnomad.lambda_function_name
-  recursive_loop = "Allow"
-}
 
 #
 # vcfstatsGraphic Lambda Function
