@@ -22,11 +22,11 @@ do
 import os
 import json
 import sys
-from main import handler
+from lambda_function import lambda_handler
 
 event_data = os.environ["EVENT_DATA"]
 try:
-    result = handler(json.loads(event_data))
+    result = lambda_handler(json.loads(event_data))
 except Exception as e:
     print(f"Python error: {e}", file=sys.stderr)
     result = {"error": str(e)}

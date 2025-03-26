@@ -325,7 +325,7 @@ module "lambda-pluginGnomad" {
   create_package      = false
   image_uri           = module.docker_image_pluginGnomad_lambda.image_uri
   package_type        = "Image"
-  memory_size         = 2048
+  memory_size         = 3000
   timeout             = 60
   attach_policy_jsons = true
   policy_jsons = [
