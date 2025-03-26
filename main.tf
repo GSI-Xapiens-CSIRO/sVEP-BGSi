@@ -320,17 +320,17 @@ module "lambda-pluginClinvar" {
 module "lambda-pluginGnomad" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name       = "svep-backend-qcFigures"
-  description         = "Running vcfstats for generating graphic."
+  function_name       = "svep-backend-pluginGnomad"
+  description         = "Running pluginGnomad docker."
   create_package      = false
-  image_uri           = module.docker_image_qcFigures_lambda.image_uri
+  image_uri           = module.docker_image_pluginGnomad_lambda.image_uri
   package_type        = "Image"
   memory_size         = 2048
   timeout             = 60
   attach_policy_jsons = true
-  policy = {
-    json = data.aws_iam_policy_document.lambda-pluginGnomad.json
-  }
+  policy = [
+    data.aws_iam_policy_document.lambda-pluginGnomad.json
+  ]
   source_path = "${path.module}/lambda/pluginGnomad"
   tags        = var.common-tags
   environment_variables = {
