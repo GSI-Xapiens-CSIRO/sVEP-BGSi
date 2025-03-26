@@ -90,12 +90,12 @@ module "docker_image_qcFigures_lambda" {
 #
 # pluginGnomad docker image
 #
-data "external" "qcFigures_lambda_source_hash" {
+data "external" "pluginGnomad_lambda_source_hash" {
   program     = ["python", "lambda/pluginGnomad/docker_prep.py"]
   working_dir = path.module
 }
 
-module "docker_image_qcFigures_lambda" {
+module "docker_image_pluginGnomad_lambda" {
   source = "terraform-aws-modules/lambda/aws//modules/docker-build"
 
   create_ecr_repo = true
