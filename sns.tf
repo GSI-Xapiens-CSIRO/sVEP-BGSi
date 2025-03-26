@@ -65,7 +65,7 @@ resource "aws_sns_topic" "pluginGnomad" {
 resource "aws_sns_topic_subscription" "pluginGnomad" {
   topic_arn = aws_sns_topic.pluginGnomad.arn
   protocol  = "lambda"
-  endpoint  = module.lambda-pluginGnomad.function_arn
+  endpoint  = module.lambda-pluginGnomad.lambda_function_arn
 }
 
 resource "aws_sns_topic" "concat" {
