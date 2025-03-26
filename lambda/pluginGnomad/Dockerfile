@@ -24,6 +24,8 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}/
 RUN pip install --upgrade pip wheel setuptools \
     && pip install -r requirements.txt --verbose
 
+RUN rm -f /var/runtime/bootstrap
+
 # Copy necessary files
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
 COPY bootstrap /var/runtime/bootstrap
