@@ -704,7 +704,14 @@ sub get_adjacent_exon_nucleotides {
             push @cds_coords, [$info[3], $info[4]];
         }
     }
-    die "CDS not found in gtf file" unless defined $exon_index;
+    unless (defined $exon_index){
+        print "CDS not found in gtf file searching $gtf_file for $reference_chr:$transcript_start-$transcript_end\n";
+        $feat->{warning} = "CDS is not found in gtf file";
+        print Dumper $feat;
+        print Dumper $bvf;
+        print "Just using As as a placeholder. This will be wrong, but at least it won't crash.\n";
+        return "A" x $num_bases;
+    }
     my ($query_start, $query_end) = undef;
     if ($earlier){
         my $prev_end_coords = $cds_coords[$exon_index-1][1];
