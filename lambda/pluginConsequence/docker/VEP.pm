@@ -473,7 +473,7 @@ sub parse_vcf {
           shift @result;
           $seq = join "", @result;
           $seq =~ s/[\r\n]+//g;
-          $length = ($info{'CDS_end'}-$info{'CDS_start'},$info{'CDS_start'}-$info{'CDS_end'})[$info{'CDS_end'}-$info{'CDS_start'} < $info{'CDS_start'}-$info{'CDS_end'}];
+          $length = abs($info{'CDS_end'}-$info{'CDS_start'}) + 1;
 
           for my $tran (split /[\r\n]+/, $intron_result){
             my @infoNew = (split '\t', $tran);
