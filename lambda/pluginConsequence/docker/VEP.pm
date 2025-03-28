@@ -616,7 +616,7 @@ sub parse_vcf {
         if($rows[1] eq "mirbase"){
           #my $intron_loc = $start;
           my $location = "chr".$chrom_mapping->{$chr}.":".$start."-".$start;
-          my $mirna_result =  `tabix $mirnaLocalFile $location`; # change this for svep
+          my $mirna_result =  `./tabix $mirnaLocalFile $location`;
           if(length $mirna_result){
             $tr->{within_mirna} = 1;
           }else{
