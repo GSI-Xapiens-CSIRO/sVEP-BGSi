@@ -681,7 +681,7 @@ sub complex_indel {
 }
 
 sub get_adjacent_exon_nucleotides {
-    my ($feat, $bvf) = @_;
+    my ($feat, $bvf, $earlier, $num_bases) = @_;
     my $chr = $bvf->{'chr'};
     my $fasta_file = $bvf->{'fasta_file'};
     my $gtf_file = $bvf->{'gtf_file'};
@@ -691,9 +691,6 @@ sub get_adjacent_exon_nucleotides {
     my $transcript_id = $feat->{'stable_id'};
     my $cdna_start = $feat->{'cdna_coding_start'};
     my $cdna_end = $feat->{'cdna_coding_end'};
-    if ($cdna_end - $cdna_start <= 3){
-        die "CDS is so short as to trigger edge cases. Will need to rework this code.";
-    }
     my $position = $feat->{'position'};
     my $tabix_result = `./tabix $gtf_file $reference_chr:$transcript_start-$transcript_end`;
     my @cds_coords = ();
@@ -709,13 +706,12 @@ sub get_adjacent_exon_nucleotides {
     }
     die "CDS not found in gtf file" unless defined $exon_index;
     my ($query_start, $query_end) = undef;
-    # This will need reworking if we have a CDS that is less than 4 nucleotides long
-    if ($position - $cdna_start < 3){
+    if ($earlier){
         my $prev_end_coords = $cds_coords[$exon_index-1][1];
-        ($query_start, $query_end) = ($prev_end_coords-1, $prev_end_coords);
+        ($query_start, $query_end) = ($prev_end_coords+1-$num_bases, $prev_end_coords);
     } else {
         my $next_start_coords = $cds_coords[$exon_index+1][0];
-        ($query_start, $query_end) = ($next_start_coords, $next_start_coords+1);
+        ($query_start, $query_end) = ($next_start_coords, $next_start_coords-1+$num_bases);
     }
     my $faidx_result = `./samtools faidx $fasta_file $reference_chr:$query_start-$query_end`;
     my @faidx_lines = split(/\n/, $faidx_result);
@@ -762,13 +758,13 @@ sub _get_peptide_alleles {
         }
     }
     if (defined $extra_bases) {
-        my $padding_bases = get_adjacent_exon_nucleotides($feat, $bvf);
         my $num_padding = 3 - $extra_bases;
+        my $padding_bases = get_adjacent_exon_nucleotides($feat, $bvf, $pad_start, $num_padding);
         if ($pad_start) {
-            $ref_seq = substr($padding_bases, -$num_padding, $num_padding).$ref_seq;
+            $ref_seq = $padding_bases.$ref_seq;
             $var_loc += $num_padding;
         } else {
-            $ref_seq = $ref_seq.substr($padding_bases, $num_padding-1, $num_padding);
+            $ref_seq = $ref_seq.$padding_bases;
         }
         if ($reset_frame) {
             $frame = 0;
