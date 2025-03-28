@@ -468,6 +468,7 @@ sub parse_vcf {
           my $file = '/tmp/'.$fasta;
           $vf->{'fasta_file'} = $file;
           $vf->{'gtf_file'} = "/tmp/".$spliceFile;
+          $vf->{'reference_chr'} = $chrom_mapping->{$chr};
           my @result = `./samtools faidx $file $location`;
           shift @result;
           $seq = join "", @result;

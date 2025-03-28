@@ -685,6 +685,7 @@ sub get_adjacent_exon_nucleotides {
     my $chr = $bvf->{'chr'};
     my $fasta_file = $bvf->{'fasta_file'};
     my $gtf_file = $bvf->{'gtf_file'};
+    my $reference_chr = $bvf->{'reference_chr'};
     my $transcript_start = $feat->{'start'};
     my $transcript_end = $feat->{'end'};
     my $transcript_id = $feat->{'stable_id'};
@@ -694,7 +695,7 @@ sub get_adjacent_exon_nucleotides {
         die "CDS is so short as to trigger edge cases. Will need to rework this code.";
     }
     my $position = $feat->{'position'};
-    my $tabix_result = `./tabix $gtf_file $chr:$transcript_start-$transcript_end`;
+    my $tabix_result = `./tabix $gtf_file $reference_chr:$transcript_start-$transcript_end`;
     my @cds_coords = ();
     my $exon_index = undef;
     for my $record (split /[\r\n]+/, $tabix_result){
@@ -716,7 +717,7 @@ sub get_adjacent_exon_nucleotides {
         my $next_start_coords = $cds_coords[$exon_index+1][0];
         ($query_start, $query_end) = ($next_start_coords, $next_start_coords+1);
     }
-    my $faidx_result = `./samtools faidx $fasta_file $chr:$query_start-$query_end`;
+    my $faidx_result = `./samtools faidx $fasta_file $reference_chr:$query_start-$query_end`;
     my @faidx_lines = split(/\n/, $faidx_result);
     return $faidx_lines[1];
 }
