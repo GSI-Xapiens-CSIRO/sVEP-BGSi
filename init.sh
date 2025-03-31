@@ -44,13 +44,14 @@ cp ${SOURCE}/bcftools-1.21/bcftools ./layers/binaries/bin/
 
 # samtools
 cd ${SOURCE}
-git clone --recursive --depth 1 --branch develop https://github.com/samtools/samtools.git
-cd samtools && autoreconf && ./configure --without-curses && make
+wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2
+tar -xf samtools-1.21.tar.bz2
+cd samtools-1.21 && autoreconf && ./configure --without-curses && make
 cd ${REPOSITORY_DIRECTORY}
 mkdir -p layers/binaries/lib
 mkdir -p layers/binaries/bin
-ldd ${SOURCE}/samtools/samtools | awk 'NF == 4 { system("cp " $3 " ./layers/binaries/lib") }'
-cp ${SOURCE}/samtools/samtools ./layers/binaries/bin/
+ldd ${SOURCE}/samtools-1.21/samtools | awk 'NF == 4 { system("cp " $3 " ./layers/binaries/lib") }'
+cp ${SOURCE}/samtools-1.21/samtools ./layers/binaries/bin/
 
 # gzip & gunzip
 cd ${SOURCE}
