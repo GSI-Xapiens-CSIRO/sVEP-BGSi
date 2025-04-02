@@ -739,43 +739,44 @@ sub _get_peptide_alleles {
 
     my $seq_length = $feat->{'seq_length'};
     my $trailing_bases = ($seq_length - $frame) % 3;
-    my $rev_var_loc = $seq_length - $var_loc - 1;
+    # subtracting the length to handle deletions, the -1 and +1 cancel out
+    my $rev_var_loc = $seq_length - $var_loc - length($ref_allele);
+    if ($rev_var_loc < 0) {
+        $rev_var_loc = 0;
+    }
     my $pad_start = 0;
+    my $pad_end = 0;
     my $reset_frame = 0;
-    my $extra_bases = undef;
     if ($strand == 1) {
         if ($var_loc < $frame) {
             # Need to look at previous exon to create codon
-            $extra_bases = $frame;
+            $pad_start = 3 - $frame;
             $reset_frame = 1;
-            $pad_start = 1;
-        } elsif ($rev_var_loc < $trailing_bases) {
+        }
+        if ($rev_var_loc < $trailing_bases) {
             # Need to look at next exon to create codon
-            $extra_bases = $trailing_bases;
+            $pad_end = 3 - $trailing_bases;
         }
     } else {
         if ($var_loc < $trailing_bases) {
             # Need to look at previous exon to create codon
-            $extra_bases = $trailing_bases;
-            $pad_start = 1;
-        } elsif ($rev_var_loc < $frame) {
+            $pad_start = 3 - $trailing_bases;
+        }
+        if ($rev_var_loc < $frame) {
             # Need to look at next exon to create codon
-            $extra_bases = $frame;
+            $pad_end = 3 - $frame;
             $reset_frame = 1;
         }
     }
-    if (defined $extra_bases) {
-        my $num_padding = 3 - $extra_bases;
-        my $padding_bases = get_adjacent_exon_nucleotides($feat, $bvf, $pad_start, $num_padding);
-        if ($pad_start) {
-            $ref_seq = $padding_bases.$ref_seq;
-            $var_loc += $num_padding;
-        } else {
-            $ref_seq = $ref_seq.$padding_bases;
-        }
-        if ($reset_frame) {
-            $frame = 0;
-        }
+    if ($pad_start) {
+        $ref_seq = get_adjacent_exon_nucleotides($feat, $bvf, 1, $pad_start).$ref_seq;
+        $var_loc += $pad_start;
+    }
+    if ($pad_end) {
+        $ref_seq = $ref_seq.get_adjacent_exon_nucleotides($feat, $bvf, 0, $pad_end);
+    }
+    if ($reset_frame) {
+        $frame = 0;
     }
     my $alt_seq = $ref_seq;
 
