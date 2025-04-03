@@ -735,12 +735,13 @@ sub _get_peptide_alleles {
     my $alt_allele = $feat->{'alt_allele'};
     my $frame = $feat->{'cds_frame'};  # This should be between 0 and 2
     my $var_loc =  $feat->{'position'} - $feat->{'cdna_coding_start'};
+    my $var_loc_end = $var_loc + length($ref_allele) - 1;
     my $strand = $feat->{'strand'};
 
     my $seq_length = $feat->{'seq_length'};
     my $trailing_bases = ($seq_length - $frame) % 3;
     # subtracting the length to handle deletions, the -1 and +1 cancel out
-    my $rev_var_loc = $seq_length - $var_loc - length($ref_allele);
+    my $rev_var_loc = $seq_length - $var_loc_end - 1;
     if ($rev_var_loc < 0) {
         $rev_var_loc = 0;
     }
@@ -771,9 +772,11 @@ sub _get_peptide_alleles {
     if ($pad_start) {
         $ref_seq = get_adjacent_exon_nucleotides($feat, $bvf, 1, $pad_start).$ref_seq;
         $var_loc += $pad_start;
+        $var_loc_end += $pad_start;
     }
     if ($pad_end) {
         $ref_seq = $ref_seq.get_adjacent_exon_nucleotides($feat, $bvf, 0, $pad_end);
+        $rev_var_loc += $pad_end;
     }
     if ($reset_frame) {
         $frame = 0;
@@ -787,35 +790,40 @@ sub _get_peptide_alleles {
       substr($feat->{stop_alt}, $var_loc, length $alt_allele) = $alt_allele;
     }
     if(substr($ref_seq, $var_loc, length $ref_allele) =~ $ref_allele ){
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }elsif($ref_allele eq "-"){
       substr($alt_seq, $var_loc, 0) = $alt_allele;
     }elsif(substr($ref_seq, $var_loc, length $ref_allele) ne $ref_allele || $alt_allele eq "-"){
       $feat->{warning} = "REF doesn't match GRCh38 reference at given position";
       substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }elsif($alt_allele eq "-"){
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }else{
       $feat->{warning} = "REF doesn't match GRCh38 reference at given position";
       substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }
     if($strand == -1){
       reverse_comp(\$ref_seq);
       reverse_comp(\$alt_seq);
-      $var_loc = $feat->{'cdna_coding_end'} - $feat->{'position'};
+      $var_loc = $rev_var_loc;
+      $var_loc_end = $var_loc + length($ref_allele) - 1;
     }
-    my ($ref_pep_allele,$alt_pep_allele);
-    for (my $i = $frame; $i <= $var_loc; $i+= 3) {
-       $ref_pep_allele = substr($ref_seq, $i, 3);
-       $alt_pep_allele = substr($alt_seq, $i, 3);
-    }
+    my $codon_start = $frame + 3 * int(($var_loc-$frame) / 3);
+    my $codon_end = $frame + 2 + 3 * int(($var_loc_end-$frame-2) / 3 + 0.9);  # who needs a ceil function?
+    my $bases_to_trim = length($ref_seq) - $codon_end - 1;
+    my $ref_pep_allele = substr($ref_seq, $codon_start, -$bases_to_trim);
+    my $alt_pep_allele = substr($alt_seq, $codon_start, -$bases_to_trim);
     if($ref_pep_allele =~"^TGA\$|^TAA\$|^TAG\$" && $alt_pep_allele =~"-"){
       $alt_pep_allele = $ref_pep_allele;
     }
-    if(length $ref_pep_allele != 3 && length $alt_pep_allele != 3){
-      print("\nFailed2!\n");
+    $ref_seq =~ s/-//g;
+    $alt_seq =~ s/-//g;
+    $ref_pep_allele =~ s/-//g;
+    $alt_pep_allele =~ s/-//g;
+    if(length($ref_pep_allele) % 3 != 0){
+      print("\nCodon is out of CDS range.\n");
       $feat->{warning} = "Codon is out of CDS range.";
     }
 
@@ -847,11 +855,11 @@ sub _get_peptide_alleles {
     @alleles = ($ref_pep, $alt_pep);
     $cache->{_get_peptide_alleles} = \@alleles;
     $feat->{altCodon} = $alt_pep_allele;
-    $feat->{refCodon} = $alt_pep_allele;
+    $feat->{refCodon} = $ref_pep_allele;
     $feat->{altaa} = $ref_aa;
     $feat->{refaa} = $alt_aa;
-    $feat->{codons} = $ref_pep_allele."/".$alt_pep_allele;
-    $feat->{aa} = $ref_aa eq $alt_aa ? $ref_aa : $ref_aa."/".$alt_aa;
+    $feat->{codons} = ($ref_pep_allele||"-")."/".($alt_pep_allele||"-");
+    $feat->{aa} = $ref_aa eq $alt_aa ? $ref_aa : ($ref_aa||"-")."/".($alt_aa||"-");
 
     $bvfo->{startRef} = substr($ref_seq, $frame, 3);
     $bvfo->{startAlt} = substr($alt_seq, $frame, 3);
