@@ -1242,7 +1242,18 @@ sub inframe_deletion {
         return 1 if ($ref_codon =~ /^\Q$alt_codon\E/) || ($ref_codon =~ /\Q$alt_codon\E$/);
 
         # check for internal match
-        ($ref_codon, $alt_codon) = @{Bio::EnsEMBL::Variation::Utils::Sequence::trim_sequences($ref_codon, $alt_codon)};
+        # relevant function code was copied from external file. line was:
+        # ($ref_codon, $alt_codon) = @{Bio::EnsEMBL::Variation::Utils::Sequence::trim_sequences($ref_codon, $alt_codon)};
+        # trim from left
+        while($ref_codon && $alt_codon && substr($ref_codon, 0, 1) eq substr($alt_codon, 0, 1)) {
+        $ref_codon = substr($ref_codon, 1);
+        $alt_codon = substr($alt_codon, 1);
+        }
+        # trim from right
+        while($ref_codon && $alt_codon && substr($ref_codon, -1, 1) eq substr($alt_codon, -1, 1)) {
+        $ref_codon = substr($ref_codon, 0, length($ref_codon) - 1);
+        $alt_codon = substr($alt_codon, 0, length($alt_codon) - 1);
+        }
 
         # if nothing remains of $alt_codon,
         # then it fully matched a part in the middle of $ref_codon
