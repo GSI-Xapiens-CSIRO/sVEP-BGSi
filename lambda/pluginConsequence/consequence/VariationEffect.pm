@@ -781,19 +781,21 @@ sub _get_peptide_alleles {
     if ($reset_frame) {
         $frame = 0;
     }
+    $ref_seq = lc($ref_seq);
     my $alt_seq = $ref_seq;
 
-    if($ref_seq =~"^TGA\$|^TAA\$|^TAG\$"){#This is for stop retained variant where you want to check the original ref for stop
+    if($ref_seq =~ /^TGA$|^TAA$|^TAG$/i){#This is for stop retained variant where you want to check the original ref for stop
       #print("\nSTOP REFFFF - $ref_seq\n");
       $feat->{stop_ref} = $ref_seq;
       $feat->{stop_alt} = $ref_seq;
       substr($feat->{stop_alt}, $var_loc, length $alt_allele) = $alt_allele;
     }
-    if(substr($ref_seq, $var_loc, length $ref_allele) =~ $ref_allele ){
+    if(CORE::fc(substr($ref_seq, $var_loc, length $ref_allele)) =~ CORE::fc($ref_allele) ){
+      substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;  # This is just to set it to uppercase
       substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }elsif($ref_allele eq "-"){
       substr($alt_seq, $var_loc, 0) = $alt_allele;
-    }elsif(substr($ref_seq, $var_loc, length $ref_allele) ne $ref_allele || $alt_allele eq "-"){
+    }elsif(CORE::fc(substr($ref_seq, $var_loc, length $ref_allele)) ne CORE::fc($ref_allele) || $alt_allele eq "-"){
       $feat->{warning} = "REF doesn't match GRCh38 reference at given position";
       substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;
       substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
@@ -815,7 +817,7 @@ sub _get_peptide_alleles {
     my $bases_to_trim = length($ref_seq) - $codon_end - 1;
     my $ref_pep_allele = substr($ref_seq, $codon_start, -$bases_to_trim);
     my $alt_pep_allele = substr($alt_seq, $codon_start, -$bases_to_trim);
-    if($ref_pep_allele =~"^TGA\$|^TAA\$|^TAG\$" && $alt_pep_allele =~"-"){
+    if($ref_pep_allele =~/^TGA$|^TAA$|^TAG$/i && $alt_pep_allele =~"-"){
       $alt_pep_allele = $ref_pep_allele;
     }
     $ref_seq =~ s/-//g;
@@ -853,15 +855,15 @@ sub _get_peptide_alleles {
 
     @alleles = ($ref_pep, $alt_pep);
     $cache->{_get_peptide_alleles} = \@alleles;
-    $feat->{altCodon} = $alt_pep_allele;
-    $feat->{refCodon} = $ref_pep_allele;
+    $feat->{altCodon} = uc($alt_pep_allele);
+    $feat->{refCodon} = uc($ref_pep_allele);
     $feat->{altaa} = $ref_aa;
     $feat->{refaa} = $alt_aa;
     $feat->{codons} = ($ref_pep_allele||"-")."/".($alt_pep_allele||"-");
     $feat->{aa} = $ref_aa eq $alt_aa ? $ref_aa : ($ref_aa||"-")."/".($alt_aa||"-");
 
-    $bvfo->{startRef} = substr($ref_seq, $frame, 3);
-    $bvfo->{startAlt} = substr($alt_seq, $frame, 3);
+    $bvfo->{startRef} = uc(substr($ref_seq, $frame, 3));
+    $bvfo->{startAlt} = uc(substr($alt_seq, $frame, 3));
     $feat->{_variation_effect_feature_cache}->{peptide} = $ref_pep;
     return @{$cache->{_get_peptide_alleles}};
 }
