@@ -1237,6 +1237,7 @@ sub inframe_deletion {
 
         return 0 unless defined $ref_codon;
         return 0 unless length($alt_codon) < length ($ref_codon);
+        return 0 unless ((length($ref_codon) - length($alt_codon)) % 3 == 0);
 
         # simple string match
         return 1 if ($ref_codon =~ /^\Q$alt_codon\E/) || ($ref_codon =~ /\Q$alt_codon\E$/);
