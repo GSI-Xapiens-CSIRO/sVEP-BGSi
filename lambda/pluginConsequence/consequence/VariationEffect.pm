@@ -815,8 +815,8 @@ sub _get_peptide_alleles {
     my $codon_start = $frame + 3 * int(($var_loc-$frame) / 3);
     my $codon_end = $frame + 2 + 3 * int(($var_loc_end-$frame-2) / 3 + 0.9);  # who needs a ceil function?
     my $bases_to_trim = length($ref_seq) - $codon_end - 1;
-    my $ref_pep_allele = substr($ref_seq, $codon_start, -$bases_to_trim);
-    my $alt_pep_allele = substr($alt_seq, $codon_start, -$bases_to_trim);
+    my $ref_pep_allele = substr($ref_seq, $codon_start, -$bases_to_trim || (length($ref_seq)-$codon_start));
+    my $alt_pep_allele = substr($alt_seq, $codon_start, -$bases_to_trim || (length($alt_seq)-$codon_start));
     if($ref_pep_allele =~/^TGA$|^TAA$|^TAG$/i && $alt_pep_allele =~"-"){
       $alt_pep_allele = $ref_pep_allele;
     }
