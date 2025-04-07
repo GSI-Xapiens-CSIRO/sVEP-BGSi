@@ -845,7 +845,7 @@ sub _get_peptide_alleles {
 
 
     my $ref_aa = consequence::CodonTable->translate( $ref_pep_allele, 1);
-    my $alt_aa = consequence::CodonTable->translate( $alt_pep_allele, 1);
+    my $alt_aa = consequence::CodonTable->translate( $alt_pep_allele);
     if(length($alt_pep_allele) % 3 != 0){
       $alt_aa .='X';
     }
