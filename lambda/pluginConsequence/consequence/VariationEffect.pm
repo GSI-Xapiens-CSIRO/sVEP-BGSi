@@ -1493,17 +1493,11 @@ sub frameshift {
 
         return 0 if partial_codon(@_);
 
-        return 0 unless defined $feat->{cdna_coding_start} && defined $feat->{cdna_coding_end};
-
-        my $var_len = $feat->{cdna_coding_end} - $feat->{cdna_coding_start} + 1;
-
-        my $allele_len = $feat->{seq_length};
-
-        # if the allele length is undefined then we can't call a frameshift
-
-        return 0 unless defined $allele_len;
-
-        return abs( $allele_len - $var_len ) % 3;
+        # Trigger calculation of codons if they're not available
+        _get_peptide_alleles(@_) unless defined $feat->{refCodon} && defined $feat->{altCodon};
+        my $refLen = length($feat->{refCodon});
+        my $altLen = length($feat->{altCodon});
+        return abs($refLen - $altLen) % 3;
     }
 
     # structural variant
