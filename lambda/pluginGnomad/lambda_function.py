@@ -4,20 +4,7 @@ import gzip
 import base64
 import hail as hl
 
-# ✅ Explicitly set Java home for Hail (important for AWS Lambda)
-os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-11-amazon-corretto"
-os.environ["PATH"] = f"{os.environ['JAVA_HOME']}/bin:{os.environ['PATH']}"
-
-# ✅ Set Spark configuration for AWS Lambda
-hl.init(
-    spark_conf={
-        "spark.executor.memory": "2g",
-        "spark.driver.memory": "2g",
-        "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-        "spark.sql.files.ignoreCorruptFiles": "true",
-        "spark.sql.execution.arrow.pyspark.enabled": "true",
-    }
-)
+hl.init()
 
 
 def decompress_sns_data(encoded_data: str) -> str:
