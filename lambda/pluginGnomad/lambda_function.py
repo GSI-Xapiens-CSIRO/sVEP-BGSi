@@ -5,10 +5,11 @@ from shared.utils import (
     Orchestrator,
     s3,
     handle_failed_execution,
+    decompress_sns_data,
 )
 
 
-GNOMAD_GENOMES_PATH = os.environ["GNOMAD_GENOMES_PATH"]
+GNOMAD_PUBLIC_CHR1 = os.environ["GNOMAD_PUBLIC_CHR1"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 
 
@@ -19,7 +20,7 @@ def lambda_handler(event, _):
     chrom_mapping = message["mapping"]
     request_id = message["requestId"]
 
-    print("SNS data: ", sns_data)
+    print("SNS data: ", decompress_sns_data(sns_data))
     print("Chrom mapping: ", chrom_mapping)
 
     try:

@@ -334,7 +334,7 @@ module "lambda-pluginGnomad" {
     variables = {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
       SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
-      GNOMAD_GENOMES_S3_PATH        = "s3://gnomad-public-us-east-1/release/4.1/ht/genomes/gnomad.genomes.v4.1.sites.ht"
+      GNOMAD_PUBLIC_CHR1            = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.chr1.vcf.bgz"
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
@@ -607,8 +607,8 @@ module "lambda-qcFigures" {
   source_path            = "${path.module}/lambda/qcFigures"
   tags                   = var.common-tags
   environment_variables = {
-    FILE_LOCATION            = var.data_portal_bucket_name
-    USER_POOL_ID             = var.cognito-user-pool-id
-    HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
+    FILE_LOCATION = var.data_portal_bucket_name
+    USER_POOL_ID  = var.cognito-user-pool-id
+    HTS_S3_HOST   = "s3.${var.region}.amazonaws.com"
   }
 }

@@ -8,6 +8,7 @@ from shared.utils import (
     download_bedfile,
     handle_failed_execution,
     start_function,
+    compress_sns_data,
 )
 
 # Environment variables
@@ -75,20 +76,23 @@ def lambda_handler(event, _):
         new_rows = add_clinvar_columns(rows, chrom_mapping)
         base_filename = orchestrator.temp_file_name
         sns_data = "\n".join("\t".join(row) for row in new_rows)
+
+        compressed_sns_data = compress_sns_data(sns_data)
+
         start_function(
             topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
             base_filename=base_filename,
             message={
-                "snsData": sns_data,
+                "snsData": compressed_sns_data,
                 "mapping": chrom_mapping,
                 "requestId": request_id,
             },
         )
 
-        filename = f"/tmp/{base_filename}.tsv"
-        with open(filename, "w") as tsv_file:
-            tsv_file.write(sns_data)
-        s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
+        # filename = f"/tmp/{base_filename}.tsv"
+        # with open(filename, "w") as tsv_file:
+        #     tsv_file.write(sns_data)
+        # s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
         orchestrator.mark_completed()
     except Exception as e:
         handle_failed_execution(request_id, e)
