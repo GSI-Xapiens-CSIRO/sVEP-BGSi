@@ -563,7 +563,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
 }
 
 #
-# pluginClinvar Lambda Function
+# pluginGnomad Lambda Function
 #
 data "aws_iam_policy_document" "lambda-pluginGnomad" {
   statement {
