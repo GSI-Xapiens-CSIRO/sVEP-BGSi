@@ -70,6 +70,7 @@ def add_gnomad_columns(in_rows, chrom_mapping):
     for in_row in in_rows:
         chrom, positions = in_row[2].split(":")
         row_start, row_end = positions.split("-")
+        alt = in_row[3]
         loc = f"{chrom_mapping.get(chrom, chrom)}:{positions}"
 
         region_lines = get_query_process(chrom, row_start, row_end)

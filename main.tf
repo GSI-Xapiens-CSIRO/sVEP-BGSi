@@ -324,7 +324,7 @@ module "lambda-pluginGnomad" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 24
+  timeout       = 300
   policy = {
     json = data.aws_iam_policy_document.lambda-pluginGnomad.json
   }
