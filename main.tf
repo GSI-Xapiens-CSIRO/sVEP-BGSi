@@ -339,6 +339,7 @@ module "lambda-pluginGnomad" {
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
     }
   }
 
