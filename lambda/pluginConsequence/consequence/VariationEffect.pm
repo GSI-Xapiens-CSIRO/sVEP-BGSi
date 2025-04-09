@@ -739,6 +739,25 @@ sub _get_peptide_alleles {
     my $strand = $feat->{'strand'};
 
     my $seq_length = $feat->{'seq_length'};
+    # Handle the case of deletions that span the end of the CDS
+    # The biological implications of this are uncertain,
+    # So we'll treat as if transcription starts or ends earlier,
+    # rather than going outside the CDS.
+    # The main finding will be splice_region_variant
+    if ($var_loc_end >= $seq_length) {
+        # Deletion spans the end of the CDS
+        my $new_ref_length = length($ref_allele) - $var_loc_end + $seq_length - 1;
+        $ref_allele = substr($ref_allele, 0, $new_ref_length);
+        $alt_allele = substr($alt_allele, 0, $new_ref_length);
+        $var_loc_end = $seq_length - 1;
+    }
+    if ($var_loc < 0) {
+        # Deletion starts before the start of the CDS
+        my $new_ref_length = length($ref_allele) + $var_loc;
+        $ref_allele = substr($ref_allele, -$new_ref_length);
+        $alt_allele = substr($alt_allele, -$new_ref_length);
+        $var_loc = 0;
+    }
     my $trailing_bases = ($seq_length - $frame) % 3;
     # subtracting the length to handle deletions, the -1 and +1 cancel out
     my $rev_var_loc = $seq_length - $var_loc_end - 1;
