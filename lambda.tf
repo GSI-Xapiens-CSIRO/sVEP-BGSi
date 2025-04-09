@@ -222,6 +222,18 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
 }
 
 #
+# pluginGnomad Lambda Function
+#
+resource "aws_lambda_permission" "plugin_plugin_gnomad_executor_invoke_permission" {
+  statement_id  = "SNSPluginGnomadExecutorAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-pluginGnomadExecutor.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.pluginGnomadExecutor.arn
+
+}
+
+#
 # vcfstatsGraphic Lambda Function
 #
 resource "aws_lambda_permission" "qc_figures_invoke_permission" {

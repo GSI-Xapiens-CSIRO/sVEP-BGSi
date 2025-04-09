@@ -68,6 +68,16 @@ resource "aws_sns_topic_subscription" "pluginGnomad" {
   endpoint  = module.lambda-pluginGnomad.function_arn
 }
 
+resource "aws_sns_topic" "pluginGnomadExecutor" {
+  name = "svep-backend-pluginGnomadExecutor"
+}
+
+resource "aws_sns_topic_subscription" "pluginGnomadExecutor" {
+  topic_arn = aws_sns_topic.pluginGnomadExecutor.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-pluginGnomadExecutor.function_arn
+}
+
 resource "aws_sns_topic" "concat" {
   name = "svep-backend-concat"
 }
