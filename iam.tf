@@ -590,6 +590,7 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
     actions = [
       "s3:DeleteObject",
       "s3:GetObject",
+      "s3:PutObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
