@@ -140,46 +140,6 @@ sub handle {
     };
 }
 
-sub create_temp_file {
-  my ($nextTempFile) = @_;
-  print("Creating file: $nextTempFile\n");
-  system("aws", "s3api", "put-object", "--bucket", $tempLocation, "--key",  $nextTempFile, "--content-length", "0");
-}
-
-sub sns_publish {
-  my ($topicArn, $message) = @_;
-  my $jsonMessage = to_json($message);
-  # In order to get around command-line character limits, we must pass the message as a file
-  # https://github.com/aws/aws-cli/issues/1314#issuecomment-515674161
-  my $filename = "/tmp/message.json";
-  print("Saving message to local file $filename\n");
-  open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
-  print $fh $jsonMessage;
-  close $fh;
-  simple_truncated_print("Calling SNS Publish with topicArn: $topicArn and message: $jsonMessage\n");
-  system("aws", "sns", "publish", "--topic-arn", $topicArn, "--message", "file://$filename");
-}
-
-sub start_function {
-  my ($topicArn, $baseFilename, $message) = @_;
-  my $functionName = (split(":", $topicArn))[-1];
-  my $fileName = $baseFilename."_".$functionName;
-  $message->{'tempFileName'} = $fileName;
-  create_temp_file($fileName);
-  sns_publish($topicArn, $message);
-}
-
-sub simple_truncated_print {
-  # This doesn't need to be precise, just good enough
-  my $maxLength = 1000;
-  my ($string) = @_;
-  my $toRemove = length($string) - $maxLength;
-  if($toRemove > 0){
-    $string = substr($string, 0, $maxLength / 2)."<$toRemove bytes>".substr($string, -$maxLength / 2);
-  }
-  print($string);
-}
-
 sub handle_failed_execution {
     my ($request_id, $failed_step, $error_message) = @_;
 
