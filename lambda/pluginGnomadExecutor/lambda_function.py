@@ -3,15 +3,20 @@ import os
 import subprocess
 
 from shared.utils import (
-    Orchestrator,
-    s3,
     handle_failed_execution,
     decompress_sns_data,
+    compress_sns_data,
+    get_sns_event,
+    sns_publish,
 )
 
 
 GNOMAD_PUBLIC_CHR1 = os.environ["GNOMAD_PUBLIC_CHR1"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
+PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
+PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN = os.environ[
+    "PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN"
+]
 
 base_url = "https://gnomad-public-us-east-1.s3.amazonaws.com"
 vcf_key = "release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.chr11.vcf.bgz"
@@ -55,70 +60,98 @@ def get_query_process(chrom, start, end):
 
     # Debug log if output is empty
     if not stdout.strip():
-        print(f"[INFO] No variant found in region {chrom}:{start}-{end}")
+        print(f"[GNOMAD - INFO] No variant found in region {chrom}:{start}-{end}")
 
     return stdout.splitlines()
 
 
-def add_gnomad_columns(in_rows, chrom_mapping):
-    num_rows_hit = 0
+def add_gnomad_columns(in_rows, chrom_mapping, index):
+    # Check if index is out of bounds
+    if index >= len(in_rows):
+        print(
+            f"[GNOMAD - INFO] Index {index} out of bounds for in_rows length {len(in_rows)}"
+        )
+        return in_rows, index
 
-    print(f"[gnomad in_rows]: {in_rows}")
+    in_row = in_rows[index]
+    chrom, positions = in_row[2].split(":")
+    row_start, row_end = positions.split("-")
+    alt = in_row[3]
+    loc = f"{chrom_mapping.get(chrom, chrom)}:{positions}"
 
-    results = []
+    print(f"[GNOMAD - INFO] running with chrom: {chrom}")
 
-    for in_row in in_rows:
-        chrom, positions = in_row[2].split(":")
-        row_start, row_end = positions.split("-")
-        alt = in_row[3]
-        loc = f"{chrom_mapping.get(chrom, chrom)}:{positions}"
+    region_lines = get_query_process(chrom, row_start, row_end)
 
-        region_lines = get_query_process(chrom, row_start, row_end)
+    gnomad_info = ["."] * 10  # Default fallback values
 
-        # Default to placeholder values if nothing matched
-        gnomad_info = ["."] * 10
+    for line in region_lines:
+        info_values = line.strip().split("\t")
+        if len(info_values) == 10:
+            gnomad_info = info_values
+            break
 
-        for line in region_lines:
-            print(f"[gnomad line]: {line}")
-            # Assuming region_lines is a list of tab-separated values
-            info_values = line.strip().split("\t")
-            if len(info_values) == 10:
-                gnomad_info = info_values
-                num_rows_hit += 1
-                break
+    # Extend the row at the given index
+    in_rows[index] = in_row + gnomad_info
 
-        # Append gnomad_info to the original row
-        extended_row = in_row + gnomad_info
-        results.append(extended_row)
-
-    return results
+    # If last index, keep it the same
+    if index == len(in_rows) - 1:
+        return in_rows, index
+    else:
+        return in_rows, index + 1
 
 
 def lambda_handler(event, _):
-    orchestrator = Orchestrator(event)
-    message = orchestrator.message
+    message = get_sns_event(event)
     sns_data = message["snsData"]
     chrom_mapping = message["mapping"]
     request_id = message["requestId"]
+    sns_index = message["snsIndex"]
+    last_index = message["lastIndex"]
+
+    print(f"[GNOMAD - INFO] sns_index: {sns_index}")
+    print(f"[GNOMAD - INFO] last_index: {last_index}")
 
     print(f"[Gnomad] Request ID: {request_id}")
-
-    sns_data = decompress_sns_data(sns_data)
-
     try:
+        sns_data = decompress_sns_data(sns_data)
+        print(f"[GNOMAD - INFO] sns_data: {json.dumps(sns_data)}")
+
         rows = [row.split("\t") for row in sns_data.split("\n") if row]
+        print(f"[GNOMAD - INFO] rows last_index: {last_index}")
 
-        new_rows = add_gnomad_columns(rows, chrom_mapping)
-
-        base_filename = orchestrator.temp_file_name
+        new_rows, next_index = add_gnomad_columns(rows, chrom_mapping, sns_index)
         sns_data = "\n".join("\t".join(row) for row in new_rows)
+        compressed_sns_data = compress_sns_data(sns_data)
 
-        print(f"[Gnomad] SNS Data: {json.dumps(sns_data)}")
+        if sns_index == last_index:
+            # Finish execution when it's last index
+            print("[GNOMAD - INFO] Finished execution and upload to s3 Svep Region")
+            sns_publish(
+                PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN,
+                message={
+                    "snsData": compressed_sns_data,
+                    "mapping": chrom_mapping,
+                    "requestId": request_id,
+                    "isCompleted": True,
+                },
+            )
 
-        filename = f"/tmp/{base_filename}.tsv"
-        with open(filename, "w") as tsv_file:
-            tsv_file.write(sns_data)
-        s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
-        orchestrator.mark_completed()
+        else:
+            # Re running lambda function with next index
+            print(f"[GNOMAD - INFO] re running lambda with next_index: {next_index}")
+            compressed_sns_data = compress_sns_data(sns_data)
+
+            sns_publish(
+                PLUGIN_GNOMAD_SNS_TOPIC_ARN,
+                message={
+                    "snsData": compressed_sns_data,
+                    "mapping": chrom_mapping,
+                    "requestId": request_id,
+                    "snsIndex": next_index,
+                    "lastIndex": last_index,
+                },
+            )
+
     except Exception as e:
         handle_failed_execution(request_id, e)

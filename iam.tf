@@ -655,7 +655,8 @@ data "aws_iam_policy_document" "lambda-pluginGnomadExecutor" {
     ]
     resources = [
       aws_sns_topic.sendJobEmail.arn,
-      aws_sns_topic.pluginGnomad.arn
+      aws_sns_topic.pluginGnomad.arn,
+      aws_sns_topic.pluginGnomadExecutor.arn
     ]
   }
 
