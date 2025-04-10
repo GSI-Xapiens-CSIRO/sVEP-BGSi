@@ -122,6 +122,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
     actions = [
       "s3:PutObject",
       "s3:DeleteObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
@@ -194,6 +195,7 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
     actions = [
       "s3:PutObject",
       "s3:DeleteObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
@@ -268,6 +270,7 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
     actions = [
       "s3:PutObject",
       "s3:DeleteObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
@@ -348,6 +351,7 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
     actions = [
       "s3:PutObject",
       "s3:DeleteObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
@@ -427,6 +431,7 @@ data "aws_iam_policy_document" "lambda-pluginUpdownstream" {
   statement {
     actions = [
       "s3:DeleteObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
@@ -506,6 +511,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
   statement {
     actions = [
       "s3:DeleteObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
