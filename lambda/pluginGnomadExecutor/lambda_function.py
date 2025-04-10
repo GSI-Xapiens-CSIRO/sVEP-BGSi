@@ -9,6 +9,7 @@ from shared.utils import (
     compress_sns_data,
     get_sns_event,
     start_function,
+    Timer,
 )
 
 
@@ -66,7 +67,7 @@ def get_query_process(chrom, start, end):
     return stdout.splitlines()
 
 
-def add_gnomad_columns(in_rows, chrom_mapping, index):
+def add_gnomad_columns(in_rows, ref_chrom, index):
     # Check if index is out of bounds
     if index >= len(in_rows):
         print(
@@ -77,12 +78,10 @@ def add_gnomad_columns(in_rows, chrom_mapping, index):
     in_row = in_rows[index]
     chrom, positions = in_row[2].split(":")
     row_start, row_end = positions.split("-")
-    alt = in_row[3]
-    loc = f"{chrom_mapping.get(chrom, chrom)}:{positions}"
 
-    print(f"[GNOMAD - INFO] running with chrom: {chrom}")
+    print(f"[GNOMAD - INFO] running with chrom: {ref_chrom}")
 
-    region_lines = get_query_process(chrom, row_start, row_end)
+    region_lines = get_query_process(ref_chrom, row_start, row_end)
 
     gnomad_info = ["."] * 10  # Default fallback values
 
@@ -107,10 +106,10 @@ def lambda_handler(event, _):
 
     message = get_sns_event(event)
     sns_data = message["snsData"]
-    chrom_mapping = message["mapping"]
     request_id = message["requestId"]
     sns_index = message["snsIndex"]
     last_index = message["lastIndex"]
+    ref_chrom = message["refChrom"]
 
     print(f"[GNOMAD - INFO] sns_index: {sns_index}")
     print(f"[GNOMAD - INFO] last_index: {last_index}")
@@ -123,7 +122,7 @@ def lambda_handler(event, _):
         rows = [row.split("\t") for row in sns_data.split("\n") if row]
         print(f"[GNOMAD - INFO] rows last_index: {last_index}")
 
-        new_rows, next_index = add_gnomad_columns(rows, chrom_mapping, sns_index)
+        new_rows, next_index = add_gnomad_columns(rows, ref_chrom, sns_index)
         sns_data = "\n".join("\t".join(row) for row in new_rows)
         compressed_sns_data = compress_sns_data(sns_data)
         base_filename = orchestrator.temp_file_name
@@ -138,10 +137,11 @@ def lambda_handler(event, _):
                 base_filename=base_filename,
                 message={
                     "snsData": compressed_sns_data,
-                    "mapping": chrom_mapping,
+                    "refChrom": ref_chrom,
                     "requestId": request_id,
                     "isCompleted": True,
                 },
+                resend=True,
             )
 
         else:
@@ -154,11 +154,12 @@ def lambda_handler(event, _):
                 base_filename=base_filename,
                 message={
                     "snsData": compressed_sns_data,
-                    "mapping": chrom_mapping,
+                    "refChrom": ref_chrom,
                     "requestId": request_id,
                     "snsIndex": next_index,
                     "lastIndex": last_index,
                 },
+                resend=True,
             )
 
         orchestrator.mark_completed()
