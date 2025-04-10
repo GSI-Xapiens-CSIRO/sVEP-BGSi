@@ -35,11 +35,11 @@ def get_stream_direction(pos, metadata):
     return "up" if positive_strand == before else "down"
 
 
-def query_updownstream(chrom, pos, alt, transcripts, chrom_mapping):
+def query_updownstream(chrom, pos, alt, transcripts, ref_chrom):
     up = int(pos) - 5000
     down = int(pos) + 5000
     results = []
-    loc = f"{chrom_mapping[chrom]}:{up}-{down}"
+    loc = f"{ref_chrom}:{up}-{down}"
     local_file = f"/tmp/{REFERENCE_GENOME}"
     args = [
         "tabix",
@@ -107,7 +107,7 @@ def lambda_handler(event, _):
     orchestrator = Orchestrator(event)
     message = orchestrator.message
     sns_data = message["snsData"]
-    chrom_mapping = message["mapping"]
+    ref_chrom = message["refChrom"]
     request_id = message["requestId"]
     try:
         write_data = []
@@ -147,7 +147,7 @@ def lambda_handler(event, _):
                     transcripts = []
             if transcripts:
                 results = query_updownstream(
-                    chrom, pos, alt, list(set(transcripts)), chrom_mapping
+                    chrom, pos, alt, list(set(transcripts)), ref_chrom
                 )
             if results:
                 write_data.append(results)

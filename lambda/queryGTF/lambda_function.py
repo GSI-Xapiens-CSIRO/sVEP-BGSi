@@ -29,13 +29,13 @@ PAYLOAD_SIZE = 260000
 download_vcf(BUCKET_NAME, REFERENCE_GENOME)
 
 
-def overlap_feature(request_id, all_coords, base_id, timer, chrom_mapping):
+def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
     results = []
     tot_size = 0
     counter = 0
     for idx, coord in enumerate(all_coords):
         chrom, pos, ref, alt = coord.split("\t")
-        loc = f"{chrom_mapping[chrom]}:{pos}-{pos}"
+        loc = f"{ref_chrom}:{pos}-{pos}"
         local_file = f"/tmp/{REFERENCE_GENOME}"
         args = ["tabix", local_file, loc]
         query_process = subprocess.Popen(
@@ -62,24 +62,24 @@ def overlap_feature(request_id, all_coords, base_id, timer, chrom_mapping):
                 counter += 1
 
                 send_data_to_plugins(
-                    request_id, base_id, counter, results, chrom_mapping
+                    request_id, base_id, counter, results, ref_chrom
                 )
-                send_data_to_self(request_id, base_id, all_coords[idx:], chrom_mapping)
+                send_data_to_self(request_id, base_id, all_coords[idx:], ref_chrom)
                 return
         else:
             counter += 1
-            send_data_to_plugins(request_id, base_id, counter, results, chrom_mapping)
+            send_data_to_plugins(request_id, base_id, counter, results, ref_chrom)
             if timer.out_of_time():
-                send_data_to_self(request_id, base_id, all_coords[idx:], chrom_mapping)
+                send_data_to_self(request_id, base_id, all_coords[idx:], ref_chrom)
                 return
             else:
                 results = [data]
                 tot_size = cur_size
     counter += 1
-    send_data_to_plugins(request_id, base_id, counter, results, chrom_mapping)
+    send_data_to_plugins(request_id, base_id, counter, results, ref_chrom)
 
 
-def send_data_to_plugins(request_id, base_id, counter, results, chrom_mapping):
+def send_data_to_plugins(request_id, base_id, counter, results, ref_chrom):
     for topic in TOPICS:
         start_function(
             topic_arn=topic,
@@ -87,12 +87,12 @@ def send_data_to_plugins(request_id, base_id, counter, results, chrom_mapping):
             message={
                 "requestId": request_id,
                 "snsData": results,
-                "mapping": chrom_mapping,
+                "refChrom": ref_chrom,
             },
         )
 
 
-def send_data_to_self(request_id, base_id, remaining_coords, chrom_mapping):
+def send_data_to_self(request_id, base_id, remaining_coords, ref_chrom):
     print("Less Time remaining - call itself.")
     start_function(
         topic_arn=QUERY_GTF_SNS_TOPIC_ARN,
@@ -100,7 +100,7 @@ def send_data_to_self(request_id, base_id, remaining_coords, chrom_mapping):
         message={
             "requestId": request_id,
             "coords": remaining_coords,
-            "mapping": chrom_mapping,
+            "refChrom": ref_chrom,
         },
         resend=True,
     )
@@ -112,10 +112,10 @@ def lambda_handler(event, context):
     timer = Timer(context, MILLISECONDS_BEFORE_SPLIT)
     request_id = message["requestId"]
     coords = message["coords"]
-    chrom_mapping = message["mapping"]
+    ref_chrom = message["refChrom"]
     try:
         base_id = orchestrator.temp_file_name
-        overlap_feature(request_id, coords, base_id, timer, chrom_mapping)
+        overlap_feature(request_id, coords, base_id, timer, ref_chrom)
         orchestrator.mark_completed()
     except Exception as e:
         handle_failed_execution(request_id, e)

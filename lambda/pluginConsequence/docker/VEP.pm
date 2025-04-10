@@ -115,13 +115,12 @@ sub handle {
     my @data = $message->{'snsData'};
     my $request_id = $message->{'requestId'};
     my $tempFileName = $message->{'tempFileName'};
-    my $chrom_mapping = $message->{'mapping'};
+    my $refChrom = $message->{'refChrom'};
     print("tempFileName is - $tempFileName\n");
     #############################################
 
     try {
-      my $chr = $data[0][0]->{'chrom'};
-      my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
+      my $fasta = $fastaBase.'.'.$refChrom.'.fa.bgz';
       print "Copying fasta reference files.\n";
       system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$fasta*' 1>/dev/null");
       print "Copying splice reference files.\n";
@@ -133,7 +132,7 @@ sub handle {
           if ( scalar(@{$line->{'data'}}) == 1 && @{$line->{'data'}}[0] eq ''){
             next;
           }
-          my $vep = parse_vcf($line, $chrom_mapping);
+          my $vep = parse_vcf($line, $refChrom);
           if(length $vep){
             push @results,$vep;
           }
@@ -141,7 +140,7 @@ sub handle {
       }
       my %outMessage = (
         'snsData' => join("\n", @results),
-        'mapping' => $chrom_mapping,
+        'refChrom' => $refChrom,
         'requestId' => $request_id,
       );
       start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
@@ -265,7 +264,7 @@ sub simple_truncated_print {
 
 # parse a line of VCF input into a variation feature object
 sub parse_vcf {
-    my ($line, $chrom_mapping) = @_;
+    my ($line, $refChrom) = @_;
     #print Dumper $line;
     my ($chr, $start, $end, $ref, $alt) = ($line->{'chrom'}, $line->{'pos'}, $line->{'pos'}, $line->{'ref'}, $line->{'alt'});
     #print("$chr\t$start\n");
@@ -427,7 +426,7 @@ sub parse_vcf {
         my $file = "/tmp/".$spliceFile;
         my $intronStart = $start - 8;
         my $intronEnd = $start + 8;
-        my $location = $chrom_mapping->{$chr}.":".$intronStart."-".$intronEnd;
+        my $location = $refChrom.":".$intronStart."-".$intronEnd;
         $intron_result =  `./tabix $file $location`;
         #print("\n Intron result = $intron_result")
       }
@@ -451,12 +450,12 @@ sub parse_vcf {
         my $intron_boundary = 0;
         my $splice_region_variant =0;
         if(exists($info{'CDS'})){
-          my $location = $chrom_mapping->{$chr}.':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
-          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chrom_mapping->{$chr}.'.fa.bgz';
+          my $location = $refChrom.':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
+          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$refChrom.'.fa.bgz';
           my $file = '/tmp/'.$fasta;
           $vf->{'fasta_file'} = $file;
           $vf->{'gtf_file'} = "/tmp/".$spliceFile;
-          $vf->{'reference_chr'} = $chrom_mapping->{$chr};
+          $vf->{'reference_chr'} = $refChrom;
           my @result = `./samtools faidx $file $location`;
           shift @result;
           $seq = join "", @result;
@@ -603,7 +602,7 @@ sub parse_vcf {
         }
         if($rows[1] eq "mirbase"){
           #my $intron_loc = $start;
-          my $location = "chr".$chrom_mapping->{$chr}.":".$start."-".$start;
+          my $location = "chr".$refChrom.":".$start."-".$start;
           my $mirna_result =  `./tabix $mirnaLocalFile $location`;
           if(length $mirna_result){
             $tr->{within_mirna} = 1;

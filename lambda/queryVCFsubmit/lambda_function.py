@@ -13,7 +13,7 @@ def lambda_handler(event, _):
     message = orchestrator.message
     request_id = message["requestId"]
     total_coords = message["coords"]
-    chrom_mapping = message["mapping"]
+    ref_chrom = message["refChrom"]
     try:
         print(f"length = {len(total_coords)}")
         base_filename = orchestrator.temp_file_name
@@ -21,7 +21,7 @@ def lambda_handler(event, _):
             start_function(
                 topic_arn=QUERY_GTF_SNS_TOPIC_ARN,
                 base_filename=f"{base_filename}_{idx}",
-                message={"coords": total_coords[idx], "mapping": chrom_mapping},
+                message={"coords": total_coords[idx], "refChrom": ref_chrom},
             )
         orchestrator.mark_completed()
     except Exception as e:

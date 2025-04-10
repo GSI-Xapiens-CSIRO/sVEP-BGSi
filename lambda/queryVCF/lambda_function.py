@@ -37,7 +37,7 @@ def get_query_process(location, chrom, start, end):
     )
 
 
-def submit_query_gtf(request_id, query_process, base_id, timer, chrom_mapping):
+def submit_query_gtf(request_id, query_process, base_id, timer, ref_chrom):
     regions_list = query_process.stdout.read().splitlines()
     total_coords = [
         regions_list[x : x + RECORDS_PER_SAMPLE]
@@ -60,7 +60,7 @@ def submit_query_gtf(request_id, query_process, base_id, timer, chrom_mapping):
                     message={
                         "requestId": request_id,
                         "coords": remaining_coords[i : i + BATCH_CHUNK_SIZE],
-                        "mapping": chrom_mapping,
+                        "refChrom": ref_chrom,
                     },
                 )
             break
@@ -71,7 +71,7 @@ def submit_query_gtf(request_id, query_process, base_id, timer, chrom_mapping):
                 message={
                     "requestId": request_id,
                     "coords": total_coords[idx],
-                    "mapping": chrom_mapping,
+                    "refChrom": ref_chrom,
                 },
             )
 
@@ -106,6 +106,7 @@ def lambda_handler(event, context):
                 break
             else:
                 chrom, start_str = region.split(":")
+                ref_chrom = chrom_mapping[chrom]
                 region_base_id = f"{base_id}_{chrom}_{start_str}"
                 start = round(1000000 * float(start_str) + 1)
                 end = start + round(1000000 * SLICE_SIZE_MBP - 1)
@@ -115,7 +116,7 @@ def lambda_handler(event, context):
                     query_process,
                     region_base_id,
                     second_timer,
-                    chrom_mapping,
+                    ref_chrom,
                 )
         orchestrator.mark_completed()
     except Exception as e:
