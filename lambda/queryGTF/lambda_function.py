@@ -44,7 +44,7 @@ def overlap_feature(request_id, all_coords, base_id, timer, chrom_mapping):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd="/tmp",
-            encoding="ascii",
+            encoding="utf-8",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
         data = {

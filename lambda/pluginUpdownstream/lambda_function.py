@@ -51,7 +51,7 @@ def query_updownstream(chrom, pos, alt, transcripts, chrom_mapping):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd="/tmp",
-        encoding="ascii",
+        encoding="utf-8",
     )
     main_data = query_process.stdout.read().rstrip("\n").split("\n")
     for data in main_data:

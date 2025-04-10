@@ -40,7 +40,7 @@ def add_clinvar_columns(in_rows, chrom_mapping):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd="/tmp",
-            encoding="ascii",
+            encoding="utf-8",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
         is_matched = False
