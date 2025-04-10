@@ -3,11 +3,12 @@ import os
 import subprocess
 
 from shared.utils import (
+    Orchestrator,
     handle_failed_execution,
     decompress_sns_data,
     compress_sns_data,
     get_sns_event,
-    sns_publish,
+    start_function,
 )
 
 
@@ -102,6 +103,8 @@ def add_gnomad_columns(in_rows, chrom_mapping, index):
 
 
 def lambda_handler(event, _):
+    orchestrator = Orchestrator(event)
+
     message = get_sns_event(event)
     sns_data = message["snsData"]
     chrom_mapping = message["mapping"]
@@ -123,12 +126,16 @@ def lambda_handler(event, _):
         new_rows, next_index = add_gnomad_columns(rows, chrom_mapping, sns_index)
         sns_data = "\n".join("\t".join(row) for row in new_rows)
         compressed_sns_data = compress_sns_data(sns_data)
+        base_filename = orchestrator.temp_file_name
 
         if sns_index == last_index:
             # Finish execution when it's last index
             print("[GNOMAD - INFO] Finished execution and upload to s3 Svep Region")
-            sns_publish(
-                PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN,
+            base_filename = orchestrator.temp_file_name
+
+            start_function(
+                topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
+                base_filename=base_filename,
                 message={
                     "snsData": compressed_sns_data,
                     "mapping": chrom_mapping,
@@ -142,8 +149,9 @@ def lambda_handler(event, _):
             print(f"[GNOMAD - INFO] re running lambda with next_index: {next_index}")
             compressed_sns_data = compress_sns_data(sns_data)
 
-            sns_publish(
-                PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN,
+            start_function(
+                topic_arn=PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN,
+                base_filename=base_filename,
                 message={
                     "snsData": compressed_sns_data,
                     "mapping": chrom_mapping,
@@ -152,6 +160,8 @@ def lambda_handler(event, _):
                     "lastIndex": last_index,
                 },
             )
+
+        orchestrator.mark_completed()
 
     except Exception as e:
         handle_failed_execution(request_id, e)
