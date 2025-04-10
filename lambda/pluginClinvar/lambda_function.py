@@ -21,14 +21,14 @@ os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 download_bedfile(BUCKET_NAME, CLINVAR_REFERENCE)
 
 
-def add_clinvar_columns(in_rows, chrom_mapping):
+def add_clinvar_columns(in_rows, ref_chrom):
     num_rows_hit = 0
     results = []
     for in_row in in_rows:
         chrom, positions = in_row[2].split(":")
         row_start, row_end = positions.split("-")
         alt = in_row[3]
-        loc = f"{chrom_mapping[chrom]}:{positions}"
+        loc = f"{ref_chrom}:{positions}"
         local_file = f"/tmp/{CLINVAR_REFERENCE}"
         args = [
             "tabix",
@@ -67,12 +67,12 @@ def lambda_handler(event, _):
     orchestrator = Orchestrator(event)
     message = orchestrator.message
     sns_data = message["snsData"]
-    chrom_mapping = message["mapping"]
+    ref_chrom = message["refChrom"]
     request_id = message["requestId"]
 
     try:
         rows = [row.split("\t") for row in sns_data.split("\n") if row]
-        new_rows = add_clinvar_columns(rows, chrom_mapping)
+        new_rows = add_clinvar_columns(rows, ref_chrom)
         base_filename = orchestrator.temp_file_name
         sns_data = "\n".join("\t".join(row) for row in new_rows)
         # start_function(
@@ -80,7 +80,7 @@ def lambda_handler(event, _):
         #     base_filename=base_filename,
         #     message={
         #         "snsData": sns_data,
-        #         "mapping": chrom_mapping,
+        #         "refChrom": ref_chrom,
         #     },
         # )
         # TODO Delete upload result function to SVEP_REGIONS (Latest plugin will upload the result)
