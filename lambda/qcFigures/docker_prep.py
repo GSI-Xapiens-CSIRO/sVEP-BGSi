@@ -3,7 +3,7 @@ import shutil
 import hashlib
 from pathlib import Path
 
-DIRECTORY = str(Path(__file__).resolve().parent / "docker")
+DIRECTORY = str(Path(__file__).resolve().parent)
 
 def sha1_of_file(filepath: str):
     sha = hashlib.sha1()
