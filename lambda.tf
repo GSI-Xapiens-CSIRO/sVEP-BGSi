@@ -95,17 +95,6 @@ resource "aws_lambda_permission" "plugin_clinvar_invoke_permission" {
 
 
 #
-# pluginUpdownstream Lambda Function
-#
-resource "aws_lambda_permission" "plugin_updownstream_invoke_permission" {
-  statement_id  = "SNSPluginUpdownstreamAllowInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = module.lambda-pluginUpdownstream.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.pluginUpdownstream.arn
-}
-
-#
 # concat Lambda Function
 #
 resource "aws_lambda_permission" "concat_invoke_permission" {

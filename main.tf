@@ -187,7 +187,6 @@ module "lambda-queryGTF" {
       SVEP_TEMP                         = aws_s3_bucket.svep-temp.bucket
       REFERENCE_GENOME                  = "sorted_filtered_${var.gtf_file_base}.gtf.bgz"
       PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN  = aws_sns_topic.pluginConsequence.arn
-      PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN = aws_sns_topic.pluginUpdownstream.arn
       QUERY_GTF_SNS_TOPIC_ARN           = aws_sns_topic.queryGTF.arn
       DYNAMO_CLINIC_JOBS_TABLE          = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA     = var.svep-job-email-lambda-function-arn
@@ -238,42 +237,6 @@ module "lambda-pluginConsequence" {
     USER_POOL_ID                  = var.cognito-user-pool-id
     HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
   }
-}
-
-#
-# pluginUpdownstream Lambda Function
-#
-module "lambda-pluginUpdownstream" {
-  source        = "github.com/bhosking/terraform-aws-lambda"
-  function_name = "svep-backend-pluginUpdownstream"
-  description   = "Write upstream and downstream gene variant to temp bucket."
-  handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.12"
-  memory_size   = 2048
-  timeout       = 24
-  policy = {
-    json = data.aws_iam_policy_document.lambda-pluginUpdownstream.json
-  }
-  source_path = "${path.module}/lambda/pluginUpdownstream"
-  tags        = var.common-tags
-  environment = {
-    variables = {
-      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
-      SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
-      REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
-      REFERENCE_GENOME              = "transcripts_${var.gtf_file_base}.gtf.bgz"
-      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
-      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
-      USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
-      HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
-    }
-  }
-
-  layers = [
-    local.binaries_layer,
-    local.python_modules_layer,
-  ]
 }
 
 #
