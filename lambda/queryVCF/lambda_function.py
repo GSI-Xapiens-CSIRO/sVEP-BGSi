@@ -33,7 +33,7 @@ def get_query_process(location, chrom, start, end):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd="/tmp",
-        encoding="ascii",
+        encoding="utf-8",
     )
 
 

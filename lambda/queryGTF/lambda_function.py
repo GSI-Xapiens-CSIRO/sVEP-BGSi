@@ -20,7 +20,6 @@ QUERY_GTF_SNS_TOPIC_ARN = os.environ["QUERY_GTF_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 TOPICS = [
     PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN,
-    PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN,
 ]
 
 MILLISECONDS_BEFORE_SPLIT = 4000
@@ -44,7 +43,7 @@ def overlap_feature(request_id, all_coords, base_id, timer, chrom_mapping):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd="/tmp",
-            encoding="ascii",
+            encoding="utf-8",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
         data = {
