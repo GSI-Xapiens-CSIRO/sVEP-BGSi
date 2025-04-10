@@ -143,7 +143,7 @@ def lambda_handler(event, _):
             compressed_sns_data = compress_sns_data(sns_data)
 
             sns_publish(
-                PLUGIN_GNOMAD_SNS_TOPIC_ARN,
+                PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN,
                 message={
                     "snsData": compressed_sns_data,
                     "mapping": chrom_mapping,

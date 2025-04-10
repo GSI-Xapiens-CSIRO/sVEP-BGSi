@@ -332,14 +332,15 @@ module "lambda-pluginGnomad" {
   tags        = var.common-tags
   environment = {
     variables = {
-      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
-      SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
-      GNOMAD_PUBLIC_CHR1            = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.chr1.vcf.bgz"
-      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
-      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
-      USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
-      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
+      SVEP_TEMP                            = aws_s3_bucket.svep-temp.bucket
+      SVEP_REGIONS                         = aws_s3_bucket.svep-regions.bucket
+      GNOMAD_PUBLIC_CHR1                   = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.chr1.vcf.bgz"
+      DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA        = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                         = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN                   = aws_sns_topic.sendJobEmail.arn
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN          = aws_sns_topic.pluginGnomad.arn
+      PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN = aws_sns_topic.pluginGnomadExecutor.arn
     }
   }
 
