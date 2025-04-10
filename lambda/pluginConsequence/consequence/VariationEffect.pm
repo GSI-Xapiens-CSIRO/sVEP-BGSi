@@ -1514,6 +1514,7 @@ sub frameshift {
 
         # Trigger calculation of codons if they're not available
         _get_peptide_alleles(@_) unless defined $feat->{refCodon} && defined $feat->{altCodon};
+        return 0 unless defined $feat->{refCodon} && defined $feat->{altCodon};  # _get_pepitide_alleles() didn't work
         my $refLen = length($feat->{refCodon});
         my $altLen = length($feat->{altCodon});
         return abs($refLen - $altLen) % 3;
