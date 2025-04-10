@@ -1,6 +1,7 @@
 import subprocess
 import os
 import boto3
+import json
 from uuid import uuid4
 from shared.apiutils import bad_request, bundle_response
 from shared.utils import get_sns_event, generate_presigned_get_url
@@ -33,15 +34,20 @@ def get_result_type(file_name):
 
 
 def lambda_handler(event, context):
-    message = get_sns_event(event)
-    project_name = message["project"]
-    file_name = message["file_name"]
-    input_vcf_file = f"/projects/{project_name}/project-files/{file_name}"
-    input_dir = "/tmp/input"
-    output_dir = "/tmp/output"
-    os.makedirs(output_dir, exist_ok=True)
+    event_body = event.get("body")
+
+    if not event_body:
+        return bad_request("No body sent with request.")
 
     try:
+        body_dict = json.loads(event_body)
+        project_name = body_dict["projectName"]
+        file_name = body_dict["fileName"]
+        input_vcf_file = f"/projects/{project_name}/project-files/{file_name}"
+        input_dir = "/tmp/input"
+        output_dir = "/tmp/output"
+        os.makedirs(output_dir, exist_ok=True)
+
         response = s3_client.list_objects_v2(
             Bucket=BUCKET_NAME,
             Prefix=f"projects/{project_name}/qc-figures/{file_name}/",
