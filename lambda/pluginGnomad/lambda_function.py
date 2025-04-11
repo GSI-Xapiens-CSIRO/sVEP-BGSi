@@ -17,6 +17,7 @@ PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
 MILLISECONDS_BEFORE_SPLIT = 4000
 base_url = "https://gnomad-public-us-east-1.s3.amazonaws.com"
 
+
 def get_query_process(chrom, start, end):
     # Ensure chromosome is prefixed correctly
     if not chrom.startswith("chr"):
@@ -59,6 +60,7 @@ def get_query_process(chrom, start, end):
 
     return stdout.splitlines()
 
+
 def add_gnomad_columns(in_rows, ref_chrom, index):
     # Check if index is out of bounds
     if index >= len(in_rows):
@@ -75,7 +77,7 @@ def add_gnomad_columns(in_rows, ref_chrom, index):
 
     region_lines = get_query_process(ref_chrom, row_start, row_end)
 
-    gnomad_info = ["."] * 10 
+    gnomad_info = ["."] * 10
 
     for line in region_lines:
         info_values = line.strip().split("\t")
@@ -92,7 +94,8 @@ def add_gnomad_columns(in_rows, ref_chrom, index):
     else:
         return in_rows, index + 1
 
-def lambda_handler(event, context):
+
+def lambda_handler(event):
     orchestrator = Orchestrator(event)
     message = orchestrator.message
 
@@ -118,7 +121,7 @@ def lambda_handler(event, context):
         last_index = 2
 
         if sns_index == last_index:
-             # Finish execution when it's last index
+            # Finish execution when it's last index
             print(f"[GNOMAD - INFO] Completed")
 
             filename = f"/tmp/{base_filename}.tsv"
