@@ -1171,36 +1171,36 @@ data "aws_iam_policy_document" "lambda-sendJobEmail" {
 #
 # vcfstatsGraphic Lambda Function
 #
-data "aws_iam_policy_document" "lambda-qcFigures" {
-  statement {
-    actions = [
-      "s3:PutObject",
-      "s3:DeleteObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-temp.arn}/*",
-    ]
-  }
+# data "aws_iam_policy_document" "lambda-qcFigures" {
+#   statement {
+#     actions = [
+#       "s3:PutObject",
+#       "s3:DeleteObject",
+#     ]
+#     resources = [
+#       "${aws_s3_bucket.svep-temp.arn}/*",
+#     ]
+#   }
 
-  statement {
-    actions = [
-      "s3:ListBucket",
-      "s3:GetObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-references.arn}/*",
-    ]
-  }
+#   statement {
+#     actions = [
+#       "s3:ListBucket",
+#       "s3:GetObject",
+#     ]
+#     resources = [
+#       "${aws_s3_bucket.svep-references.arn}/*",
+#     ]
+#   }
 
-  statement {
-    actions = [
-      "s3:ListBucket",
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject",
-    ]
-    resources = [
-      "${var.data_portal_bucket_arn}/*",
-    ]
-  }
-}
+#   statement {
+#     actions = [
+#       "s3:ListBucket",
+#       "s3:GetObject",
+#       "s3:PutObject",
+#       "s3:DeleteObject",
+#     ]
+#     resources = [
+#       "${var.data_portal_bucket_arn}/*",
+#     ]
+#   }
+# }
