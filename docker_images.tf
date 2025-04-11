@@ -77,6 +77,9 @@ module "docker_image_qcFigures_lambda" {
         ]
     })
     use_image_tag = false
+    build_args = {
+        SHARED_LAYER_PATH = "${path.module}/shared_resources/python-modules/python/shared"
+    }
     source_path   = "${path.module}/lambda/qcFigures"
 
     triggers = {
