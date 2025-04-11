@@ -3,7 +3,7 @@ import shutil
 import hashlib
 from pathlib import Path
 
-DIRECTORY = str(Path(__file__).resolve().parent)
+DIRECTORY = str(Path(__file__).resolve().parent / "docker")
 
 def sha1_of_file(filepath: str):
     sha = hashlib.sha1()
@@ -31,7 +31,7 @@ def update_shared():
         shutil.rmtree(f"{DIRECTORY}/shared")
 
     shutil.copytree(
-        f"{DIRECTORY}/../../shared_resources/python-modules/python/shared",
+        f"{DIRECTORY}/../../../shared_resources/python-modules/python/shared",
         f"{DIRECTORY}/shared",
     )
 
