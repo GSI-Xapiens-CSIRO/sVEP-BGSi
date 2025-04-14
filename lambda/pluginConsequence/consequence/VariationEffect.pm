@@ -319,7 +319,7 @@ sub protein_altering_variant{
 
     return 0 if  length($alt_pep) eq length($ref_pep);       # synonymous_variant(@_);  missense_variant(@_);
     return 0 if  $ref_pep =~/^\*/  || $alt_pep =~/^\*/;      # stop lost/ gained/ retained
-    return 0 if  $alt_pep =~/^\Q$ref_pep\E|\Q$ref_pep\E$/;   # inframe_insertion(@_);
+    return 0 if  inframe_insertion(@_);   # inframe_insertion(@_);
 
     return 0 if inframe_deletion(@_);
     return 0 if start_lost(@_);
@@ -1189,7 +1189,7 @@ sub inframe_insertion {
     $bvf  ||= $bvfo->base_variation_feature;
 
     # sequence variant
-    if($bvf->isa('Bio::EnsEMBL::Variation::VariationFeature')) {
+    if(($bvf->isa('Bio::EnsEMBL::Variation::VariationFeature') || $bvf->isa('consequence::VariationFeature'))) {
         my ($ref_codon, $alt_codon) = _get_codon_alleles(@_);
 
         return 0 if start_lost(@_);
@@ -1204,6 +1204,7 @@ sub inframe_insertion {
         # we can use start_retained to check this
         return 0 if start_retained_variant(@_) && $alt_pep =~ /\Q$ref_pep\E$/;
 
+        return (length($alt_codon) - length($ref_codon)) % 3 == 0;
         # if we have a stop codon in the alt peptide
         # trim off everything after it
         # this allows us to detect inframe insertions that retain a stop
