@@ -75,26 +75,34 @@ def add_gnomad_columns(in_rows, ref_chrom, index):
     print(f"[GNOMAD - INFO] running with chrom: {ref_chrom}")
 
     region_lines = get_query_process(ref_chrom, row_start, row_end)
-
     print(f"[GNOMAD - INFO] region_lines: {json.dumps(region_lines)}")
 
-    gnomad_info = []
+    if not region_lines:
+        # No region lines, just append empty placeholders
+        # in_rows[index] = in_row + ["."] * 10
+        return in_rows, index + 1 if index < len(in_rows) - 1 else index
 
-    for line in region_lines:
-        info_values = line.strip().split("\t")
-        if len(info_values) == 10:
-            gnomad_info.extend(info_values)
+    # If multiple region lines, duplicate the row
+    if len(region_lines) > 1:
+        original_row = in_rows.pop(index)
+        new_rows = []
+        for region_line in region_lines:
+            info_values = region_line.strip().split("\t")
+            if len(info_values) == 10:
+                new_rows.append(original_row + info_values)
+        # Insert new rows in place of original
+        for i, new_row in enumerate(new_rows):
+            in_rows.insert(index + i, new_row)
+        return in_rows, index + len(new_rows)
 
-    if not gnomad_info:
-        gnomad_info = ["."] * 10
+    # Only one region line, extend current row
+    info_values = region_lines[0].strip().split("\t")
+    if len(info_values) == 10:
+        in_rows[index] = in_row + info_values
+    else:
+        in_rows[index] = in_row + ["."] * 10
 
-    # Extend the row at the given index
-    updated_row = in_row + gnomad_info
-    in_rows[index] = updated_row
-
-    print(f"[GNOMAD - INFO] in_row after extend: {json.dumps(updated_row)}")
-
-    return in_rows, index if index == len(in_rows) - 1 else index + 1
+    return in_rows, index + 1 if index < len(in_rows) - 1 else index
 
 
 def lambda_handler(event, _):
