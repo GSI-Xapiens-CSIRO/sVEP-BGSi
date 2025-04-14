@@ -18,7 +18,6 @@ locals {
   python_modules_layer = module.python_modules_layer.lambda_layer_arn
   output_columns = join(",", [
     "rank",
-    ".",
     "region",
     "alt",
     "consequence",

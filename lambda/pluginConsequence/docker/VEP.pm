@@ -705,7 +705,6 @@ sub parse_vcf {
       my $start_end_string = $start<$end ? $start.'-'.$end : $end.'-'.$start;
       my %record = (
         rank => $rank,
-        . => ".",
         region => $chr.':'.$start_end_string,
         alt => $alt,
         consequence => $cons,
