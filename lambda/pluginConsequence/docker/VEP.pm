@@ -132,14 +132,14 @@ sub handle {
           if ( scalar(@{$line->{'data'}}) == 1 && @{$line->{'data'}}[0] eq ''){
             next;
           }
-          my $vep = parse_vcf($line, $refChrom);
-          if(length $vep){
-            push @results,$vep;
+          my @vep = parse_vcf($line, $refChrom);
+          if(scalar(@vep)) {
+            push @results, @vep;
           }
         }
       }
       my %outMessage = (
-        'snsData' => join("\n", @results),
+        'snsData' => \@results,
         'refChrom' => $refChrom,
         'requestId' => $request_id,
       );
@@ -703,19 +703,30 @@ sub parse_vcf {
         }
       }
       my $start_end_string = $start<$end ? $start.'-'.$end : $end.'-'.$start;
-      my $line = $rank."\t".('.')."\t".$chr.':'.$start_end_string."\t".$alt."\t".$cons."\t".(defined $info{gene_name} ? $info{gene_name} : '-')."\t".$info{gene_id}."\t".$rows[2]."\t".
-      $info{transcript_id}.".".$info{transcript_version}."\t".$info{transcript_biotype}."\t".($info{'exon_number'} || '-')."\t".
-      ($tv->{'feature'}{'aa'} || '-')."\t".($tv->{'feature'}{'codons'} || '-')."\t".$strand."\t".($info{transcript_support_level}|| '-');
-      #print($result1);
+      my %record = (
+        rank => $rank,
+        . => ".",
+        region => $chr.':'.$start_end_string,
+        alt => $alt,
+        consequence => $cons,
+        geneName => (defined $info{gene_name} ? $info{gene_name} : '-'),
+        geneId => $info{gene_id},
+        feature => $rows[2],
+        transcriptId => $info{transcript_id}.".".$info{transcript_version},
+        transcriptBiotype => $info{transcript_biotype},
+        exonNumber => ($info{exon_number} || '-'),
+        aminoAcids => ($tv->{feature}{aa} || '-'),
+        codons => ($tv->{feature}{codons} || '-'),
+        strand => $strand,
+        transcriptSupportLevel => ($info{transcript_support_level}|| '-'),
+      );
       if(length $tr->{warning}){
-        $line = $line."\t".$tr->{warning};
+        $record{warning} = $tr->{warning};
       }
-      push @results,$line;
-      #print("$rank\n");
-
+      push @results, \%record;
     }
-    my @sorted = sort { (split('\t', $a))[0] <=> (split('\t', $b))[0] } @results;
-    return join("\n", @sorted);
+    my @sorted = sort { $a->{rank} <=> $b->{rank} } @results;
+    return @sorted;
 
     #print Dumper @sorted;
 

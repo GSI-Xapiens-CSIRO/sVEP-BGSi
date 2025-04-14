@@ -16,6 +16,33 @@ locals {
   binaries_layer = "${aws_lambda_layer_version.binaries_layer.layer_arn}:${aws_lambda_layer_version.binaries_layer.version}"
   // python_libraries_layer = module.python_libraries_layer.lambda_layer_arn
   python_modules_layer = module.python_modules_layer.lambda_layer_arn
+  output_columns = join(",", [
+    "rank",
+    ".",
+    "region",
+    "alt",
+    "consequence",
+    "geneName",
+    "geneId",
+    "feature",
+    "transcriptId",
+    "transcriptBiotype",
+    "exonNumber",
+    "aminoAcids",
+    "codons",
+    "strand",
+    "transcriptSupportLevel",
+    "variationId",
+    "rsId",
+    "omimId",
+    "classification",
+    "conditions",
+    "clinSig",
+    "reviewStatus",
+    "lastEvaluated",
+    "accession",
+    "pubmed",
+  ])
 }
 
 #
@@ -258,9 +285,9 @@ module "lambda-pluginClinvar" {
   environment = {
     variables = {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
-      SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE             = "clinvar.bed.gz"
+      FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
       PLUGIN_SIFT_SNS_TOPIC_ARN     = ""
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
@@ -511,4 +538,37 @@ module "lambda-clearTempAndRegions" {
     SVEP_TEMP    = aws_s3_bucket.svep-temp.bucket
     SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
   }
+}
+
+#
+# formatOutput Lambda Function
+#
+module "lambda-formatOutput" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-formatOutput"
+  description   = "Convert input list of dictionaries to a TSV file."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 24
+  policy = {
+    json = data.aws_iam_policy_document.lambda-formatOutput.json
+  }
+  source_path = "${path.module}/lambda/formatOutput"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+      COLUMNS                       = local.output_columns
+    }
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
 }

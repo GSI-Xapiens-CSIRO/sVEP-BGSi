@@ -32,8 +32,8 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
     results = []
     tot_size = 0
     counter = 0
-    for idx, coord in enumerate(all_coords):
-        chrom, pos, ref, alt = coord.split("\t")
+    for idx, data in enumerate(all_coords):
+        pos = data["pos"]
         loc = f"{ref_chrom}:{pos}-{pos}"
         local_file = f"/tmp/{REFERENCE_GENOME}"
         args = ["tabix", local_file, loc]
@@ -45,13 +45,7 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
             encoding="utf-8",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
-        data = {
-            "chrom": chrom,
-            "pos": pos,
-            "ref": ref,
-            "alt": alt,
-            "data": main_data,
-        }
+        data["data"] = main_data
         cur_size = len(json.dumps(data, separators=(",", ":"))) + 1
         tot_size += cur_size
         if tot_size < PAYLOAD_SIZE:

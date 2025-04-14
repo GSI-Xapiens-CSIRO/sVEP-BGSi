@@ -414,6 +414,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "SNS:Publish",
     ]
     resources = [
+      aws_sns_topic.formatOutput.arn,
       aws_sns_topic.sendJobEmail.arn,
     ]
   }
@@ -429,6 +430,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
 
   statement {
     actions = [
+      "s3:PutObject",
       "s3:DeleteObject",
       "s3:GetObject",
     ]
@@ -905,6 +907,68 @@ data "aws_iam_policy_document" "lambda-sendJobEmail" {
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "cognito-idp:ListUsers",
+    ]
+    resources = [
+      var.cognito-user-pool-arn,
+    ]
+  }
+}
+
+#
+# formatOutput Lambda Function
+#
+data "aws_iam_policy_document" "lambda-formatOutput" {
+  statement {
+    actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.sendJobEmail.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-regions.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:DeleteObject",
+      "s3:GetObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
     ]
   }
 

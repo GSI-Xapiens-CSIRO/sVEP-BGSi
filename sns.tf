@@ -107,3 +107,13 @@ resource "aws_sns_topic_subscription" "sendJobEmail" {
   protocol  = "lambda"
   endpoint  = module.lambda-sendJobEmail.function_arn
 }
+
+resource "aws_sns_topic" "formatOutput" {
+  name = "svep-backend-formatOutput"
+}
+
+resource "aws_sns_topic_subscription" "formatOutput" {
+  topic_arn = aws_sns_topic.formatOutput.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-formatOutput.function_arn
+}
