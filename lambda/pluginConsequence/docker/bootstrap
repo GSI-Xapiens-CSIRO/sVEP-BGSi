@@ -33,7 +33,7 @@ do
     close($fh);
   ' RESPONSE_FILE="$RESPONSE_FILE" <<< "$EVENT_DATA"
 
-  rm -rf "/tmp/*"
+  rm -rf "/tmp/"*
 
   # Send the response
   curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response"
