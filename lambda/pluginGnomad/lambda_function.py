@@ -94,7 +94,7 @@ def add_gnomad_columns(in_rows, ref_chrom, index):
         return in_rows, index + 1
 
 
-def lambda_handler(event):
+def lambda_handler(event, _):
     orchestrator = Orchestrator(event)
     message = orchestrator.message
 
