@@ -59,11 +59,6 @@ def process_ensembl_gtf(gtf_url):
     filtered_gtf_file = prepend_tmp(f"filtered_{gtf_file}")
     _filter(gtf_file, filtered_gtf_file, "gene")
 
-    # TRANSCRIPT - occurs before GTF completes to reduce storage consumption
-    filtered_transcript_file = prepend_tmp(f"transcript_filtered_{gtf_file}")
-    _transcript_filter(gtf_file, filtered_transcript_file)
-    _remove(gtf_file)
-
     # GTF
     sorted_filtered_gtf_file = prepend_tmp(f"sorted_{filtered_gtf_file}")
     _sort(filtered_gtf_file, sorted_filtered_gtf_file)
@@ -74,18 +69,6 @@ def process_ensembl_gtf(gtf_url):
 
     bgzipped_gtf_index = prepend_tmp(f"{bgzipped_gtf_file}.tbi")
     _tabix_index(bgzipped_gtf_file)
-
-    # TRANSCRIPT
-    sorted_filtered_transcript_file = prepend_tmp(f"transcripts_{gtf_file}")
-    _sort(filtered_transcript_file, sorted_filtered_transcript_file)
-    _remove(filtered_transcript_file)
-
-    bgzipped_transcript_file = prepend_tmp(f"{sorted_filtered_transcript_file}.bgz")
-    _bgzip(sorted_filtered_transcript_file, bgzipped_transcript_file)
-    _remove(sorted_filtered_transcript_file)
-
-    bgzipped_transcript_index = prepend_tmp(f"{bgzipped_transcript_file}.tbi")
-    _tabix_index(bgzipped_transcript_file)
 
     # SPLICE
     splice_file = prepend_tmp(f"{SPLICE_BASE}.gtf")
@@ -106,8 +89,6 @@ def process_ensembl_gtf(gtf_url):
     files = [
         bgzipped_gtf_file,
         bgzipped_gtf_index,
-        bgzipped_transcript_file,
-        bgzipped_transcript_index,
         bgzipped_splice_file,
         bgzipped_splice_index,
     ]
@@ -152,13 +133,6 @@ def process_ensembl_fasta(fasta_url, chr):
 
 def _gunzip(input_file, output_file):
     command = f"gunzip -c {input_file} > {output_file}"
-    execute_subprocess(command)
-
-
-def _transcript_filter(input_file, output_file):
-    command = (
-        f"""awk '$3 == "transcript" {{ print $0 }}' {input_file} > {output_file}"""
-    )
     execute_subprocess(command)
 
 

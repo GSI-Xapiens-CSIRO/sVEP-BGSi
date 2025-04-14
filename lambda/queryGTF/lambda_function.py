@@ -15,7 +15,6 @@ from shared.utils import (
 BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 REFERENCE_GENOME = os.environ["REFERENCE_GENOME"]
 PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN = os.environ["PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN"]
-PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN = os.environ["PLUGIN_UPDOWNSTREAM_SNS_TOPIC_ARN"]
 QUERY_GTF_SNS_TOPIC_ARN = os.environ["QUERY_GTF_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 TOPICS = [
@@ -33,8 +32,8 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
     results = []
     tot_size = 0
     counter = 0
-    for idx, coord in enumerate(all_coords):
-        chrom, pos, ref, alt = coord.split("\t")
+    for idx, data in enumerate(all_coords):
+        pos = data["pos"]
         loc = f"{ref_chrom}:{pos}-{pos}"
         local_file = f"/tmp/{REFERENCE_GENOME}"
         args = ["tabix", local_file, loc]
@@ -46,13 +45,7 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
             encoding="utf-8",
         )
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
-        data = {
-            "chrom": chrom,
-            "pos": pos,
-            "ref": ref,
-            "alt": alt,
-            "data": main_data,
-        }
+        data["data"] = main_data
         cur_size = len(json.dumps(data, separators=(",", ":"))) + 1
         tot_size += cur_size
         if tot_size < PAYLOAD_SIZE:
@@ -61,9 +54,7 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
                 # should only be executed in very few cases.
                 counter += 1
 
-                send_data_to_plugins(
-                    request_id, base_id, counter, results, ref_chrom
-                )
+                send_data_to_plugins(request_id, base_id, counter, results, ref_chrom)
                 send_data_to_self(request_id, base_id, all_coords[idx:], ref_chrom)
                 return
         else:

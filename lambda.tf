@@ -95,17 +95,6 @@ resource "aws_lambda_permission" "plugin_clinvar_invoke_permission" {
 
 
 #
-# pluginUpdownstream Lambda Function
-#
-resource "aws_lambda_permission" "plugin_updownstream_invoke_permission" {
-  statement_id  = "SNSPluginUpdownstreamAllowInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = module.lambda-pluginUpdownstream.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.pluginUpdownstream.arn
-}
-
-#
 # concat Lambda Function
 #
 resource "aws_lambda_permission" "concat_invoke_permission" {
@@ -234,12 +223,12 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_executor_invoke_permissio
 }
 
 #
-# vcfstatsGraphic Lambda Function
+# formatOutput Lambda Function
 #
-# resource "aws_lambda_permission" "qc_figures_invoke_permission" {
-#   statement_id  = "APIQcFiguresAllowInvoke"
-#   action        = "lambda:InvokeFunction"
-#   function_name = module.lambda-qcFigures.lambda_function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.vcfstats.path_part}"
-# }
+resource "aws_lambda_permission" "formatOutput_invoke_permission" {
+  statement_id  = "SNSformatOutputAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-formatOutput.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.formatOutput.arn
+}

@@ -8,8 +8,8 @@ s3 = boto3.client("s3")
 SVEP_TEMP = os.environ["SVEP_TEMP"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 
-MAX_RETRIES = 5 
-RETRY_DELAY = 30 
+MAX_RETRIES = 5
+RETRY_DELAY = 30
 
 
 def clean_bucket(bucket, request_id):

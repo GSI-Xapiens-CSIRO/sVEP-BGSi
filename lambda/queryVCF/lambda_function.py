@@ -17,6 +17,16 @@ RECORDS_PER_SAMPLE = 700
 BATCH_CHUNK_SIZE = 10
 PAYLOAD_SIZE = 260000
 
+QUERY_KEYS = [
+    "chrom",
+    "pos",
+    "ref",
+    "alt",
+    "qual",
+    "filter",
+    "gt",
+]
+
 
 def get_query_process(location, chrom, start, end):
     args = [
@@ -25,7 +35,7 @@ def get_query_process(location, chrom, start, end):
         "--regions",
         f"{chrom}:{start}-{end}",
         "--format",
-        "%CHROM\t%POS\t%REF\t%ALT\n",
+        "%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t[%GT]\n",
         location,
     ]
     return subprocess.Popen(
@@ -40,7 +50,16 @@ def get_query_process(location, chrom, start, end):
 def submit_query_gtf(request_id, query_process, base_id, timer, ref_chrom):
     regions_list = query_process.stdout.read().splitlines()
     total_coords = [
-        regions_list[x : x + RECORDS_PER_SAMPLE]
+        [
+            {
+                key: value
+                for key, value in zip(
+                    QUERY_KEYS,
+                    vcf_line.split("\t"),
+                )
+            }
+            for vcf_line in regions_list[x : x + RECORDS_PER_SAMPLE]
+        ]
         for x in range(0, len(regions_list), RECORDS_PER_SAMPLE)
     ]
 
