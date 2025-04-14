@@ -22,6 +22,9 @@ QUERY_KEYS = [
     "pos",
     "ref",
     "alt",
+    "qual",
+    "filter",
+    "gt",
 ]
 
 
@@ -32,7 +35,7 @@ def get_query_process(location, chrom, start, end):
         "--regions",
         f"{chrom}:{start}-{end}",
         "--format",
-        "%CHROM\t%POS\t%REF\t%ALT\n",
+        "%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t[%GT]\n",
         location,
     ]
     return subprocess.Popen(

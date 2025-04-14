@@ -719,6 +719,10 @@ sub parse_vcf {
         codons => ($tv->{feature}{codons} || '-'),
         strand => $strand,
         transcriptSupportLevel => ($info{transcript_support_level}|| '-'),
+        ref => $ref,
+        gt => $line->{'gt'},
+        qual => $line->{'qual'},
+        filter => $line->{'filter'},
       );
       if(length $tr->{warning}){
         $record{warning} = $tr->{warning};
