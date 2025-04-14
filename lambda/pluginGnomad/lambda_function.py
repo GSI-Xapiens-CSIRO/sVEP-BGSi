@@ -61,7 +61,6 @@ def get_query_process(chrom, start, end):
 
 
 def add_gnomad_columns(in_rows, ref_chrom, index):
-    # Check if index is out of bounds
     if index >= len(in_rows):
         print(
             f"[GNOMAD - INFO] Index {index} out of bounds for in_rows length {len(in_rows)}"
@@ -72,26 +71,30 @@ def add_gnomad_columns(in_rows, ref_chrom, index):
     chrom, positions = in_row[2].split(":")
     row_start, row_end = positions.split("-")
 
+    print(f"[GNOMAD - INFO] in_row before extend: {json.dumps(in_row)}")
     print(f"[GNOMAD - INFO] running with chrom: {ref_chrom}")
 
     region_lines = get_query_process(ref_chrom, row_start, row_end)
 
-    gnomad_info = ["."] * 10
+    print(f"[GNOMAD - INFO] region_lines: {json.dumps(region_lines)}")
+
+    gnomad_info = []
 
     for line in region_lines:
         info_values = line.strip().split("\t")
         if len(info_values) == 10:
-            gnomad_info = info_values
-            break
+            gnomad_info.extend(info_values)
+
+    if not gnomad_info:
+        gnomad_info = ["."] * 10
 
     # Extend the row at the given index
-    in_rows[index] = in_row + gnomad_info
+    updated_row = in_row + gnomad_info
+    in_rows[index] = updated_row
 
-    # If last index, keep it the same
-    if index == len(in_rows) - 1:
-        return in_rows, index
-    else:
-        return in_rows, index + 1
+    print(f"[GNOMAD - INFO] in_row after extend: {json.dumps(updated_row)}")
+
+    return in_rows, index if index == len(in_rows) - 1 else index + 1
 
 
 def lambda_handler(event, _):
@@ -111,20 +114,22 @@ def lambda_handler(event, _):
 
         rows = [row.split("\t") for row in sns_data.split("\n") if row]
 
+        # TODO: Fix this to be dynamic
+        last_index = len(rows) - 1
+        # last_index = 2
+        print(f"[GNOMAD - INFO] last_index: {last_index}")
+
         new_rows, next_index = add_gnomad_columns(rows, ref_chrom, sns_index)
         sns_data = "\n".join("\t".join(row) for row in new_rows)
         compressed_sns_data = compress_sns_data(sns_data)
         base_filename = orchestrator.temp_file_name
 
-        # last_index = len(rows) - 1
-        # TODO: Fix this to be dynamic
-        last_index = 2
-
         if sns_index == last_index:
             # Finish execution when it's last index
-            print(f"[GNOMAD - INFO] Completed")
-
             filename = f"/tmp/{base_filename}.tsv"
+
+            print(f"[GNOMAD - INFO] Completed with file {filename}")
+
             with open(filename, "w") as tsv_file:
                 tsv_file.write(sns_data)
             s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
