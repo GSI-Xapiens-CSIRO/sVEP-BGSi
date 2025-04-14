@@ -67,15 +67,17 @@ def add_clinvar_columns(in_rows, ref_chrom):
                 and int(bed_start) + 1 == int(row_start)
             ):
                 is_matched = True
-                results.append(dict(
-                    **in_row,
-                    **{
-                        col_name: clinvar_datum
-                        for col_name, clinvar_datum in zip(
-                            CLINVAR_COLUMNS, clinvar_data
-                        )
-                    }
-                ))
+                results.append(
+                    dict(
+                        **in_row,
+                        **{
+                            col_name: clinvar_datum
+                            for col_name, clinvar_datum in zip(
+                                CLINVAR_COLUMNS, clinvar_data
+                            )
+                        },
+                    )
+                )
         if is_matched:
             num_rows_hit += 1
     print(

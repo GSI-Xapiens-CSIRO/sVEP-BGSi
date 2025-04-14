@@ -159,14 +159,16 @@ def get_sns_event(event, max_length=MAX_SNS_EVENT_PRINT_LENGTH):
     return message
 
 
-def sns_publish(topic_arn, message, max_length=MAX_PRINT_LENGTH, s3_payload_prefix=None):
+def sns_publish(
+    topic_arn, message, max_length=MAX_PRINT_LENGTH, s3_payload_prefix=None
+):
     message = json.dumps(message, separators=(",", ":"))
     if len(message) > MAX_SNS_MESSAGE_SIZE and s3_payload_prefix is not None:
         print(f"SNS message too large ({len(message)} bytes), uploading to S3")
         payload_key = f"payloads/{s3_payload_prefix}.json"
         truncated_print(
             f"Uploading to S3 bucket {SVEP_TEMP} and key {payload_key}: {message}",
-            max_length
+            max_length,
         )
         s3.Object(SVEP_TEMP, payload_key).put(Body=message.encode())
         message = json.dumps({S3_PAYLOAD_KEY: payload_key}, separators=(",", ":"))

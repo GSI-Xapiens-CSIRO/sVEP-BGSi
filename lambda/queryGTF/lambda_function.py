@@ -54,9 +54,7 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
                 # should only be executed in very few cases.
                 counter += 1
 
-                send_data_to_plugins(
-                    request_id, base_id, counter, results, ref_chrom
-                )
+                send_data_to_plugins(request_id, base_id, counter, results, ref_chrom)
                 send_data_to_self(request_id, base_id, all_coords[idx:], ref_chrom)
                 return
         else:

@@ -1,14 +1,14 @@
 import json
 
 
-HEADERS = {'Access-Control-Allow-Origin': '*'}
+HEADERS = {"Access-Control-Allow-Origin": "*"}
 
 
 def bad_request(data, extra_params=None):
     response = {
-        'error': {
-            'errorCode': 400,
-            'errorMessage': data,
+        "error": {
+            "errorCode": 400,
+            "errorMessage": data,
         },
     }
     if extra_params:
@@ -18,9 +18,9 @@ def bad_request(data, extra_params=None):
 
 def bundle_response(status_code, body):
     return {
-        'statusCode': status_code,
-        'headers': HEADERS,
-        'body': json.dumps(body),
+        "statusCode": status_code,
+        "headers": HEADERS,
+        "body": json.dumps(body),
     }
 
 

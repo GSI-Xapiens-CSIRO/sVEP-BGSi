@@ -23,7 +23,7 @@ def create_index(file: io.BytesIO) -> Dict[str, Dict[str, List]]:
         if len(line.strip()) == 0:
             continue
 
-        start = line.split(b"\t", REGION_COLUMN_INDEX+1)[REGION_COLUMN_INDEX]
+        start = line.split(b"\t", REGION_COLUMN_INDEX + 1)[REGION_COLUMN_INDEX]
         chrom, start_end = start.split(b":")
         start, end = [int(pos) for pos in start_end.split(b"-")]
 
@@ -68,7 +68,7 @@ def create_index(file: io.BytesIO) -> Dict[str, Dict[str, List]]:
 
     # last index entry
     if previous_line:
-        start = previous_line.split(b"\t", REGION_COLUMN_INDEX+1)[REGION_COLUMN_INDEX]
+        start = previous_line.split(b"\t", REGION_COLUMN_INDEX + 1)[REGION_COLUMN_INDEX]
         chrom, start_end = start.split(b":")
         start, end = [int(pos) for pos in start_end.split(b"-")]
         chrom = chrom.decode()
