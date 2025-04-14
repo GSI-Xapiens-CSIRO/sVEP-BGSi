@@ -9,7 +9,6 @@ from shared.utils import (
     decompress_sns_data,
     compress_sns_data,
     start_function,
-    Timer,
 )
 
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
@@ -118,6 +117,7 @@ def lambda_handler(event):
         base_filename = orchestrator.temp_file_name
 
         # last_index = len(rows) - 1
+        # TODO: Fix this to be dynamic
         last_index = 2
 
         if sns_index == last_index:
