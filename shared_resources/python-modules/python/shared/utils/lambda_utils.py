@@ -2,6 +2,7 @@ import os
 import shutil
 import json
 import math
+import traceback
 
 import boto3
 from botocore.config import Config
@@ -201,7 +202,7 @@ def truncated_print(string, max_length=MAX_PRINT_LENGTH):
 
 
 def handle_failed_execution(job_id, error_message):
-    print(error_message)
+    print(traceback.format_exc())
     job = query_clinic_job(job_id)
     if job.get("job_status").get("S") == "failed":
         return
