@@ -190,11 +190,13 @@ sub handle_failed_execution {
     });
 
     # Update the item in DynamoDB
-    my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
-                           "--key '{\"job_id\":{\"S\":\"$request_id\"}}' " .
-                           "--update-expression \"$update_expression\" " .
-                           "--expression-attribute-names '$expression_attribute_names' " .
-                           "--expression-attribute-values '$expression_attribute_values'");
+    my $system_call = "/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
+      "--key '{\"job_id\":{\"S\":\"$request_id\"}}' " .
+      "--update-expression \"$update_expression\" " .
+      "--expression-attribute-names '$expression_attribute_names' " .
+      "--expression-attribute-values '$expression_attribute_values'";
+    print("System call: $system_call\n");
+    my $exit_code = system($system_call);
 
     die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
     
