@@ -223,6 +223,7 @@ module "lambda-queryGTF" {
       USER_POOL_ID                     = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN               = aws_sns_topic.sendJobEmail.arn
       HTS_S3_HOST                      = "s3.${var.region}.amazonaws.com"
+      HUB_NAME                         = var.hub_name
     }
   }
 

@@ -16,6 +16,8 @@ BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 REFERENCE_GENOME = os.environ["REFERENCE_GENOME"]
 PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN = os.environ["PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN"]
 QUERY_GTF_SNS_TOPIC_ARN = os.environ["QUERY_GTF_SNS_TOPIC_ARN"]
+HUB_NAME = os.environ["HUB_NAME"]
+
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 TOPICS = [
     PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN,
@@ -104,6 +106,8 @@ def lambda_handler(event, context):
     request_id = message["requestId"]
     coords = message["coords"]
     ref_chrom = message["refChrom"]
+
+    print(f"Received HUB: {HUB_NAME}")
     try:
         base_id = orchestrator.temp_file_name
         overlap_feature(request_id, coords, base_id, timer, ref_chrom)
