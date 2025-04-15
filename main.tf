@@ -45,6 +45,16 @@ locals {
     "lastEvaluated",
     "accession",
     "pubmed",
+    "afAfr",
+    "afEas",
+    "afFin",
+    "afNfe",
+    "afSas",
+    "afAmr",
+    "af",
+    "ac",
+    "an",
+    "siftMax",
   ])
 }
 
@@ -315,7 +325,7 @@ module "lambda-pluginGnomad" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 300
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-pluginGnomad.json
   }
@@ -323,58 +333,19 @@ module "lambda-pluginGnomad" {
   tags        = var.common-tags
   environment = {
     variables = {
-      SVEP_TEMP                            = aws_s3_bucket.svep-temp.bucket
-      SVEP_REGIONS                         = aws_s3_bucket.svep-regions.bucket
-      GNOMAD_PUBLIC_CHR1                   = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.chr1.vcf.bgz"
-      DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
-      COGNITO_SVEP_JOB_EMAIL_LAMBDA        = var.svep-job-email-lambda-function-arn
-      USER_POOL_ID                         = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN                   = aws_sns_topic.sendJobEmail.arn
-      PLUGIN_GNOMAD_SNS_TOPIC_ARN          = aws_sns_topic.pluginGnomad.arn
-      PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN = aws_sns_topic.pluginGnomadExecutor.arn
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     }
   }
 
   layers = [
     local.binaries_layer,
     local.python_modules_layer,
-  ]
-}
-
-#
-# pluginGnomad Lambda Function
-#
-module "lambda-pluginGnomadExecutor" {
-  source        = "github.com/bhosking/terraform-aws-lambda"
-  function_name = "svep-backend-pluginGnomadExecutor"
-  description   = "Add pluginGnomadExecutor annotations to sVEP result rows."
-  handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.12"
-  memory_size   = 2048
-  timeout       = 300
-  policy = {
-    json = data.aws_iam_policy_document.lambda-pluginGnomadExecutor.json
-  }
-  source_path = "${path.module}/lambda/pluginGnomadExecutor"
-  tags        = var.common-tags
-  environment = {
-    variables = {
-      SVEP_TEMP                            = aws_s3_bucket.svep-temp.bucket
-      SVEP_REGIONS                         = aws_s3_bucket.svep-regions.bucket
-      GNOMAD_PUBLIC_CHR1                   = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.chr1.vcf.bgz"
-      DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
-      COGNITO_SVEP_JOB_EMAIL_LAMBDA        = var.svep-job-email-lambda-function-arn
-      USER_POOL_ID                         = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN                   = aws_sns_topic.sendJobEmail.arn
-      PLUGIN_GNOMAD_SNS_TOPIC_ARN          = aws_sns_topic.pluginGnomad.arn
-      PLUGIN_GNOMAD_EXECUTOR_SNS_TOPIC_ARN = aws_sns_topic.pluginGnomadExecutor.arn
-    }
-  }
-
-  layers = [
-    local.binaries_layer,
-    local.python_modules_layer,
-    # local.hail_layer
   ]
 }
 

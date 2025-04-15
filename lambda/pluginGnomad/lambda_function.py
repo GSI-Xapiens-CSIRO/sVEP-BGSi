@@ -1,164 +1,141 @@
-import json
+from collections import defaultdict
 import os
-import subprocess
 
 from shared.utils import (
+    CheckedProcess,
     Orchestrator,
-    s3,
     handle_failed_execution,
-    decompress_sns_data,
-    compress_sns_data,
     start_function,
+    Timer,
 )
 
-SVEP_REGIONS = os.environ["SVEP_REGIONS"]
+FORMAT_OUTPUT_SNS_TOPIC_ARN = os.environ["FORMAT_OUTPUT_SNS_TOPIC_ARN"]
 PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
-MILLISECONDS_BEFORE_SPLIT = 4000
-base_url = "https://gnomad-public-us-east-1.s3.amazonaws.com"
+GNOMAD_S3_PREFIX = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites."
+GNOMAD_S3_SUFFIX = ".vcf.bgz"
+MAX_REGIONS_PER_QUERY = 20  # Hard limit is probably around 5000
+# Just the columns after the identifying columns
+GNOMAD_COLUMNS = {
+    "afAfr": "INFO/AF_afr",
+    "afEas": "INFO/AF_eas",
+    "afFin": "INFO/AF_fin",
+    "afNfe": "INFO/AF_nfe",
+    "afSas": "INFO/AF_sas",
+    "afAmr": "INFO/AF_amr",
+    "af": "INFO/AF",
+    "ac": "INFO/AC",
+    "an": "INFO/AN",
+    "siftMax": "INFO/sift_max",
+}
+MILLISECONDS_BEFORE_SPLIT = 300000
 
 
-def get_query_process(chrom, start, end):
-    # Ensure chromosome is prefixed correctly
-    if not chrom.startswith("chr"):
-        chrom = f"chr{chrom}"
-
-    vcf_url = (
-        f"{base_url}/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites.{chrom}.vcf.bgz"
-    )
-
+def get_query_process(regions, ref_chrom):
+    chrom = f"chr{ref_chrom}"
     args = [
         "bcftools",
         "query",
         "--regions",
-        f"{chrom}:{start}-{end}",
+        ",".join(f"{chrom}:{region}" for region in regions),
         "--format",
-        "%INFO/AF_afr\t%INFO/AF_eas\t%INFO/AF_fin\t%INFO/AF_nfe\t%INFO/AF_sas\t%INFO/AF_amr\t%INFO/AF\t%INFO/AC\t%INFO/AN\t%INFO/sift_max\n",
-        vcf_url,
+        f"%POS\t%REF\t%ALT\t{'\\t'.join("%" + val for val in GNOMAD_COLUMNS.values())}\n",
+        f"{GNOMAD_S3_PREFIX}{chrom}{GNOMAD_S3_SUFFIX}",
     ]
-
-    print(f"[BCFTOOLS QUERY] {' '.join(args)}")
-
-    process = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding="utf-8",
-        cwd="/tmp",
-    )
-
-    stdout, stderr = process.communicate()
-
-    if process.returncode != 0:
-        print(f"[ERROR] bcftools failed with code {process.returncode}")
-        print(f"[STDERR] {stderr.strip()}")
-        return []
-
-    # Debug log if output is empty
-    if not stdout.strip():
-        print(f"[GNOMAD - INFO] No variant found in region {chrom}:{start}-{end}")
-
-    return stdout.splitlines()
+    return CheckedProcess(args=args, error_message="bcftools error querying gnomAD")
 
 
-def add_gnomad_columns(in_rows, ref_chrom, index):
-    if index >= len(in_rows):
-        print(
-            f"[GNOMAD - INFO] Index {index} out of bounds for in_rows length {len(in_rows)}"
-        )
-        return in_rows, index
-
-    in_row = in_rows[index]
-    chrom, positions = in_row[2].split(":")
-    row_start, row_end = positions.split("-")
-
-    print(f"[GNOMAD - INFO] in_row before extend: {json.dumps(in_row)}")
-    print(f"[GNOMAD - INFO] running with chrom: {ref_chrom}")
-
-    region_lines = get_query_process(ref_chrom, row_start, row_end)
-    print(f"[GNOMAD - INFO] region_lines: {json.dumps(region_lines)}")
-
-    if not region_lines:
-        # No region lines, just append empty placeholders
-        # in_rows[index] = in_row + ["."] * 10
-        return in_rows, index + 1 if index < len(in_rows) - 1 else index
-
-    # If multiple region lines, duplicate the row
-    if len(region_lines) > 1:
-        original_row = in_rows.pop(index)
-        new_rows = []
-        for region_line in region_lines:
-            info_values = region_line.strip().split("\t")
-            if len(info_values) == 10:
-                new_rows.append(original_row + info_values)
-        # Insert new rows in place of original
-        for i, new_row in enumerate(new_rows):
-            in_rows.insert(index + i, new_row)
-        return in_rows, index + len(new_rows)
-
-    # Only one region line, extend current row
-    info_values = region_lines[0].strip().split("\t")
-    if len(info_values) == 10:
-        in_rows[index] = in_row + info_values
-    else:
-        in_rows[index] = in_row + ["."] * 10
-
-    return in_rows, index + 1 if index < len(in_rows) - 1 else index
+def convert_to_regions_queries(sns_data):
+    regions = set()
+    for data in sns_data:
+        positions = data["region"].split(":")[1]
+        start, end = positions.split("-")
+        regions.add(positions if start != end else start)
+    # Split into chunks of MAX_REGIONS_PER_QUERY
+    regions_list = sorted(list(regions), key=lambda x: int(x.split("-")[0]))
+    region_chunks = [
+        regions_list[i : i + MAX_REGIONS_PER_QUERY]
+        for i in range(0, len(regions_list), MAX_REGIONS_PER_QUERY)
+    ]
+    return region_chunks
 
 
-def lambda_handler(event, _):
+def add_gnomad_columns(sns_data, ref_chrom, timer):
+    region_queries = convert_to_regions_queries(sns_data)
+    query_processes_sns_data = [
+        get_query_process(query_region, ref_chrom) for query_region in region_queries
+    ]
+    regions_data = defaultdict(list)
+    for data in sns_data:
+        regions_data[
+            (data["region"].split(":")[1].split("-")[0], data["ref"], data["alt"])
+        ].append(data)
+    lines_updated = 0
+    completed_lines = []
+    for query_process in query_processes_sns_data:
+        for line in query_process.stdout:
+            line = line.strip()
+            if not line:
+                continue
+            pos, ref, alt, *query_data = line.split("\t")
+            if (pos, ref, alt) not in regions_data:
+                continue
+            for data in regions_data[(pos, ref, alt)]:
+                data.update(
+                    {
+                        col_name: gnomad_datum
+                        for col_name, gnomad_datum in zip(
+                            list(GNOMAD_COLUMNS.keys()), query_data
+                        )
+                    }
+                )
+                completed_lines.append(data)
+                lines_updated += 1
+            del regions_data[(pos, ref, alt)]
+            if timer.out_of_time():
+                # Call self with remaining data
+                remaining_data = [
+                    data for pos_data in regions_data.values() for data in pos_data
+                ]
+                return completed_lines, remaining_data
+        query_process.check()
+    return sns_data, []
+
+
+def lambda_handler(event, context):
+    timer = Timer(context, MILLISECONDS_BEFORE_SPLIT)
     orchestrator = Orchestrator(event)
     message = orchestrator.message
-
     sns_data = message["snsData"]
-    request_id = message["requestId"]
     ref_chrom = message["refChrom"]
-    sns_index = message["snsIndex"]
-
-    print(f"[Gnomad] Request ID: {request_id}")
+    request_id = message["requestId"]
 
     try:
-        sns_data = decompress_sns_data(sns_data)
-        print(f"[GNOMAD - INFO] sns_data: {json.dumps(sns_data)}")
-
-        rows = [row.split("\t") for row in sns_data.split("\n") if row]
-
-        # TODO: Fix this to be dynamic
-        last_index = len(rows) - 1
-        # last_index = 2
-        print(f"[GNOMAD - INFO] last_index: {last_index}")
-
-        new_rows, next_index = add_gnomad_columns(rows, ref_chrom, sns_index)
-        sns_data = "\n".join("\t".join(row) for row in new_rows)
-        compressed_sns_data = compress_sns_data(sns_data)
-        base_filename = orchestrator.temp_file_name
-
-        if sns_index == last_index:
-            # Finish execution when it's last index
-            filename = f"/tmp/{base_filename}.tsv"
-
-            print(f"[GNOMAD - INFO] Completed with file {filename}")
-
-            with open(filename, "w") as tsv_file:
-                tsv_file.write(sns_data)
-            s3.Bucket(SVEP_REGIONS).upload_file(filename, f"{base_filename}.tsv")
-        else:
-            # Re running lambda function with next index
-            print(f"[GNOMAD - INFO] re running lambda with next_index: {next_index}")
-            compressed_sns_data = compress_sns_data(sns_data)
+        complete_lines, remaining = add_gnomad_columns(sns_data, ref_chrom, timer)
+        if remaining:
+            print(f"remaining data length {len(remaining)}")
             start_function(
                 topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
                 base_filename=base_filename,
                 message={
-                    "snsData": compressed_sns_data,
-                    "requestId": request_id,
-                    "snsIndex": next_index,
-                    "lastIndex": last_index,
+                    "snsData": remaining,
                     "refChrom": ref_chrom,
-                    # "lastIndex": last_index,
+                    "requestId": request_id,
                 },
                 resend=True,
             )
-
+            assert (
+                len(complete_lines) > 0
+            ), "Not able to make any progress getting gnomAD data"
+        print(f"Updated {len(complete_lines)}/{len(sns_data)} rows with gnomad data")
+        base_filename = orchestrator.temp_file_name
+        start_function(
+            topic_arn=FORMAT_OUTPUT_SNS_TOPIC_ARN,
+            base_filename=base_filename,
+            message={
+                "snsData": complete_lines,
+                "requestId": request_id,
+            },
+        )
         orchestrator.mark_completed()
     except Exception as e:
         handle_failed_execution(request_id, e)

@@ -414,18 +414,8 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "SNS:Publish",
     ]
     resources = [
-      aws_sns_topic.formatOutput.arn,
       aws_sns_topic.sendJobEmail.arn,
       aws_sns_topic.pluginGnomad.arn
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:PutObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-regions.arn}/*",
     ]
   }
 
@@ -497,111 +487,17 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
       "SNS:Publish",
     ]
     resources = [
-      aws_sns_topic.sendJobEmail.arn,
+      aws_sns_topic.formatOutput.arn,
       aws_sns_topic.pluginGnomad.arn,
-      aws_sns_topic.pluginGnomadExecutor.arn
+      aws_sns_topic.sendJobEmail.arn,
     ]
   }
 
   statement {
     actions = [
       "s3:PutObject",
-      "s3:GetObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-regions.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
       "s3:DeleteObject",
       "s3:GetObject",
-      "s3:PutObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-temp.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:GetObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-references.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:ListBucket",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-references.arn}",
-    ]
-  }
-
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:UpdateItem",
-    ]
-    resources = [
-      var.dynamo-clinic-jobs-table-arn,
-    ]
-  }
-
-  statement {
-    actions = [
-      "lambda:InvokeFunction",
-    ]
-    resources = [
-      var.svep-job-email-lambda-function-arn,
-    ]
-  }
-
-  statement {
-    actions = [
-      "cognito-idp:ListUsers",
-    ]
-    resources = [
-      var.cognito-user-pool-arn,
-    ]
-  }
-}
-
-#
-# pluginGnomad Lambda Function
-#
-data "aws_iam_policy_document" "lambda-pluginGnomadExecutor" {
-  statement {
-    actions = [
-      "SNS:Publish",
-    ]
-    resources = [
-      aws_sns_topic.sendJobEmail.arn,
-      aws_sns_topic.pluginGnomad.arn,
-      aws_sns_topic.pluginGnomadExecutor.arn
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:PutObject",
-      "s3:GetObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-regions.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:DeleteObject",
-      "s3:GetObject",
-      "s3:PutObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",

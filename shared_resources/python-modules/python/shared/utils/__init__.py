@@ -8,6 +8,7 @@ from .chrom_matching import (
 )
 from .lambda_utils import (
     s3,
+    CheckedProcess,
     Timer,
     Orchestrator,
     _get_function_name_from_arn,

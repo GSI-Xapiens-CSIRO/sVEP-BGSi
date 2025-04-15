@@ -4,11 +4,9 @@ import subprocess
 
 from shared.utils import (
     Orchestrator,
-    s3,
     download_bedfile,
     handle_failed_execution,
     start_function,
-    compress_sns_data,
 )
 
 # Environment variables
@@ -81,7 +79,7 @@ def add_clinvar_columns(in_rows, ref_chrom):
         if is_matched:
             num_rows_hit += 1
     print(
-        f"Matched {len(results)} rows in clinvar from {num_rows_hit} matching input rows"
+        f"Matched {len(results)} rows in clinvar from {num_rows_hit}/{len(in_rows)} matching input rows"
     )
     return results
 
@@ -96,16 +94,18 @@ def lambda_handler(event, _):
     try:
         sns_data = add_clinvar_columns(sns_data, ref_chrom)
         base_filename = orchestrator.temp_file_name
-        compressed_sns_data = compress_sns_data(sns_data)
-        start_function(
-            topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
-            base_filename=base_filename,
-            message={
-                "snsData": compressed_sns_data,
-                "refChrom": ref_chrom,
-                "requestId": request_id,
-            },
-        )
+        if sns_data:
+            start_function(
+                topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
+                base_filename=base_filename,
+                message={
+                    "snsData": sns_data,
+                    "refChrom": ref_chrom,
+                    "requestId": request_id,
+                },
+            )
+        else:
+            "No rows matched in clinvar, not continuing downstream plugins."
         orchestrator.mark_completed()
     except Exception as e:
         handle_failed_execution(request_id, e)

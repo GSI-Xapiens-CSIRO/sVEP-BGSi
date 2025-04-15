@@ -4,6 +4,7 @@ import json
 import math
 import gzip
 import base64
+import subprocess
 import traceback
 
 import boto3
@@ -43,11 +44,11 @@ class Timer:
 
 class Orchestrator:
     def __init__(self, event):
-        self.message = get_sns_event(event)
-        self.temp_file_name = self.message[TEMP_FILE_FIELD]
         # A flag to ensure that the temp file is deleted at the end of
         # the function.
         self.completed = False
+        self.message = get_sns_event(event)
+        self.temp_file_name = self.message[TEMP_FILE_FIELD]
 
     def __del__(self):
         assert self.completed, "Must call mark_completed at end of function."
@@ -56,6 +57,45 @@ class Orchestrator:
         print(f"Deleting file: {self.temp_file_name}")
         s3.Object(SVEP_TEMP, self.temp_file_name).delete()
         self.completed = True
+
+
+class ProcessError(Exception):
+    def __init__(self, message, stdout, stderr, returncode, process_args):
+        self.message = message
+        self.stdout = stdout
+        self.stderr = stderr
+        self.returncode = returncode
+        self.process_args = process_args
+        super().__init__(message)
+
+    def __str__(self):
+        return f"{self.message}\nProcess args: {self.process_args}\nstderr:\n{self.stderr}\nreturncode: {self.returncode}"
+
+
+class CheckedProcess:
+    def __init__(self, error_message, **kwargs):
+        defaults = {
+            "stderr": subprocess.PIPE,
+            "stdout": subprocess.PIPE,
+            "cwd": "/tmp",
+            "encoding": "utf-8",
+        }
+        kwargs.update({k: v for k, v in defaults.items() if k not in kwargs})
+        print(
+            f"Running subprocess.Popen with kwargs: {json.dumps(kwargs, default=str)}"
+        )
+        self.process = subprocess.Popen(**kwargs)
+        self.error_message = error_message
+        self.stdout = self.process.stdout
+        self.stdin = self.process.stdin
+
+    def check(self):
+        stdout, stderr = self.process.communicate()
+        returncode = self.process.returncode
+        if returncode != 0:
+            raise ProcessError(
+                self.error_message, stdout, stderr, returncode, self.process.args
+            )
 
 
 def _get_function_name_from_arn(arn):
