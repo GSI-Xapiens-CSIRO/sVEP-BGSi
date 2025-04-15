@@ -319,7 +319,7 @@ sub protein_altering_variant{
 
     return 0 if  length($alt_pep) eq length($ref_pep);       # synonymous_variant(@_);  missense_variant(@_);
     return 0 if  $ref_pep =~/^\*/  || $alt_pep =~/^\*/;      # stop lost/ gained/ retained
-    return 0 if  $alt_pep =~/^\Q$ref_pep\E|\Q$ref_pep\E$/;   # inframe_insertion(@_);
+    return 0 if  inframe_insertion(@_);   # inframe_insertion(@_);
 
     return 0 if inframe_deletion(@_);
     return 0 if start_lost(@_);
@@ -680,57 +680,171 @@ sub complex_indel {
     return @{ $bvfo->cds_coords } > 1;
 }
 
+sub get_adjacent_exon_nucleotides {
+    my ($feat, $bvf, $earlier, $num_bases) = @_;
+    my $chr = $bvf->{'chr'};
+    my $fasta_file = $bvf->{'fasta_file'};
+    my $gtf_file = $bvf->{'gtf_file'};
+    my $reference_chr = $bvf->{'reference_chr'};
+    my $transcript_start = $feat->{'start'};
+    my $transcript_end = $feat->{'end'};
+    my $transcript_id = $feat->{'stable_id'};
+    my $cdna_start = $feat->{'cdna_coding_start'};
+    my $cdna_end = $feat->{'cdna_coding_end'};
+    my $position = $feat->{'position'};
+    my $tabix_result = `./tabix $gtf_file $reference_chr:$transcript_start-$transcript_end`;
+    my @cds_coords = ();
+    my $exon_index = undef;
+    for my $record (split /[\r\n]+/, $tabix_result){
+        my @info = (split '\t', $record);
+        if ($info[2] eq "CDS" && $info[7] eq $transcript_id){
+            if ($info[3] eq $cdna_start && $info[4] eq $cdna_end){
+                $exon_index = @cds_coords;
+            }
+            push @cds_coords, [$info[3], $info[4]];
+        }
+    }
+    unless (defined $exon_index){
+        print "CDS not found in gtf file searching $gtf_file for $reference_chr:$transcript_start-$transcript_end\n";
+        $feat->{warning} = "CDS is not found in gtf file";
+        print Dumper $feat;
+        print Dumper $bvf;
+        print "Just using As as a placeholder. This will be wrong, but at least it won't crash.\n";
+        return "A" x $num_bases;
+    }
+    my ($query_start, $query_end) = undef;
+    if ($earlier){
+        my $prev_end_coords = $cds_coords[$exon_index-1][1];
+        ($query_start, $query_end) = ($prev_end_coords+1-$num_bases, $prev_end_coords);
+    } else {
+        my $next_start_coords = $cds_coords[$exon_index+1][0];
+        ($query_start, $query_end) = ($next_start_coords, $next_start_coords-1+$num_bases);
+    }
+    my $faidx_result = `./samtools faidx $fasta_file $reference_chr:$query_start-$query_end`;
+    my @faidx_lines = split(/\n/, $faidx_result);
+    return $faidx_lines[1];
+}
+
 sub _get_peptide_alleles {
     my ($bvfoa, $feat, $bvfo, $bvf) = @_;
     my $cache = $bvfoa->{_predicate_cache} ||= {};
     my @alleles = ();
-    #print Dumper $feat;
     my $ref_seq = $feat->{'seq'};
-    my $alt_seq = $ref_seq;
-    #print("$feat->{'strand'}");
-    #print($feat->{stable_id},"\n");
 
     my $ref_allele = $feat->{'ref_allele'};
     my $alt_allele = $feat->{'alt_allele'};
+    my $frame = $feat->{'cds_frame'};  # This should be between 0 and 2
     my $var_loc =  $feat->{'position'} - $feat->{'cdna_coding_start'};
-    if($ref_seq =~"^TGA\$|^TAA\$|^TAG\$"){#This is for stop retained variant where you want to check the original ref for stop
+    my $var_loc_end = $var_loc + length($ref_allele) - 1;
+    my $strand = $feat->{'strand'};
+
+    my $seq_length = $feat->{'seq_length'};
+    # Handle the case of deletions that span the end of the CDS
+    # The biological implications of this are uncertain,
+    # So we'll treat as if transcription starts or ends earlier,
+    # rather than going outside the CDS.
+    # The main finding will be splice_region_variant
+    if ($var_loc_end >= $seq_length) {
+        # Deletion spans the end of the CDS
+        my $new_ref_length = length($ref_allele) - $var_loc_end + $seq_length - 1;
+        $ref_allele = substr($ref_allele, 0, $new_ref_length);
+        $alt_allele = substr($alt_allele, 0, $new_ref_length);
+        $var_loc_end = $seq_length - 1;
+    }
+    if ($var_loc < 0) {
+        # Deletion starts before the start of the CDS
+        my $new_ref_length = length($ref_allele) + $var_loc;
+        $ref_allele = substr($ref_allele, -$new_ref_length);
+        $alt_allele = substr($alt_allele, -$new_ref_length);
+        $var_loc = 0;
+    }
+    my $trailing_bases = ($seq_length - $frame) % 3;
+    # subtracting the length to handle deletions, the -1 and +1 cancel out
+    my $rev_var_loc = $seq_length - $var_loc_end - 1;
+    if ($rev_var_loc < 0) {
+        $rev_var_loc = 0;
+    }
+    my $pad_start = 0;
+    my $pad_end = 0;
+    my $reset_frame = 0;
+    if ($strand == 1) {
+        if ($var_loc < $frame) {
+            # Need to look at previous exon to create codon
+            $pad_start = 3 - $frame;
+            $reset_frame = 1;
+        }
+        if ($rev_var_loc < $trailing_bases) {
+            # Need to look at next exon to create codon
+            $pad_end = 3 - $trailing_bases;
+        }
+    } else {
+        if ($var_loc < $trailing_bases) {
+            # Need to look at previous exon to create codon
+            $pad_start = 3 - $trailing_bases;
+        }
+        if ($rev_var_loc < $frame) {
+            # Need to look at next exon to create codon
+            $pad_end = 3 - $frame;
+            $reset_frame = 1;
+        }
+    }
+    if ($pad_start) {
+        $ref_seq = get_adjacent_exon_nucleotides($feat, $bvf, 1, $pad_start).$ref_seq;
+        $var_loc += $pad_start;
+        $var_loc_end += $pad_start;
+    }
+    if ($pad_end) {
+        $ref_seq = $ref_seq.get_adjacent_exon_nucleotides($feat, $bvf, 0, $pad_end);
+        $rev_var_loc += $pad_end;
+    }
+    if ($reset_frame) {
+        $frame = 0;
+    }
+    $ref_seq = lc($ref_seq);
+    my $alt_seq = $ref_seq;
+
+    if($ref_seq =~ /^TGA$|^TAA$|^TAG$/i){#This is for stop retained variant where you want to check the original ref for stop
       #print("\nSTOP REFFFF - $ref_seq\n");
       $feat->{stop_ref} = $ref_seq;
       $feat->{stop_alt} = $ref_seq;
       substr($feat->{stop_alt}, $var_loc, length $alt_allele) = $alt_allele;
     }
-    if(substr($ref_seq, $var_loc, length $ref_allele) =~ $ref_allele ){
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+    if(CORE::fc(substr($ref_seq, $var_loc, length $ref_allele)) =~ CORE::fc($ref_allele) ){
+      substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;  # This is just to set it to uppercase
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }elsif($ref_allele eq "-"){
       substr($alt_seq, $var_loc, 0) = $alt_allele;
-    }elsif(substr($ref_seq, $var_loc, length $ref_allele) ne $ref_allele || $alt_allele eq "-"){
+    }elsif(CORE::fc(substr($ref_seq, $var_loc, length $ref_allele)) ne CORE::fc($ref_allele) || $alt_allele eq "-"){
       $feat->{warning} = "REF doesn't match GRCh38 reference at given position";
       substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }elsif($alt_allele eq "-"){
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }else{
       $feat->{warning} = "REF doesn't match GRCh38 reference at given position";
       substr($ref_seq, $var_loc, length $ref_allele) = $ref_allele;
-      substr($alt_seq, $var_loc, length $alt_allele) = $alt_allele;
+      substr($alt_seq, $var_loc, length $ref_allele) = $alt_allele;
     }
-
-    my $strand = $feat->{'strand'};
-    my $frame = $feat->{'cds_frame'};
     if($strand == -1){
       reverse_comp(\$ref_seq);
       reverse_comp(\$alt_seq);
-      $var_loc = $feat->{'cdna_coding_end'} - $feat->{'position'};
+      $var_loc = $rev_var_loc;
+      $var_loc_end = $var_loc + length($ref_allele) - 1;
     }
-    my ($ref_pep_allele,$alt_pep_allele);
-    for (my $i = $frame; $i <= $var_loc; $i+= 3) {
-       $ref_pep_allele = substr($ref_seq, $i, 3);
-       $alt_pep_allele = substr($alt_seq, $i, 3);
-    }
-    if($ref_pep_allele =~"^TGA\$|^TAA\$|^TAG\$" && $alt_pep_allele =~"-"){
+    my $codon_start = $frame + 3 * int(($var_loc-$frame) / 3);
+    my $codon_end = $frame + 2 + 3 * int(($var_loc_end-$frame-2) / 3 + 0.9);  # who needs a ceil function?
+    my $bases_to_trim = length($ref_seq) - $codon_end - 1;
+    my $ref_pep_allele = substr($ref_seq, $codon_start, -$bases_to_trim || (length($ref_seq)-$codon_start));
+    my $alt_pep_allele = substr($alt_seq, $codon_start, -$bases_to_trim || (length($alt_seq)-$codon_start));
+    if($ref_pep_allele =~/^TGA$|^TAA$|^TAG$/i && $alt_pep_allele =~"-"){
       $alt_pep_allele = $ref_pep_allele;
     }
-    if(length $ref_pep_allele != 3 && length $alt_pep_allele != 3){
+    $ref_seq =~ s/-//g;
+    $alt_seq =~ s/-//g;
+    $ref_pep_allele =~ s/-//g;
+    $alt_pep_allele =~ s/-//g;
+    if(length($ref_pep_allele) % 3 != 0){
+      print("\nCodon is out of CDS range.\n");
       $feat->{warning} = "Codon is out of CDS range.";
     }
 
@@ -739,6 +853,7 @@ sub _get_peptide_alleles {
 
 
     if(!length $ref_pep_allele &&  !length $alt_pep_allele) {
+      print("\nFailed!\n");
       $feat->{warning} = "Frame removes the variant position out of equation";
       $bvfo->{startRef} = substr($ref_seq, $frame, 3);
       $bvfo->{startAlt} = substr($alt_seq, $frame, 3);
@@ -749,9 +864,8 @@ sub _get_peptide_alleles {
 
 
     my $ref_aa = consequence::CodonTable->translate( $ref_pep_allele, 1);
-    my $alt_aa = consequence::CodonTable->translate( $alt_pep_allele, 1);
-    if($ref_allele eq "-"){
-      $alt_pep_allele .= substr($alt_seq, $var_loc+1, length $alt_allele);
+    my $alt_aa = consequence::CodonTable->translate( $alt_pep_allele);
+    if(length($alt_pep_allele) % 3 != 0){
       $alt_aa .='X';
     }
     #print("$ref_aa\n$alt_aa\n");
@@ -760,15 +874,15 @@ sub _get_peptide_alleles {
 
     @alleles = ($ref_pep, $alt_pep);
     $cache->{_get_peptide_alleles} = \@alleles;
-    $feat->{altCodon} = $alt_pep_allele;
-    $feat->{refCodon} = $alt_pep_allele;
+    $feat->{altCodon} = uc($alt_pep_allele);
+    $feat->{refCodon} = uc($ref_pep_allele);
     $feat->{altaa} = $ref_aa;
     $feat->{refaa} = $alt_aa;
-    $feat->{codons} = $ref_pep_allele."/".$alt_pep_allele;
-    $feat->{aa} = $ref_aa eq $alt_aa ? $ref_aa : $ref_aa."/".$alt_aa;
+    $feat->{codons} = ($ref_pep_allele||"-")."/".($alt_pep_allele||"-");
+    $feat->{aa} = $ref_aa eq $alt_aa ? $ref_aa : ($ref_aa||"-")."/".($alt_aa||"-");
 
-    $bvfo->{startRef} = substr($ref_seq, $frame, 3);
-    $bvfo->{startAlt} = substr($alt_seq, $frame, 3);
+    $bvfo->{startRef} = uc(substr($ref_seq, $frame, 3));
+    $bvfo->{startAlt} = uc(substr($alt_seq, $frame, 3));
     $feat->{_variation_effect_feature_cache}->{peptide} = $ref_pep;
     return @{$cache->{_get_peptide_alleles}};
 }
@@ -1075,7 +1189,7 @@ sub inframe_insertion {
     $bvf  ||= $bvfo->base_variation_feature;
 
     # sequence variant
-    if($bvf->isa('Bio::EnsEMBL::Variation::VariationFeature')) {
+    if(($bvf->isa('Bio::EnsEMBL::Variation::VariationFeature') || $bvf->isa('consequence::VariationFeature'))) {
         my ($ref_codon, $alt_codon) = _get_codon_alleles(@_);
 
         return 0 if start_lost(@_);
@@ -1090,6 +1204,7 @@ sub inframe_insertion {
         # we can use start_retained to check this
         return 0 if start_retained_variant(@_) && $alt_pep =~ /\Q$ref_pep\E$/;
 
+        return (length($alt_codon) - length($ref_codon)) % 3 == 0;
         # if we have a stop codon in the alt peptide
         # trim off everything after it
         # this allows us to detect inframe insertions that retain a stop
@@ -1142,12 +1257,24 @@ sub inframe_deletion {
 
         return 0 unless defined $ref_codon;
         return 0 unless length($alt_codon) < length ($ref_codon);
+        return 0 unless ((length($ref_codon) - length($alt_codon)) % 3 == 0);
 
         # simple string match
         return 1 if ($ref_codon =~ /^\Q$alt_codon\E/) || ($ref_codon =~ /\Q$alt_codon\E$/);
 
         # check for internal match
-        ($ref_codon, $alt_codon) = @{Bio::EnsEMBL::Variation::Utils::Sequence::trim_sequences($ref_codon, $alt_codon)};
+        # relevant function code was copied from external file. line was:
+        # ($ref_codon, $alt_codon) = @{Bio::EnsEMBL::Variation::Utils::Sequence::trim_sequences($ref_codon, $alt_codon)};
+        # trim from left
+        while($ref_codon && $alt_codon && substr($ref_codon, 0, 1) eq substr($alt_codon, 0, 1)) {
+        $ref_codon = substr($ref_codon, 1);
+        $alt_codon = substr($alt_codon, 1);
+        }
+        # trim from right
+        while($ref_codon && $alt_codon && substr($ref_codon, -1, 1) eq substr($alt_codon, -1, 1)) {
+        $ref_codon = substr($ref_codon, 0, length($ref_codon) - 1);
+        $alt_codon = substr($alt_codon, 0, length($alt_codon) - 1);
+        }
 
         # if nothing remains of $alt_codon,
         # then it fully matched a part in the middle of $ref_codon
@@ -1386,17 +1513,12 @@ sub frameshift {
 
         return 0 if partial_codon(@_);
 
-        return 0 unless defined $feat->{cdna_coding_start} && defined $feat->{cdna_coding_end};
-
-        my $var_len = $feat->{cdna_coding_end} - $feat->{cdna_coding_start} + 1;
-
-        my $allele_len = $feat->{seq_length};
-
-        # if the allele length is undefined then we can't call a frameshift
-
-        return 0 unless defined $allele_len;
-
-        return abs( $allele_len - $var_len ) % 3;
+        # Trigger calculation of codons if they're not available
+        _get_peptide_alleles(@_) unless defined $feat->{refCodon} && defined $feat->{altCodon};
+        return 0 unless defined $feat->{refCodon} && defined $feat->{altCodon};  # _get_pepitide_alleles() didn't work
+        my $refLen = length($feat->{refCodon});
+        my $altLen = length($feat->{altCodon});
+        return abs($refLen - $altLen) % 3;
     }
 
     # structural variant

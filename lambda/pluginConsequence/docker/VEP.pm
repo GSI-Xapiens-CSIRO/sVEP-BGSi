@@ -88,6 +88,9 @@ my $tempLocation =  $ENV{'SVEP_TEMP'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
 my $sendJobEmailArn = $ENV{'SEND_JOB_EMAIL_ARN'};
+my $maxSnsMessageSize = 260000;
+my $s3PayloadKey = "_s3_payload_key";
+
 sub handle {
     my ($payload) = @_;
     simple_truncated_print("Received message: $payload\n");
@@ -95,16 +98,29 @@ sub handle {
     my $sns = $event->{Records}[0]{Sns};
     ##########################################update
     my $message = decode_json($sns->{'Message'}); #might have to remove decode_json
+    my $payloadKey = $message->{$s3PayloadKey};
+    if (defined $payloadKey) {
+      print("Loading payload from S3 bucket $tempLocation and key: $payloadKey\n");
+      my $payloadFile = "/tmp/payload.json";
+      system("/usr/bin/aws s3 cp s3://$tempLocation/$payloadKey $payloadFile 1>/dev/null");
+      my $messageString;
+      {
+        local $/;
+        open(my $fh, '<', $payloadFile) or die "can't open $payloadFile: $!";
+        $messageString = <$fh>;
+      }
+      simple_truncated_print("Payload from S3: $messageString\n");
+      $message = decode_json($messageString);
+    }
     my @data = $message->{'snsData'};
     my $request_id = $message->{'requestId'};
     my $tempFileName = $message->{'tempFileName'};
-    my $chrom_mapping = $message->{'mapping'};
+    my $refChrom = $message->{'refChrom'};
     print("tempFileName is - $tempFileName\n");
     #############################################
 
     try {
-      my $chr = $data[0][0]->{'chrom'};
-      my $fasta = $fastaBase.'.'.$chrom_mapping->{$chr}.'.fa.bgz';
+      my $fasta = $fastaBase.'.'.$refChrom.'.fa.bgz';
       print "Copying fasta reference files.\n";
       system("/usr/bin/aws s3 cp $fastaLocation /tmp/ --recursive  --exclude '*'  --include '$fasta*' 1>/dev/null");
       print "Copying splice reference files.\n";
@@ -116,15 +132,15 @@ sub handle {
           if ( scalar(@{$line->{'data'}}) == 1 && @{$line->{'data'}}[0] eq ''){
             next;
           }
-          my $vep = parse_vcf($line, $chrom_mapping);
-          if(length $vep){
-            push @results,$vep;
+          my @vep = parse_vcf($line, $refChrom);
+          if(scalar(@vep)) {
+            push @results, @vep;
           }
         }
       }
       my %outMessage = (
-        'snsData' => join("\n", @results),
-        'mapping' => $chrom_mapping,
+        'snsData' => \@results,
+        'refChrom' => $refChrom,
         'requestId' => $request_id,
       );
       start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
@@ -138,46 +154,6 @@ sub handle {
     catch {
      handle_failed_execution($request_id, $functionName, $_);
     };
-}
-
-sub create_temp_file {
-  my ($nextTempFile) = @_;
-  print("Creating file: $nextTempFile\n");
-  system("aws", "s3api", "put-object", "--bucket", $tempLocation, "--key",  $nextTempFile, "--content-length", "0");
-}
-
-sub sns_publish {
-  my ($topicArn, $message) = @_;
-  my $jsonMessage = to_json($message);
-  # In order to get around command-line character limits, we must pass the message as a file
-  # https://github.com/aws/aws-cli/issues/1314#issuecomment-515674161
-  my $filename = "/tmp/message.json";
-  print("Saving message to local file $filename\n");
-  open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
-  print $fh $jsonMessage;
-  close $fh;
-  simple_truncated_print("Calling SNS Publish with topicArn: $topicArn and message: $jsonMessage\n");
-  system("aws", "sns", "publish", "--topic-arn", $topicArn, "--message", "file://$filename");
-}
-
-sub start_function {
-  my ($topicArn, $baseFilename, $message) = @_;
-  my $functionName = (split(":", $topicArn))[-1];
-  my $fileName = $baseFilename."_".$functionName;
-  $message->{'tempFileName'} = $fileName;
-  create_temp_file($fileName);
-  sns_publish($topicArn, $message);
-}
-
-sub simple_truncated_print {
-  # This doesn't need to be precise, just good enough
-  my $maxLength = 1000;
-  my ($string) = @_;
-  my $toRemove = length($string) - $maxLength;
-  if($toRemove > 0){
-    $string = substr($string, 0, $maxLength / 2)."<$toRemove bytes>".substr($string, -$maxLength / 2);
-  }
-  print($string);
 }
 
 sub handle_failed_execution {
@@ -214,11 +190,13 @@ sub handle_failed_execution {
     });
 
     # Update the item in DynamoDB
-    my $exit_code = system("/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
-                           "--key '{\"job_id\":{\"S\":\"$request_id\"}}' " .
-                           "--update-expression \"$update_expression\" " .
-                           "--expression-attribute-names '$expression_attribute_names' " .
-                           "--expression-attribute-values '$expression_attribute_values'");
+    my $system_call = "/usr/bin/aws dynamodb update-item --table-name $dynamoClinicJobsTable " .
+      "--key '{\"job_id\":{\"S\":\"$request_id\"}}' " .
+      "--update-expression \"$update_expression\" " .
+      "--expression-attribute-names '$expression_attribute_names' " .
+      "--expression-attribute-values '$expression_attribute_values'";
+    print("System call: $system_call\n");
+    my $exit_code = system($system_call);
 
     die "DynamoDB update failed with exit code " . ($exit_code >> 8) if $exit_code != 0;
     
@@ -242,7 +220,7 @@ sub create_temp_file {
 }
 
 sub sns_publish {
-  my ($topicArn, $message) = @_;
+  my ($topicArn, $message, $s3PayloadPrefix) = @_;
   my $jsonMessage = to_json($message);
   # In order to get around command-line character limits, we must pass the message as a file
   # https://github.com/aws/aws-cli/issues/1314#issuecomment-515674161
@@ -251,8 +229,19 @@ sub sns_publish {
   open(my $fh, '>', $filename) or die "Could not open file '$filename' $!";
   print $fh $jsonMessage;
   close $fh;
+  my $messageString = "file://$filename";
+  my $messageSize = length($jsonMessage);
+  if ($messageSize > $maxSnsMessageSize && defined $s3PayloadPrefix) {
+    print("SNS message too large ($messageSize bytes), uploading to S3\n");
+    my $payloadKey = "payloads/$s3PayloadPrefix.json";
+    simple_truncated_print("Uploading to S3 bucket $tempLocation and key $payloadKey: $jsonMessage\n");
+    system("/usr/bin/aws s3 cp $filename s3://$tempLocation/$payloadKey 1>/dev/null");
+    my %s3Map = ($s3PayloadKey => $payloadKey);
+    $jsonMessage = to_json(\%s3Map);
+    $messageString = $jsonMessage;
+  }
   simple_truncated_print("Calling SNS Publish with topicArn: $topicArn and message: $jsonMessage\n");
-  system("aws", "sns", "publish", "--topic-arn", $topicArn, "--message", "file://$filename");
+  system("aws", "sns", "publish", "--topic-arn", $topicArn, "--message", $messageString);
 }
 
 sub start_function {
@@ -261,7 +250,7 @@ sub start_function {
   my $fileName = $baseFilename."_".$functionName;
   $message->{'tempFileName'} = $fileName;
   create_temp_file($fileName);
-  sns_publish($topicArn, $message);
+  sns_publish($topicArn, $message, $fileName);
 }
 
 sub simple_truncated_print {
@@ -277,7 +266,7 @@ sub simple_truncated_print {
 
 # parse a line of VCF input into a variation feature object
 sub parse_vcf {
-    my ($line, $chrom_mapping) = @_;
+    my ($line, $refChrom) = @_;
     #print Dumper $line;
     my ($chr, $start, $end, $ref, $alt) = ($line->{'chrom'}, $line->{'pos'}, $line->{'pos'}, $line->{'ref'}, $line->{'alt'});
     #print("$chr\t$start\n");
@@ -439,7 +428,7 @@ sub parse_vcf {
         my $file = "/tmp/".$spliceFile;
         my $intronStart = $start - 8;
         my $intronEnd = $start + 8;
-        my $location = $chrom_mapping->{$chr}.":".$intronStart."-".$intronEnd;
+        my $location = $refChrom.":".$intronStart."-".$intronEnd;
         $intron_result =  `./tabix $file $location`;
         #print("\n Intron result = $intron_result")
       }
@@ -463,14 +452,17 @@ sub parse_vcf {
         my $intron_boundary = 0;
         my $splice_region_variant =0;
         if(exists($info{'CDS'})){
-          my $location = $chrom_mapping->{$chr}.':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
-          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$chrom_mapping->{$chr}.'.fa.bgz';
+          my $location = $refChrom.':'.$info{'CDS_start'}.'-'.$info{'CDS_end'};
+          my $fasta ='Homo_sapiens.GRCh38.dna.chromosome.'.$refChrom.'.fa.bgz';
           my $file = '/tmp/'.$fasta;
+          $vf->{'fasta_file'} = $file;
+          $vf->{'gtf_file'} = "/tmp/".$spliceFile;
+          $vf->{'reference_chr'} = $refChrom;
           my @result = `./samtools faidx $file $location`;
           shift @result;
           $seq = join "", @result;
           $seq =~ s/[\r\n]+//g;
-          $length = ($info{'CDS_end'}-$info{'CDS_start'},$info{'CDS_start'}-$info{'CDS_end'})[$info{'CDS_end'}-$info{'CDS_start'} < $info{'CDS_start'}-$info{'CDS_end'}];
+          $length = abs($info{'CDS_end'}-$info{'CDS_start'}) + 1;
 
           for my $tran (split /[\r\n]+/, $intron_result){
             my @infoNew = (split '\t', $tran);
@@ -612,8 +604,8 @@ sub parse_vcf {
         }
         if($rows[1] eq "mirbase"){
           #my $intron_loc = $start;
-          my $location = "chr".$chrom_mapping->{$chr}.":".$start."-".$start;
-          my $mirna_result =  `tabix $mirnaLocalFile $location`; # change this for svep
+          my $location = "chr".$refChrom.":".$start."-".$start;
+          my $mirna_result =  `./tabix $mirnaLocalFile $location`;
           if(length $mirna_result){
             $tr->{within_mirna} = 1;
           }else{
@@ -710,19 +702,34 @@ sub parse_vcf {
         $cons = '5_prime_UTR_variant,'.$cons;
         }
       }
-      my $line = $rank."\t".('.')."\t".$chr.':'.$start.'-'.$end."\t".$alt."\t".$cons."\t".(defined $info{gene_name} ? $info{gene_name} : '-')."\t".$info{gene_id}."\t".$rows[2]."\t".
-      $info{transcript_id}.".".$info{transcript_version}."\t".$info{transcript_biotype}."\t".($info{'exon_number'} || '-')."\t".
-      ($tv->{'feature'}{'aa'} || '-')."\t".($tv->{'feature'}{'codons'} || '-')."\t".$strand."\t".($info{transcript_support_level}|| '-');
-      #print($result1);
+      my $start_end_string = $start<$end ? $start.'-'.$end : $end.'-'.$start;
+      my %record = (
+        rank => $rank,
+        region => $chr.':'.$start_end_string,
+        alt => $alt,
+        consequence => $cons,
+        geneName => (defined $info{gene_name} ? $info{gene_name} : '-'),
+        geneId => $info{gene_id},
+        feature => $rows[2],
+        transcriptId => $info{transcript_id}.".".$info{transcript_version},
+        transcriptBiotype => $info{transcript_biotype},
+        exonNumber => ($info{exon_number} || '-'),
+        aminoAcids => ($tv->{feature}{aa} || '-'),
+        codons => ($tv->{feature}{codons} || '-'),
+        strand => $strand,
+        transcriptSupportLevel => ($info{transcript_support_level}|| '-'),
+        ref => $ref,
+        gt => $line->{'gt'},
+        qual => $line->{'qual'},
+        filter => $line->{'filter'},
+      );
       if(length $tr->{warning}){
-        $line = $line."\t".$tr->{warning};
+        $record{warning} = $tr->{warning};
       }
-      push @results,$line;
-      #print("$rank\n");
-
+      push @results, \%record;
     }
-    my @sorted = sort { (split('\t', $a))[0] <=> (split('\t', $b))[0] } @results;
-    return join("\n", @sorted);
+    my @sorted = sort { $a->{rank} <=> $b->{rank} } @results;
+    return @sorted;
 
     #print Dumper @sorted;
 

@@ -17,6 +17,16 @@ RECORDS_PER_SAMPLE = 700
 BATCH_CHUNK_SIZE = 10
 PAYLOAD_SIZE = 260000
 
+QUERY_KEYS = [
+    "chrom",
+    "pos",
+    "ref",
+    "alt",
+    "qual",
+    "filter",
+    "gt",
+]
+
 
 def get_query_process(location, chrom, start, end):
     args = [
@@ -25,7 +35,7 @@ def get_query_process(location, chrom, start, end):
         "--regions",
         f"{chrom}:{start}-{end}",
         "--format",
-        "%CHROM\t%POS\t%REF\t%ALT\n",
+        "%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t[%GT]\n",
         location,
     ]
     return subprocess.Popen(
@@ -33,14 +43,23 @@ def get_query_process(location, chrom, start, end):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd="/tmp",
-        encoding="ascii",
+        encoding="utf-8",
     )
 
 
-def submit_query_gtf(request_id, query_process, base_id, timer, chrom_mapping):
+def submit_query_gtf(request_id, query_process, base_id, timer, ref_chrom):
     regions_list = query_process.stdout.read().splitlines()
     total_coords = [
-        regions_list[x : x + RECORDS_PER_SAMPLE]
+        [
+            {
+                key: value
+                for key, value in zip(
+                    QUERY_KEYS,
+                    vcf_line.split("\t"),
+                )
+            }
+            for vcf_line in regions_list[x : x + RECORDS_PER_SAMPLE]
+        ]
         for x in range(0, len(regions_list), RECORDS_PER_SAMPLE)
     ]
 
@@ -60,7 +79,7 @@ def submit_query_gtf(request_id, query_process, base_id, timer, chrom_mapping):
                     message={
                         "requestId": request_id,
                         "coords": remaining_coords[i : i + BATCH_CHUNK_SIZE],
-                        "mapping": chrom_mapping,
+                        "refChrom": ref_chrom,
                     },
                 )
             break
@@ -71,7 +90,7 @@ def submit_query_gtf(request_id, query_process, base_id, timer, chrom_mapping):
                 message={
                     "requestId": request_id,
                     "coords": total_coords[idx],
-                    "mapping": chrom_mapping,
+                    "refChrom": ref_chrom,
                 },
             )
 
@@ -106,6 +125,7 @@ def lambda_handler(event, context):
                 break
             else:
                 chrom, start_str = region.split(":")
+                ref_chrom = chrom_mapping[chrom]
                 region_base_id = f"{base_id}_{chrom}_{start_str}"
                 start = round(1000000 * float(start_str) + 1)
                 end = start + round(1000000 * SLICE_SIZE_MBP - 1)
@@ -115,7 +135,7 @@ def lambda_handler(event, context):
                     query_process,
                     region_base_id,
                     second_timer,
-                    chrom_mapping,
+                    ref_chrom,
                 )
         orchestrator.mark_completed()
     except Exception as e:
