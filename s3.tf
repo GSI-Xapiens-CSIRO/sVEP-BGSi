@@ -15,6 +15,23 @@ resource "aws_s3_bucket" "svep-temp" {
   tags          = var.common-tags
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "svep-temp-lifecycle" {
+  bucket = aws_s3_bucket.svep-temp.id
+
+  rule {
+    id     = "remove-old-payloads"
+    status = "Enabled"
+
+    filter {
+      prefix = "payloads/"
+    }
+
+    expiration {
+      days = 1
+    }
+  }
+}
+
 resource "aws_s3_bucket" "svep-results" {
   bucket_prefix = "svep-backend-results-"
   force_destroy = true

@@ -2,6 +2,7 @@ import os
 import shutil
 import json
 import math
+import traceback
 
 import boto3
 from botocore.config import Config
@@ -24,6 +25,8 @@ s3_client = boto3.client(
 
 MAX_PRINT_LENGTH = 1024
 MAX_SNS_EVENT_PRINT_LENGTH = 2048
+MAX_SNS_MESSAGE_SIZE = 260000
+S3_PAYLOAD_KEY = "_s3_payload_key"
 TEMP_FILE_FIELD = "tempFileName"
 
 
@@ -147,13 +150,31 @@ def print_event(event, max_length=MAX_PRINT_LENGTH):
 
 def get_sns_event(event, max_length=MAX_SNS_EVENT_PRINT_LENGTH):
     print_event(event, max_length)
-    return json.loads(event["Records"][0]["Sns"]["Message"])
+    message = json.loads(event["Records"][0]["Sns"]["Message"])
+    if (payload_key := message.get(S3_PAYLOAD_KEY)) is not None:
+        print(f"Loading payload from S3 bucket {SVEP_TEMP} and key: {payload_key}")
+        payload = s3.Object(SVEP_TEMP, payload_key).get()
+        message = json.loads(payload["Body"].read().decode())
+        truncated_print(f"Payload from S3: {json.dumps(message)}", max_length)
+    return message
 
 
-def sns_publish(topic_arn, message, max_length=MAX_PRINT_LENGTH):
+def sns_publish(
+    topic_arn, message, max_length=MAX_PRINT_LENGTH, s3_payload_prefix=None
+):
+    message = json.dumps(message, separators=(",", ":"))
+    if len(message) > MAX_SNS_MESSAGE_SIZE and s3_payload_prefix is not None:
+        print(f"SNS message too large ({len(message)} bytes), uploading to S3")
+        payload_key = f"payloads/{s3_payload_prefix}.json"
+        truncated_print(
+            f"Uploading to S3 bucket {SVEP_TEMP} and key {payload_key}: {message}",
+            max_length,
+        )
+        s3.Object(SVEP_TEMP, payload_key).put(Body=message.encode())
+        message = json.dumps({S3_PAYLOAD_KEY: payload_key}, separators=(",", ":"))
     kwargs = {
         "TopicArn": topic_arn,
-        "Message": json.dumps(message, separators=(",", ":")),
+        "Message": message,
     }
     truncated_print(f"Publishing to SNS: {json.dumps(kwargs)}", max_length)
     sns.publish(**kwargs)
@@ -172,7 +193,7 @@ def start_function(
         filename = f"{base_filename}_{function_name}"
     message[TEMP_FILE_FIELD] = filename
     _create_temp_file(filename)
-    sns_publish(topic_arn, message, max_length)
+    sns_publish(topic_arn, message, max_length, filename)
 
 
 def truncated_print(string, max_length=MAX_PRINT_LENGTH):
@@ -183,7 +204,7 @@ def truncated_print(string, max_length=MAX_PRINT_LENGTH):
 
 
 def handle_failed_execution(job_id, error_message):
-    print(error_message)
+    print(traceback.format_exc())
     job = query_clinic_job(job_id)
     if job.get("job_status").get("S") == "failed":
         return

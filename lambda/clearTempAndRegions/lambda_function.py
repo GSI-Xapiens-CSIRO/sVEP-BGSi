@@ -8,8 +8,8 @@ s3 = boto3.client("s3")
 SVEP_TEMP = os.environ["SVEP_TEMP"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 
-MAX_RETRIES = 5 
-RETRY_DELAY = 30 
+MAX_RETRIES = 5
+RETRY_DELAY = 30
 
 
 def clean_bucket(bucket, request_id):
@@ -41,8 +41,8 @@ def lambda_handler(event, _):
     print(f"Event received: {json.dumps(event)}")
     for record in event["Records"]:
         job_id = record["dynamodb"]["Keys"]["job_id"]["S"]
-        old_job_status = record["dynamodb"]["OldImage"]["job_status"]["S"]
-        new_job_status = record["dynamodb"]["NewImage"]["job_status"]["S"]
+        old_job_status = record["dynamodb"]["OldImage"].get("job_status", {}).get("S")
+        new_job_status = record["dynamodb"]["NewImage"].get("job_status", {}).get("S")
         if old_job_status != "failed" and new_job_status == "failed":
             print(f"Job {job_id} failed. Cleaning regions in buckets.")
             clean_with_retries(SVEP_TEMP, job_id)

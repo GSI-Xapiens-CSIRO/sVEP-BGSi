@@ -38,16 +38,6 @@ resource "aws_sns_topic_subscription" "pluginConsequence" {
   endpoint = module.lambda-pluginConsequence.lambda_function_arn
 }
 
-resource "aws_sns_topic" "pluginUpdownstream" {
-  name = "svep-backend-pluginUpdownstream"
-}
-
-resource "aws_sns_topic_subscription" "pluginUpdownstream" {
-  topic_arn = aws_sns_topic.pluginUpdownstream.arn
-  protocol  = "lambda"
-  endpoint  = module.lambda-pluginUpdownstream.function_arn
-}
-
 resource "aws_sns_topic" "pluginClinvar" {
   name = "svep-backend-pluginClinvar"
 }
@@ -126,4 +116,14 @@ resource "aws_sns_topic_subscription" "sendJobEmail" {
   topic_arn = aws_sns_topic.sendJobEmail.arn
   protocol  = "lambda"
   endpoint  = module.lambda-sendJobEmail.function_arn
+}
+
+resource "aws_sns_topic" "formatOutput" {
+  name = "svep-backend-formatOutput"
+}
+
+resource "aws_sns_topic_subscription" "formatOutput" {
+  topic_arn = aws_sns_topic.formatOutput.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-formatOutput.function_arn
 }
