@@ -610,3 +610,31 @@ module "lambda-formatOutput" {
     local.python_modules_layer,
   ]
 }
+
+#
+# qcFigures Lambda Function
+#
+module "lambda-qcFigures" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-qcFigures"
+  description         = "Running vcfstats for generating graphic."
+  create_package      = false
+  image_uri           = module.docker_image_qcFigures_lambda.image_uri
+  package_type        = "Image"
+  memory_size         = 3000
+  timeout             = 600
+  ephemeral_storage_size = 10240
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-qcFigures.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/qcFigures"
+  tags                   = var.common-tags
+  environment_variables = {
+    FILE_LOCATION            = var.data_portal_bucket_name
+    USER_POOL_ID             = var.cognito-user-pool-id
+    HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
+  }
+}
