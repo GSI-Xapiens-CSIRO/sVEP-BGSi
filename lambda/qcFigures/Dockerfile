@@ -25,6 +25,6 @@ RUN pip install --upgrade pip wheel setuptools \
     && pip install -r requirements.txt --verbose
 
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
-# ADD shared ${LAMBDA_TASK_ROOT}/shared
+ADD shared ${LAMBDA_TASK_ROOT}/shared
 
 CMD ["lambda_function.lambda_handler"]
