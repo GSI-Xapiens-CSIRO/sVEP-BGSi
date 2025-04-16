@@ -636,5 +636,6 @@ module "lambda-qcFigures" {
     FILE_LOCATION            = var.data_portal_bucket_name
     USER_POOL_ID             = var.cognito-user-pool-id
     HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
+    RESULT_DURATION          = local.result_duration
   }
 }
