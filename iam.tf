@@ -1099,6 +1099,7 @@ data "aws_iam_policy_document" "lambda-qcFigures" {
     ]
     resources = [
       "${var.data_portal_bucket_arn}",
+      "${var.data_portal_bucket_arn}/*",
     ]
   }
 }
