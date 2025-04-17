@@ -47,6 +47,7 @@ def lambda_handler(event, context):
         input_vcf_file = f"projects/{project_name}/project-files/{file_name}"
         input_dir = "/tmp/input"
         output_dir = "/tmp/output"
+        os.makedirs(input_dir, exist_ok=True)
         os.makedirs(output_dir, exist_ok=True)
 
         response = s3_client.list_objects_v2(
