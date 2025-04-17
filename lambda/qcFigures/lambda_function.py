@@ -13,6 +13,10 @@ s3_resource = boto3.resource("s3")
 BUCKET_NAME = os.environ["FILE_LOCATION"]
 RESULT_DURATION = int(os.environ["RESULT_DURATION"])
 
+input_dir = "/tmp/input"
+output_dir = "/tmp/output"
+os.makedirs(input_dir, exist_ok=True)
+os.makedirs(output_dir, exist_ok=True)
 
 def get_result_type(file_name):
     key_titles = {
@@ -45,10 +49,8 @@ def lambda_handler(event, context):
         project_name = body_dict["projectName"]
         file_name = body_dict["fileName"]
         input_vcf_file = f"projects/{project_name}/project-files/{file_name}"
-        input_dir = "/tmp/input"
-        output_dir = "/tmp/output"
-        os.makedirs(input_dir, exist_ok=True)
-        os.makedirs(output_dir, exist_ok=True)
+        input_dir = "input"
+        output_dir = "output"
 
         response = s3_client.list_objects_v2(
             Bucket=BUCKET_NAME,
