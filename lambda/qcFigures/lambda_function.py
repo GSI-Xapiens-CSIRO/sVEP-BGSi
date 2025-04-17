@@ -8,6 +8,7 @@ from shared.utils import get_sns_event, generate_presigned_get_url
 
 
 s3_client = boto3.client("s3")
+s3_resource = boto3.resource("s3")
 
 BUCKET_NAME = os.environ["FILE_LOCATION"]
 RESULT_DURATION = int(os.environ["RESULT_DURATION"])
@@ -81,7 +82,7 @@ def lambda_handler(event, context):
                 },
             )
         else:
-            s3_client.Bucket(BUCKET_NAME).download_file(input_vcf_file, input_dir)
+            s3_resource.Bucket(BUCKET_NAME).download_file(input_vcf_file, input_dir)
             for vcf_file in os.listdir(input_dir):
                 if vcf_file.endswith(".vcf"):
                     vcf_path = os.path.join(input_dir, vcf_file)
