@@ -44,7 +44,7 @@ def lambda_handler(event, context):
         body_dict = json.loads(event_body)
         project_name = body_dict["projectName"]
         file_name = body_dict["fileName"]
-        input_vcf_file = f"/projects/{project_name}/project-files/{file_name}"
+        input_vcf_file = f"projects/{project_name}/project-files/{file_name}"
         input_dir = "/tmp/input"
         output_dir = "/tmp/output"
         os.makedirs(output_dir, exist_ok=True)
