@@ -56,6 +56,8 @@ def lambda_handler(event, context):
             Prefix=f"projects/{project_name}/qc-figures/{file_name}/",
         )
         if "Contents" in response:
+            print("get existing Images")
+            print(response)
             image_files = [obj["Key"] for obj in response["Contents"]]
 
             images = {}
@@ -85,6 +87,9 @@ def lambda_handler(event, context):
             )
         else:
             s3_resource.Bucket(BUCKET_NAME).download_file(input_vcf_file, local_vcf_path)
+            print("generate Images")
+            print(os.listdir(output_dir))
+            print(os.listdir(input_dir))
             for vcf_file in os.listdir(input_dir):
                 if vcf_file.endswith(".vcf"):
                     vcf_path = os.path.join(input_dir, vcf_file)
@@ -189,7 +194,6 @@ def lambda_handler(event, context):
                         os.unlink(vcf_path)
 
             images = {}
-
             for image_file in os.listdir(output_dir):
                 image_path = os.path.join(output_dir, image_file)
                 output_vcfstats_file = (
