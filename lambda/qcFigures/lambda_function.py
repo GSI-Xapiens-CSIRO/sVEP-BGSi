@@ -195,6 +195,9 @@ def lambda_handler(event, context):
                 output_vcfstats_file = (
                     f"projects/{project_name}/qc-figures/{file_name}/{image_file}"
                 )
+                print(image_file)
+                print(image_path)
+                print(output_vcfstats_file)
                 with open(image_path, "rb") as image_file:
                     image_data = image_file.read()
                 s3_client.put_object(
