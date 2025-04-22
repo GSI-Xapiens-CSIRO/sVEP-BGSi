@@ -49,8 +49,6 @@ def lambda_handler(event, context):
         project_name = body_dict["projectName"]
         file_name = body_dict["fileName"]
         input_vcf_file = f"projects/{project_name}/project-files/{file_name}"
-        input_dir = "input"
-        output_dir = "output"
 
         response = s3_client.list_objects_v2(
             Bucket=BUCKET_NAME,
@@ -111,6 +109,7 @@ def lambda_handler(event, context):
                                 f"QUAL Score Histogram ({vcf_file})",
                             ],
                             check=True,
+                            cwd="/tmp",
                         )
                         print(f"Results saved in: {output_image}")
 
@@ -127,6 +126,7 @@ def lambda_handler(event, context):
                                 f"GQ Score Histogram ({vcf_file})",
                             ],
                             check=True,
+                            cwd="/tmp",
                         )
                         print(f"Results saved in: {output_image}")
 
@@ -143,6 +143,7 @@ def lambda_handler(event, context):
                                 f"QUAL Score vs DP Scatterplot ({vcf_file})",
                             ],
                             check=True,
+                            cwd="/tmp",
                         )
 
                         print(f"Results saved in: {output_image}")
@@ -160,6 +161,7 @@ def lambda_handler(event, context):
                                 f"Allele Frequency ({vcf_file})",
                             ],
                             check=True,
+                            cwd="/tmp",
                         )
                         print(f"Results saved in: {output_image}")
 
@@ -177,6 +179,7 @@ def lambda_handler(event, context):
                                 "--passed",
                             ],
                             check=True,
+                            cwd="/tmp",
                         )
 
                         print(f"Results saved in: {output_image}")
