@@ -12,7 +12,7 @@ data "archive_file" "binaries_layer" {
 resource "aws_lambda_layer_version" "binaries_layer" {
   filename         = data.archive_file.binaries_layer.output_path
   layer_name       = "svep_backend_binaries_layer"
-  source_code_hash = filebase64sha256("${data.archive_file.binaries_layer.output_path}")
+  source_code_hash = data.archive_file.binaries_layer.output_base64sha512
 
   compatible_runtimes = ["python3.12"]
 }
