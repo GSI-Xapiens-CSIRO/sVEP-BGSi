@@ -123,76 +123,76 @@ def lambda_handler(event, context):
                         )
                         print(f"Results saved in: {output_image}")
 
-                        subprocess.run(
-                            [
-                                "vcfstats",
-                                "--vcf",
-                                vcf_path,
-                                "--outdir",
-                                output_dir,
-                                "--formula",
-                                "GQs ~ 1",
-                                "--title",
-                                f"GQ Score Histogram ({vcf_file})",
-                            ],
-                            check=True,
-                            cwd="/tmp",
-                        )
-                        print(f"Results saved in: {output_image}")
+                        # subprocess.run(
+                        #     [
+                        #         "vcfstats",
+                        #         "--vcf",
+                        #         vcf_path,
+                        #         "--outdir",
+                        #         output_dir,
+                        #         "--formula",
+                        #         "GQs ~ 1",
+                        #         "--title",
+                        #         f"GQ Score Histogram ({vcf_file})",
+                        #     ],
+                        #     check=True,
+                        #     cwd="/tmp",
+                        # )
+                        # print(f"Results saved in: {output_image}")
 
-                        subprocess.run(
-                            [
-                                "vcfstats",
-                                "--vcf",
-                                vcf_path,
-                                "--outdir",
-                                output_dir,
-                                "--formula",
-                                "QUAL ~ DPs",
-                                "--title",
-                                f"QUAL Score vs DP Scatterplot ({vcf_file})",
-                            ],
-                            check=True,
-                            cwd="/tmp",
-                        )
+                        # subprocess.run(
+                        #     [
+                        #         "vcfstats",
+                        #         "--vcf",
+                        #         vcf_path,
+                        #         "--outdir",
+                        #         output_dir,
+                        #         "--formula",
+                        #         "QUAL ~ DPs",
+                        #         "--title",
+                        #         f"QUAL Score vs DP Scatterplot ({vcf_file})",
+                        #     ],
+                        #     check=True,
+                        #     cwd="/tmp",
+                        # )
 
-                        print(f"Results saved in: {output_image}")
+                        # print(f"Results saved in: {output_image}")
 
-                        subprocess.run(
-                            [
-                                "vcfstats",
-                                "--vcf",
-                                vcf_path,
-                                "--outdir",
-                                output_dir,
-                                "--formula",
-                                "AAF ~ CONTIG",
-                                "--title",
-                                f"Allele Frequency ({vcf_file})",
-                            ],
-                            check=True,
-                            cwd="/tmp",
-                        )
-                        print(f"Results saved in: {output_image}")
+                        # subprocess.run(
+                        #     [
+                        #         "vcfstats",
+                        #         "--vcf",
+                        #         vcf_path,
+                        #         "--outdir",
+                        #         output_dir,
+                        #         "--formula",
+                        #         "AAF ~ CONTIG",
+                        #         "--title",
+                        #         f"Allele Frequency ({vcf_file})",
+                        #     ],
+                        #     check=True,
+                        #     cwd="/tmp",
+                        # )
+                        # print(f"Results saved in: {output_image}")
 
-                        subprocess.run(
-                            [
-                                "vcfstats",
-                                "--vcf",
-                                vcf_path,
-                                "--outdir",
-                                output_dir,
-                                "--formula",
-                                "COUNT(1, VARTYPE[snp]) ~ SUBST[A>T,A>G,A>C,T>A,T>G,T>C,G>A,G>T,G>C,C>A,C>T,C>G]",
-                                "--title",
-                                f"Number of substitutions of SNPs (passed) ({vcf_file})",
-                                "--passed",
-                            ],
-                            check=True,
-                            cwd="/tmp",
-                        )
+                        # subprocess.run(
+                        #     [
+                        #         "vcfstats",
+                        #         "--vcf",
+                        #         vcf_path,
+                        #         "--outdir",
+                        #         output_dir,
+                        #         "--formula",
+                        #         "COUNT(1, VARTYPE[snp]) ~ SUBST[A>T,A>G,A>C,T>A,T>G,T>C,G>A,G>T,G>C,C>A,C>T,C>G]",
+                        #         "--title",
+                        #         f"Number of substitutions of SNPs (passed) ({vcf_file})",
+                        #         "--passed",
+                        #     ],
+                        #     check=True,
+                        #     cwd="/tmp",
+                        # )
 
-                        print(f"Results saved in: {output_image}")
+                        # print(f"Results saved in: {output_image}")
 
                 if os.path.isfile(vcf_path):
                     os.unlink(vcf_path)
