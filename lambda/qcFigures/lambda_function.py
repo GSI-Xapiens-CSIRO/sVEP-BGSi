@@ -35,7 +35,8 @@ def get_result_type(file_name):
 
     for key, value in key_titles.items():
         if key in file_name:
-            return value("key"), value.get("title")
+            return value.get("key"), value.get("title")
+    
 
 
 def lambda_handler(event, context):
