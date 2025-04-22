@@ -5,6 +5,7 @@ RUN dnf update -y && dnf install -y \
     blas-devel lapack-devel \
     openssl-devel \
     pkg-config \
+    gzip \
     git \
     && dnf clean all
 

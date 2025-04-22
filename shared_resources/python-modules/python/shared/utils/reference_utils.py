@@ -155,8 +155,8 @@ def _bgzip(input_file, output_file):
     command = f"bgzip -c {input_file} > {output_file}"
     execute_subprocess(command)
     
-def _bgzip_dc(input_file, output_file):
-    command = f"bgzip -dc {input_file} > {output_file}"
+def _gzip_dc(input_file):
+    command = f"gzip -d {input_file}"
     execute_subprocess(command)
 
 

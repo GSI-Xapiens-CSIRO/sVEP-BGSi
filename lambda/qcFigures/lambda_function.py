@@ -4,7 +4,7 @@ import boto3
 import json
 from uuid import uuid4
 from shared.apiutils import bad_request, bundle_response
-from shared.utils import get_sns_event, generate_presigned_get_url, _bgzip_dc
+from shared.utils import get_sns_event, generate_presigned_get_url, _gzip_dc
 
 
 s3_client = boto3.client("s3")
@@ -91,7 +91,7 @@ def lambda_handler(event, context):
             print(os.listdir(output_dir))
             print(os.listdir(input_dir))
 
-            _bgzip_dc(local_vcf_path,local_vcf_path.replace(".vcf.gz", ".vcf"))
+            _gzip_dc(local_vcf_path)
             
             for vcf_file in os.listdir(input_dir):
                 if vcf_file.endswith(".vcf"):
