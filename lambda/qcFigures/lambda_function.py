@@ -4,7 +4,7 @@ import boto3
 import json
 from uuid import uuid4
 from shared.apiutils import bad_request, bundle_response
-from shared.utils import get_sns_event, generate_presigned_get_url
+from shared.utils import get_sns_event, generate_presigned_get_url, _bgzip_dc
 
 
 s3_client = boto3.client("s3")
@@ -90,6 +90,9 @@ def lambda_handler(event, context):
             print("generate Images")
             print(os.listdir(output_dir))
             print(os.listdir(input_dir))
+
+            _bgzip_dc(local_vcf_path,local_vcf_path.replace(".vcf.gz", ".vcf"))
+            
             for vcf_file in os.listdir(input_dir):
                 if vcf_file.endswith(".vcf"):
                     vcf_path = os.path.join(input_dir, vcf_file)
@@ -190,8 +193,8 @@ def lambda_handler(event, context):
 
                         print(f"Results saved in: {output_image}")
 
-                    if os.path.isfile(vcf_path):
-                        os.unlink(vcf_path)
+                if os.path.isfile(vcf_path):
+                    os.unlink(vcf_path)
 
             images = {}
             for image_file in os.listdir(output_dir):

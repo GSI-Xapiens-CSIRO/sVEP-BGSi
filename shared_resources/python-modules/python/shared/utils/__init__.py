@@ -38,6 +38,7 @@ from .reference_utils import (
     _filter,
     _sort,
     _bgzip,
+    _bgzip_dc,
     _tabix_index,
 )
 from .cognito_utils import get_cognito_user_by_id

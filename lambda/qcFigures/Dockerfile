@@ -3,7 +3,7 @@ FROM public.ecr.aws/lambda/python:3.12-x86_64
 RUN dnf update -y && dnf install -y \
     gcc gcc-c++ make \
     blas-devel lapack-devel \
-    openssl-devel \
+    openssl-devel htslib\
     pkg-config \
     git \
     && dnf clean all
