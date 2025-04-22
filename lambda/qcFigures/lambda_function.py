@@ -198,12 +198,12 @@ def lambda_handler(event, context):
                     os.unlink(vcf_path)
 
             images = {}
-            for image_file in os.listdir(output_dir):
-                image_path = os.path.join(output_dir, image_file)
+            for image_file_name in os.listdir(output_dir):
+                image_path = os.path.join(output_dir, image_file_name)
                 output_vcfstats_file = (
-                    f"projects/{project_name}/qc-figures/{file_name}/{image_file}"
+                    f"projects/{project_name}/qc-figures/{file_name}/{image_file_name}"
                 )
-                print(image_file)
+                print(image_file_name)
                 print(image_path)
                 print(output_vcfstats_file)
                 with open(image_path, "rb") as image_file:
@@ -222,7 +222,7 @@ def lambda_handler(event, context):
                     output_vcfstats_file,
                     RESULT_DURATION,
                 )
-                key, title = get_result_type(image_file)
+                key, title = get_result_type(image_file_name)
 
                 images[key] = {
                     "title": title,
