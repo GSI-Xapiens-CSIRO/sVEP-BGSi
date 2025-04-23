@@ -134,7 +134,15 @@ def lambda_handler(event, context):
 
                         output_image = os.path.join(output_dir, f"{output_prefix}.png")
                         formula, title_image = get_formula_and_title(key, vcf_file)
-
+                        if not formula:
+                            return bundle_response(
+                                400,
+                                {
+                                    "message": "Formula not found",
+                                    "images": {},
+                                },
+                            )
+                            
                         vcfstats_params = [
                             "vcfstats",
                             "--vcf",
