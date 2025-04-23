@@ -1,5 +1,5 @@
 locals {
-    api_gateway_origin_id = "svep-backend-api"
+  api_gateway_origin_id = "svep-backend-api"
 }
 
 resource "aws_cloudfront_cache_policy" "api" {
@@ -24,7 +24,7 @@ resource "aws_cloudfront_cache_policy" "api" {
 resource "aws_cloudfront_origin_request_policy" "api" {
   name = "svep-backend-api"
 
-    cookies_config {
+  cookies_config {
     cookie_behavior = "none"
   }
 
@@ -59,7 +59,7 @@ resource "aws_cloudfront_distribution" "api_distribution" {
 
   default_cache_behavior {
     allowed_methods          = ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"]
-    cached_methods           = ["HEAD", "GET"]  # Just so terraform actually sets the CachedMethods parameter
+    cached_methods           = ["HEAD", "GET"] # Just so terraform actually sets the CachedMethods parameter
     target_origin_id         = local.api_gateway_origin_id
     origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
     cache_policy_id          = aws_cloudfront_cache_policy.api.id
