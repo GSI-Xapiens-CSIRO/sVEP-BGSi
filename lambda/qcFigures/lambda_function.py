@@ -18,6 +18,7 @@ output_dir = "/tmp/output"
 os.makedirs(input_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
 
+
 def get_result_type(file_name):
     key_titles = {
         "qual-score-histogram": {
@@ -36,7 +37,36 @@ def get_result_type(file_name):
     for key, value in key_titles.items():
         if key in file_name:
             return value.get("key"), value.get("title")
-    
+
+
+def get_formula_and_title(key, vcf_file):
+    mapping_formula = {
+        "qc_hc": {
+            "formula": "QUAL ~ 1",
+            "title": "QUAL Score Histogram ({vcf_file})",
+        },
+        "low_var": {
+            "formula": "GQs ~ 1",
+            "title": f"GQ Score Histogram ({vcf_file})",
+        },
+        "gq": {
+            "formula": "QUAL ~ DPs",
+            "title": f"QUAL Score vs DP Scatterplot ({vcf_file})",
+        },
+        "alle_freq": {
+            "formula": "AAF ~ CONTIG",
+            "title": f"Allele Frequency ({vcf_file})",
+        },
+        "snp_pass": {
+            "formula": "COUNT(1, VARTYPE[snp]) ~ SUBST[A>T,A>G,A>C,T>A,T>G,T>C,G>A,G>T,G>C,C>A,C>T,C>G]",
+            "title": f"Number of substitutions of SNPs (passed) ({vcf_file})",
+        },
+    }
+
+    formula = mapping_formula.get(key, False)
+    if not formula:
+        return False, False
+    return formula["formula"], formula["title"]
 
 
 def lambda_handler(event, context):
@@ -49,6 +79,7 @@ def lambda_handler(event, context):
         body_dict = json.loads(event_body)
         project_name = body_dict["projectName"]
         file_name = body_dict["fileName"]
+        key = body_dict["key"]
         input_vcf_file = f"projects/{project_name}/project-files/{file_name}"
         local_vcf_path = os.path.join(input_dir, os.path.basename(file_name))
 
@@ -87,112 +118,44 @@ def lambda_handler(event, context):
                 },
             )
         else:
-            s3_resource.Bucket(BUCKET_NAME).download_file(input_vcf_file, local_vcf_path)
-            print("generate Images")
-            print(os.listdir(output_dir))
-            print(os.listdir(input_dir))
-
-            _gzip_dc(local_vcf_path)
-            
+            s3_resource.Bucket(BUCKET_NAME).download_file(
+                input_vcf_file, local_vcf_path
+            )
             for vcf_file in os.listdir(input_dir):
-                if vcf_file.endswith(".vcf"):
+                if vcf_file.endswith(".vcf.gz"):
                     vcf_path = os.path.join(input_dir, vcf_file)
                     output_prefix = os.path.splitext(vcf_file)[0]
                     print(f"Processing: {vcf_file}")
-                    if vcf_file.endswith(".vcf"):
+                    if vcf_file.endswith(".vcf.gz"):
                         vcf_path = os.path.join(input_dir, vcf_file)
                         output_prefix = os.path.splitext(vcf_file)[0]
 
                         print(f"Processing: {vcf_file}")
 
                         output_image = os.path.join(output_dir, f"{output_prefix}.png")
+                        formula, title_image = get_formula_and_title(key, vcf_file)
+
+                        vcfstats_params = [
+                            "vcfstats",
+                            "--vcf",
+                            vcf_path,
+                            "--outdir",
+                            output_dir,
+                            "--formula",
+                            formula,
+                            "--title",
+                            title_image,
+                        ]
+
+                        if key == "snp_pass":
+                            vcfstats_params.append("--passed")
+
                         subprocess.run(
-                            [
-                                "vcfstats",
-                                "--vcf",
-                                vcf_path,
-                                "--outdir",
-                                output_dir,
-                                "--formula",
-                                "QUAL ~ 1",
-                                "--title",
-                                f"QUAL Score Histogram ({vcf_file})",
-                            ],
+                            vcfstats_params,
                             check=True,
                             cwd="/tmp",
                         )
                         print(f"Results saved in: {output_image}")
-
-                        # subprocess.run(
-                        #     [
-                        #         "vcfstats",
-                        #         "--vcf",
-                        #         vcf_path,
-                        #         "--outdir",
-                        #         output_dir,
-                        #         "--formula",
-                        #         "GQs ~ 1",
-                        #         "--title",
-                        #         f"GQ Score Histogram ({vcf_file})",
-                        #     ],
-                        #     check=True,
-                        #     cwd="/tmp",
-                        # )
-                        # print(f"Results saved in: {output_image}")
-
-                        # subprocess.run(
-                        #     [
-                        #         "vcfstats",
-                        #         "--vcf",
-                        #         vcf_path,
-                        #         "--outdir",
-                        #         output_dir,
-                        #         "--formula",
-                        #         "QUAL ~ DPs",
-                        #         "--title",
-                        #         f"QUAL Score vs DP Scatterplot ({vcf_file})",
-                        #     ],
-                        #     check=True,
-                        #     cwd="/tmp",
-                        # )
-
-                        # print(f"Results saved in: {output_image}")
-
-                        # subprocess.run(
-                        #     [
-                        #         "vcfstats",
-                        #         "--vcf",
-                        #         vcf_path,
-                        #         "--outdir",
-                        #         output_dir,
-                        #         "--formula",
-                        #         "AAF ~ CONTIG",
-                        #         "--title",
-                        #         f"Allele Frequency ({vcf_file})",
-                        #     ],
-                        #     check=True,
-                        #     cwd="/tmp",
-                        # )
-                        # print(f"Results saved in: {output_image}")
-
-                        # subprocess.run(
-                        #     [
-                        #         "vcfstats",
-                        #         "--vcf",
-                        #         vcf_path,
-                        #         "--outdir",
-                        #         output_dir,
-                        #         "--formula",
-                        #         "COUNT(1, VARTYPE[snp]) ~ SUBST[A>T,A>G,A>C,T>A,T>G,T>C,G>A,G>T,G>C,C>A,C>T,C>G]",
-                        #         "--title",
-                        #         f"Number of substitutions of SNPs (passed) ({vcf_file})",
-                        #         "--passed",
-                        #     ],
-                        #     check=True,
-                        #     cwd="/tmp",
-                        # )
-
-                        # print(f"Results saved in: {output_image}")
 
                 if os.path.isfile(vcf_path):
                     os.unlink(vcf_path)
@@ -203,9 +166,6 @@ def lambda_handler(event, context):
                 output_vcfstats_file = (
                     f"projects/{project_name}/qc-figures/{file_name}/{image_file_name}"
                 )
-                print(image_file_name)
-                print(image_path)
-                print(output_vcfstats_file)
                 with open(image_path, "rb") as image_file:
                     image_data = image_file.read()
                 s3_client.put_object(
