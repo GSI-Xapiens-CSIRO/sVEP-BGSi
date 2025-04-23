@@ -18,55 +18,52 @@ output_dir = "/tmp/output"
 os.makedirs(input_dir, exist_ok=True)
 os.makedirs(output_dir, exist_ok=True)
 
+mapping_formula = {
+    "qc_hc": {
+        "formula": "QUAL ~ 1",
+        "title": "Variant Quality Score Distributions",
+        "image_title": "QUAL Score Histogram",
+        "identifier": "qual-score-histogram",
+    },
+    "low_var": {
+        "formula": "GQs ~ 1",
+        "title": "Low Variant Flagging",
+        "image_title": f"GQ Score Histogram",
+        "identifier": "gq-score-histogram",
+    },
+    "gq": {
+        "formula": "QUAL ~ DPs",
+        "title": "Genotype Quality",
+        "image_title": f"QUAL Score vs DP Scatterplot",
+        "identifier": "qual-score-vs-dp-scatterplot",
+    },
+    "alle_freq": {
+        "formula": "AAF ~ CONTIG",
+        "title": "Allele Frequency",
+        "image_title": f"Allele Frequency",
+        "identifier": "allele-frequency",
+    },
+    "snp_pass": {
+        "formula": "COUNT(1, VARTYPE[snp]) ~ SUBST[A>T,A>G,A>C,T>A,T>G,T>C,G>A,G>T,G>C,C>A,C>T,C>G]",
+        "title": "Only with SNP's Pass all filters",
+        "image_title": f"Number of substitutions of SNPs (passed)",
+        "identifier": "number-of-substitutions-of-snps-passed",
+    },
+}
+
 
 def get_result_type(file_name):
-    key_titles = {
-        "qual-score-histogram": {
-            "key": "qc_hc",
-            "title": "Variant Quality Score Distributions",
-        },
-        "gq-score-histogram": {"key": "low_var", "title": "Low Variant Flagging"},
-        "qual-score-vs-dp-scatterplot": {"key": "gq", "title": "Genotype Quality"},
-        "allele-frequency": {"key": "alle_freq", "title": "Allele Frequency"},
-        "number-of-substitutions-of-snps-passed": {
-            "key": "snp_pass",
-            "title": "Only with SNP's Pass all filters",
-        },
-    }
-
-    for key, value in key_titles.items():
-        if key in file_name:
-            return value.get("key"), value.get("title")
+    for key, value in mapping_formula.items():
+        identifier = value['identifier']
+        if identifier in file_name:
+            return key, value["title"]
 
 
 def get_formula_and_title(key, vcf_file):
-    mapping_formula = {
-        "qc_hc": {
-            "formula": "QUAL ~ 1",
-            "title": "QUAL Score Histogram ({vcf_file})",
-        },
-        "low_var": {
-            "formula": "GQs ~ 1",
-            "title": f"GQ Score Histogram ({vcf_file})",
-        },
-        "gq": {
-            "formula": "QUAL ~ DPs",
-            "title": f"QUAL Score vs DP Scatterplot ({vcf_file})",
-        },
-        "alle_freq": {
-            "formula": "AAF ~ CONTIG",
-            "title": f"Allele Frequency ({vcf_file})",
-        },
-        "snp_pass": {
-            "formula": "COUNT(1, VARTYPE[snp]) ~ SUBST[A>T,A>G,A>C,T>A,T>G,T>C,G>A,G>T,G>C,C>A,C>T,C>G]",
-            "title": f"Number of substitutions of SNPs (passed) ({vcf_file})",
-        },
-    }
-
     formula = mapping_formula.get(key, False)
     if not formula:
         return False, False
-    return formula["formula"], formula["title"]
+    return formula["formula"], f"{formula["image_title"]} ({vcf_file})"
 
 
 def lambda_handler(event, context):
@@ -87,10 +84,22 @@ def lambda_handler(event, context):
             Bucket=BUCKET_NAME,
             Prefix=f"projects/{project_name}/qc-figures/{file_name}/",
         )
-        if "Contents" in response:
+
+        contents = response and "Contents" in response
+        image_files = contents and [obj["Key"] for obj in response["Contents"]]
+        formula = mapping_formula.get(key,False)
+        if not formula:
+            return bundle_response(
+                        400,
+                        {
+                            "message": "Formula not found. Please check key parameter.",
+                            "images": {},
+                        },
+                    )
+        identifier = formula['identifier']
+        if any(identifier in image_file for image_file in image_files):
             print("get existing Images")
             print(response)
-            image_files = [obj["Key"] for obj in response["Contents"]]
 
             images = {}
             for image_file in image_files:
@@ -133,16 +142,16 @@ def lambda_handler(event, context):
                         print(f"Processing: {vcf_file}")
 
                         output_image = os.path.join(output_dir, f"{output_prefix}.png")
-                        formula, title_image = get_formula_and_title(key, vcf_file)
+                        formula, image_title = get_formula_and_title(key, vcf_file)
                         if not formula:
                             return bundle_response(
                                 400,
                                 {
-                                    "message": "Formula not found",
+                                    "message": "Formula not found. Please check key parameter.",
                                     "images": {},
                                 },
                             )
-                            
+
                         vcfstats_params = [
                             "vcfstats",
                             "--vcf",
@@ -152,7 +161,7 @@ def lambda_handler(event, context):
                             "--formula",
                             formula,
                             "--title",
-                            title_image,
+                            image_title,
                         ]
 
                         if key == "snp_pass":
