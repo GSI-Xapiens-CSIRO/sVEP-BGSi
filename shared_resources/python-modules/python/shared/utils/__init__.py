@@ -24,8 +24,6 @@ from .lambda_utils import (
     truncated_print,
     handle_failed_execution,
     download_bedfile,
-    compress_sns_data,
-    decompress_sns_data,
 )
 from .reference_utils import (
     truncate_tmp,

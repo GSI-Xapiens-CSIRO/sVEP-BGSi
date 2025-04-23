@@ -2,8 +2,6 @@ import os
 import shutil
 import json
 import math
-import gzip
-import base64
 import subprocess
 import traceback
 
@@ -263,13 +261,3 @@ def handle_failed_execution(job_id, error_message):
         user_id=job.get("uid", {}).get("S"),
         is_from_failed_execution=True,
     )
-
-
-def compress_sns_data(data):
-    compressed = gzip.compress(data.encode("utf-8"))  # Compress string
-    return base64.b64encode(compressed).decode("utf-8")  # Encode to Base64 string
-
-
-def decompress_sns_data(encoded_data: str) -> str:
-    compressed = base64.b64decode(encoded_data)  # Decode from Base64
-    return gzip.decompress(compressed).decode("utf-8")  # Decompress with gzip
