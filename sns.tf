@@ -48,6 +48,16 @@ resource "aws_sns_topic_subscription" "pluginClinvar" {
   endpoint  = module.lambda-pluginClinvar.function_arn
 }
 
+resource "aws_sns_topic" "pluginGnomad" {
+  name = "svep-backend-pluginGnomad"
+}
+
+resource "aws_sns_topic_subscription" "pluginGnomad" {
+  topic_arn = aws_sns_topic.pluginGnomad.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-pluginGnomad.function_arn
+}
+
 resource "aws_sns_topic" "concat" {
   name = "svep-backend-concat"
 }

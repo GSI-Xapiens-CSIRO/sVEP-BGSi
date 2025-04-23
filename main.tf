@@ -45,6 +45,16 @@ locals {
     "lastEvaluated",
     "accession",
     "pubmed",
+    "afAfr",
+    "afEas",
+    "afFin",
+    "afNfe",
+    "afSas",
+    "afAmr",
+    "af",
+    "ac",
+    "an",
+    "siftMax",
   ])
 }
 
@@ -290,13 +300,46 @@ module "lambda-pluginClinvar" {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE             = "clinvar.bed.gz"
-      FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
-      PLUGIN_SIFT_SNS_TOPIC_ARN     = ""
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
       HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# pluginGnomad Lambda Function
+#
+module "lambda-pluginGnomad" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginGnomad"
+  description   = "Add Gnomad annotations to sVEP result rows."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 900
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginGnomad.json
+  }
+  source_path = "${path.module}/lambda/pluginGnomad"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
     }
   }
 
