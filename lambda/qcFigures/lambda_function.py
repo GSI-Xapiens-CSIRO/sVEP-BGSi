@@ -103,6 +103,7 @@ def lambda_handler(event, context):
 
             images = {}
             for image_file in image_files:
+                image_file_name = key.split('/')[-1]
                 output_vcfstats_file = (
                     f"projects/{project_name}/qc-figures/{file_name}/{image_file}"
                 )
