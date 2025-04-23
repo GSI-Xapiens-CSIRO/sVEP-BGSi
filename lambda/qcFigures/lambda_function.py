@@ -106,7 +106,7 @@ def lambda_handler(event, context):
                 image_file_name = key.split('/')[-1]
                 if identifier in image_file_name:
                     output_vcfstats_file = (
-                        f"projects/{project_name}/qc-figures/{file_name}/{image_file}"
+                        f"projects/{project_name}/qc-figures/{file_name}/{image_file_name}"
                     )
 
                     result_url = generate_presigned_get_url(
