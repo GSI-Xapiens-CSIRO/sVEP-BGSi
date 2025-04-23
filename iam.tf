@@ -414,7 +414,6 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "SNS:Publish",
     ]
     resources = [
-      aws_sns_topic.formatOutput.arn,
       aws_sns_topic.sendJobEmail.arn,
       aws_sns_topic.pluginGnomad.arn
     ]
@@ -423,17 +422,9 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
   statement {
     actions = [
       "s3:PutObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-regions.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:PutObject",
       "s3:DeleteObject",
       "s3:GetObject",
+      "s3:PutObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
@@ -489,7 +480,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
 }
 
 #
-# pluginClinvar Lambda Function
+# pluginGnomad Lambda Function
 #
 data "aws_iam_policy_document" "lambda-pluginGnomad" {
   statement {
@@ -497,6 +488,8 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
       "SNS:Publish",
     ]
     resources = [
+      aws_sns_topic.formatOutput.arn,
+      aws_sns_topic.pluginGnomad.arn,
       aws_sns_topic.sendJobEmail.arn,
     ]
   }
@@ -504,15 +497,6 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
   statement {
     actions = [
       "s3:PutObject",
-      "s3:GetObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-regions.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
       "s3:DeleteObject",
       "s3:GetObject",
     ]
@@ -568,7 +552,6 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
     ]
   }
 }
-
 
 #
 # concat Lambda Function

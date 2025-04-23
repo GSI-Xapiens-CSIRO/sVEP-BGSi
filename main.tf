@@ -45,6 +45,16 @@ locals {
     "lastEvaluated",
     "accession",
     "pubmed",
+    "afAfr",
+    "afEas",
+    "afFin",
+    "afNfe",
+    "afSas",
+    "afAmr",
+    "af",
+    "ac",
+    "an",
+    "siftMax",
   ])
 }
 
@@ -291,7 +301,7 @@ module "lambda-pluginClinvar" {
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE             = "clinvar.bed.gz"
       FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
-      PLUGIN_SIFT_SNS_TOPIC_ARN     = ""
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
@@ -316,7 +326,7 @@ module "lambda-pluginGnomad" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 24
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-pluginGnomad.json
   }
@@ -325,8 +335,8 @@ module "lambda-pluginGnomad" {
   environment = {
     variables = {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
-      SVEP_REGIONS                  = aws_s3_bucket.svep-regions.bucket
-      GNOMAD_GENOMES_S3_PATH        = "s3://gnomad-public-us-east-1/release/4.1/ht/genomes/gnomad.genomes.v4.1.sites.ht"
+      FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
+      PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
@@ -337,7 +347,6 @@ module "lambda-pluginGnomad" {
   layers = [
     local.binaries_layer,
     local.python_modules_layer,
-    # local.hail_layer
   ]
 }
 
@@ -617,15 +626,15 @@ module "lambda-formatOutput" {
 module "lambda-qcFigures" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name       = "svep-backend-qcFigures"
-  description         = "Running vcfstats for generating graphic."
-  create_package      = false
-  image_uri           = module.docker_image_qcFigures_lambda.image_uri
-  package_type        = "Image"
-  memory_size         = 3000
-  timeout             = 900
+  function_name          = "svep-backend-qcFigures"
+  description            = "Running vcfstats for generating graphic."
+  create_package         = false
+  image_uri              = module.docker_image_qcFigures_lambda.image_uri
+  package_type           = "Image"
+  memory_size            = 3000
+  timeout                = 900
   ephemeral_storage_size = 10240
-  attach_policy_jsons = true
+  attach_policy_jsons    = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-qcFigures.json
   ]
@@ -633,9 +642,9 @@ module "lambda-qcFigures" {
   source_path            = "${path.module}/lambda/qcFigures"
   tags                   = var.common-tags
   environment_variables = {
-    FILE_LOCATION            = var.data_portal_bucket_name
-    USER_POOL_ID             = var.cognito-user-pool-id
-    HTS_S3_HOST              = "s3.${var.region}.amazonaws.com"
-    RESULT_DURATION          = local.result_duration
+    FILE_LOCATION   = var.data_portal_bucket_name
+    USER_POOL_ID    = var.cognito-user-pool-id
+    HTS_S3_HOST     = "s3.${var.region}.amazonaws.com"
+    RESULT_DURATION = local.result_duration
   }
 }

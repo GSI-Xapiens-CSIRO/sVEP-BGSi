@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "svep-inputs" {
   bucket_prefix = "svep-backend-inputs-"
   force_destroy = false
-  tags = var.common-tags
+  tags          = var.common-tags
 }
 
 resource "aws_s3_bucket" "svep-regions" {

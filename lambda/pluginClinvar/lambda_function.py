@@ -4,7 +4,6 @@ import subprocess
 
 from shared.utils import (
     Orchestrator,
-    s3,
     download_bedfile,
     handle_failed_execution,
     start_function,
@@ -13,8 +12,7 @@ from shared.utils import (
 # Environment variables
 BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 CLINVAR_REFERENCE = os.environ["CLINVAR_REFERENCE"]
-FORMAT_OUTPUT_SNS_TOPIC_ARN = os.environ["FORMAT_OUTPUT_SNS_TOPIC_ARN"]
-PLUGIN_SIFT_SNS_TOPIC_ARN = os.environ["PLUGIN_SIFT_SNS_TOPIC_ARN"]
+PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 # Just the columns after the identifying columns
 CLINVAR_COLUMNS = [
@@ -81,7 +79,7 @@ def add_clinvar_columns(in_rows, ref_chrom):
         if is_matched:
             num_rows_hit += 1
     print(
-        f"Matched {len(results)} rows in clinvar from {num_rows_hit} matching input rows"
+        f"Matched {len(results)} rows in clinvar from {num_rows_hit}/{len(in_rows)} matching input rows"
     )
     return results
 
@@ -96,23 +94,18 @@ def lambda_handler(event, _):
     try:
         sns_data = add_clinvar_columns(sns_data, ref_chrom)
         base_filename = orchestrator.temp_file_name
-        # start_function(
-        #     topic_arn=PLUGIN_SIFT_SNS_TOPIC_ARN,
-        #     base_filename=base_filename,
-        #     message={
-        #         "snsData": sns_data,
-        #         "refChrom": ref_chrom,
-        #     },
-        # )
-        # TODO Delete formatOutput function call (Latest plugin will call this)
-        start_function(
-            topic_arn=FORMAT_OUTPUT_SNS_TOPIC_ARN,
-            base_filename=base_filename,
-            message={
-                "requestId": request_id,
-                "snsData": sns_data,
-            },
-        )
+        if sns_data:
+            start_function(
+                topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
+                base_filename=base_filename,
+                message={
+                    "snsData": sns_data,
+                    "refChrom": ref_chrom,
+                    "requestId": request_id,
+                },
+            )
+        else:
+            "No rows matched in clinvar, not continuing downstream plugins."
         orchestrator.mark_completed()
     except Exception as e:
         handle_failed_execution(request_id, e)

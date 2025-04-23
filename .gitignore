@@ -15,6 +15,3 @@ layers/binaries/lib/*
 *.pyc
 build
 libraries
-
-# docker related bundle images
-lambda/qcFigures/shared
