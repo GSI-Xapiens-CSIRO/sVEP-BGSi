@@ -97,7 +97,7 @@ def lambda_handler(event, context):
                         },
                     )
         identifier = formula['identifier']
-        if any(identifier in image_file for image_file in image_files):
+        if image_files and any(identifier in image_file for image_file in image_files):
             print("get existing Images")
             print(response)
 

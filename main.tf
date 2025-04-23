@@ -623,7 +623,7 @@ module "lambda-qcFigures" {
   image_uri           = module.docker_image_qcFigures_lambda.image_uri
   package_type        = "Image"
   memory_size         = 3000
-  timeout             = 600
+  timeout             = 900
   ephemeral_storage_size = 10240
   attach_policy_jsons = true
   policy_jsons = [
