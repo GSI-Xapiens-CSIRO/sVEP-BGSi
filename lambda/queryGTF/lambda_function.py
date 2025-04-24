@@ -1,8 +1,8 @@
 import json
 import os
-import subprocess
 
 from shared.utils import (
+    CheckedProcess,
     download_vcf,
     Orchestrator,
     start_function,
@@ -33,18 +33,13 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
     tot_size = 0
     counter = 0
     for idx, data in enumerate(all_coords):
-        pos = data["pos"]
+        pos = data["posVcf"]
         loc = f"{ref_chrom}:{pos}-{pos}"
         local_file = f"/tmp/{REFERENCE_GENOME}"
         args = ["tabix", local_file, loc]
-        query_process = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd="/tmp",
-            encoding="utf-8",
-        )
+        query_process = CheckedProcess(args)
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
+        query_process.check()
         data["data"] = main_data
         cur_size = len(json.dumps(data, separators=(",", ":"))) + 1
         tot_size += cur_size

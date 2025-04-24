@@ -1,7 +1,12 @@
 import os
-import subprocess
 
-from shared.utils import Orchestrator, start_function, Timer, handle_failed_execution
+from shared.utils import (
+    CheckedProcess,
+    Orchestrator,
+    start_function,
+    Timer,
+    handle_failed_execution,
+)
 
 
 # Environment variables
@@ -19,45 +24,78 @@ PAYLOAD_SIZE = 260000
 
 QUERY_KEYS = [
     "chrom",
-    "pos",
-    "ref",
-    "alt",
+    "posVcf",
+    "refVcf",
+    "altVcf",
     "qual",
     "filter",
     "gt",
 ]
 
 
-def get_query_process(location, chrom, start, end):
-    args = [
+def get_query_lines(location, chrom, start, end):
+    norm_args = [
         "bcftools",
-        "query",
+        "norm",
         "--regions",
         f"{chrom}:{start}-{end}",
-        "--format",
-        "%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t[%GT]\n",
+        "--atomize",
+        "--atom-overlaps",
+        ".",
+        "--multiallelics",
+        "-both",
         location,
     ]
-    return subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd="/tmp",
-        encoding="utf-8",
+    norm_process = CheckedProcess(norm_args)
+    query_args = [
+        "bcftools",
+        "query",
+        "--format",
+        "%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t[%GT]\n",
+    ]
+    query_process = CheckedProcess(query_args, stdin=norm_process.stdout)
+    lines = query_process.stdout.read().splitlines()
+    norm_process.check()
+    query_process.check()
+    return lines
+
+
+def trim_alleles(vcf_line_dict):
+    pos = int(vcf_line_dict["posVcf"])
+    ref = vcf_line_dict["refVcf"]
+    alt = vcf_line_dict["altVcf"]
+    while len(ref) > 1 and len(alt) > 1:
+        if ref[-1] == alt[-1]:
+            ref = ref[:-1]
+            alt = alt[:-1]
+        elif ref[0] == alt[0]:
+            ref = ref[1:]
+            alt = alt[1:]
+            pos += 1
+        else:
+            break
+    vcf_line_dict.update(
+        {
+            "posVcf": pos,
+            "refVcf": ref,
+            "altVcf": alt,
+        }
     )
+    return vcf_line_dict
 
 
-def submit_query_gtf(request_id, query_process, base_id, timer, ref_chrom):
-    regions_list = query_process.stdout.read().splitlines()
+def submit_query_gtf(request_id, regions_list, base_id, timer, ref_chrom):
     total_coords = [
         [
-            {
-                key: value
-                for key, value in zip(
-                    QUERY_KEYS,
-                    vcf_line.split("\t"),
-                )
-            }
+            trim_alleles(
+                {
+                    key: value
+                    for key, value in zip(
+                        QUERY_KEYS,
+                        vcf_line.split("\t"),
+                    )
+                }
+            )
             for vcf_line in regions_list[x : x + RECORDS_PER_SAMPLE]
         ]
         for x in range(0, len(regions_list), RECORDS_PER_SAMPLE)
@@ -129,10 +167,10 @@ def lambda_handler(event, context):
                 region_base_id = f"{base_id}_{chrom}_{start_str}"
                 start = round(1000000 * float(start_str) + 1)
                 end = start + round(1000000 * SLICE_SIZE_MBP - 1)
-                query_process = get_query_process(location, chrom, start, end)
+                query_lines = get_query_lines(location, chrom, start, end)
                 submit_query_gtf(
                     request_id,
-                    query_process,
+                    query_lines,
                     region_base_id,
                     second_timer,
                     ref_chrom,
