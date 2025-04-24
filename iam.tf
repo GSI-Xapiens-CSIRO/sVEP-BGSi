@@ -423,7 +423,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
     actions = [
       "s3:PutObject",
       "s3:DeleteObject",
-      "s3:PutObject",
+      "s3:GetObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
