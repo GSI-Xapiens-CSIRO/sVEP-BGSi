@@ -390,6 +390,51 @@ resource "aws_api_gateway_integration_response" "vcfstats-options" {
   depends_on = [aws_api_gateway_integration.vcfstats-options]
 }
 
+resource "aws_api_gateway_method" "vcfstats-patch" {
+  rest_api_id   = aws_api_gateway_rest_api.VPApi.id
+  resource_id   = aws_api_gateway_resource.vcfstats.id
+  http_method   = "PATCH"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+}
+
+resource "aws_api_gateway_method_response" "vcfstats-patch" {
+  rest_api_id = aws_api_gateway_method.vcfstats-patch.rest_api_id
+  resource_id = aws_api_gateway_method.vcfstats-patch.resource_id
+  http_method = aws_api_gateway_method.vcfstats-patch.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin" = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration" "vcfstats-patch" {
+  rest_api_id             = aws_api_gateway_method.vcfstats-patch.rest_api_id
+  resource_id             = aws_api_gateway_method.vcfstats-patch.resource_id
+  http_method             = aws_api_gateway_method.vcfstats-patch.http_method
+  type                    = "AWS_PROXY"
+  uri                     = module.lambda-qcFigures.function_invoke_arn
+  integration_http_method = "POST"
+}
+
+resource "aws_api_gateway_integration_response" "vcfstats-patch" {
+  rest_api_id = aws_api_gateway_method.vcfstats-patch.rest_api_id
+  resource_id = aws_api_gateway_method.vcfstats-patch.resource_id
+  http_method = aws_api_gateway_method.vcfstats-patch.http_method
+  status_code = aws_api_gateway_method_response.vcfstats-patch.status_code
+
+  response_templates = {
+    "application/json" = ""
+  }
+
+  depends_on = [aws_api_gateway_integration.vcfstats-patch]
+}
+
 #
 # Deployment
 #
@@ -431,6 +476,10 @@ resource "aws_api_gateway_deployment" "VPApi" {
       aws_api_gateway_integration.vcfstats-options,
       aws_api_gateway_integration_response.vcfstats-options,
       aws_api_gateway_method_response.vcfstats-options,
+      aws_api_gateway_method.vcfstats-patch / vcfstats,
+      aws_api_gateway_integration.vcfstats-patch,
+      aws_api_gateway_integration_response.vcfstats-patch,
+      aws_api_gateway_method_response.vcfstats-patch,
       aws_api_gateway_method.vcfstats-post,
       aws_api_gateway_method_response.vcfstats-post,
       aws_api_gateway_integration.vcfstats-post,
