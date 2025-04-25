@@ -25,15 +25,15 @@ mapping_formula = {
         "image_title": "QUAL Score Histogram",
         "identifier": "qual-score-histogram",
     },
-    "low_var": {
+    "gq": {
         "formula": "GQs ~ 1",
-        "title": "Low Variant Flagging",
+        "title": "Genotype Quality",
         "image_title": f"GQ Score Histogram",
         "identifier": "gq-score-histogram",
     },
-    "gq": {
+    "low_var": {
         "formula": "QUAL ~ DPs",
-        "title": "Genotype Quality",
+        "title": "Low Variant Flagging",
         "image_title": f"QUAL Score vs DP Scatterplot",
         "identifier": "qual-score-vs-dp-scatterplot",
     },
