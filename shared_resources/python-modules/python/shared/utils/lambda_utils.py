@@ -71,8 +71,9 @@ class ProcessError(Exception):
 
 
 class CheckedProcess:
-    def __init__(self, error_message, **kwargs):
+    def __init__(self, args, error_message=None, **kwargs):
         defaults = {
+            "args": args,
             "stderr": subprocess.PIPE,
             "stdout": subprocess.PIPE,
             "cwd": "/tmp",
@@ -83,7 +84,7 @@ class CheckedProcess:
             f"Running subprocess.Popen with kwargs: {json.dumps(kwargs, default=str)}"
         )
         self.process = subprocess.Popen(**kwargs)
-        self.error_message = error_message
+        self.error_message = error_message or f"Error running {args[0]}"
         self.stdout = self.process.stdout
         self.stdin = self.process.stdin
 

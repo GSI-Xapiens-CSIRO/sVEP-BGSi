@@ -268,7 +268,7 @@ sub simple_truncated_print {
 sub parse_vcf {
     my ($line, $refChrom) = @_;
     #print Dumper $line;
-    my ($chr, $start, $end, $ref, $alt) = ($line->{'chrom'}, $line->{'pos'}, $line->{'pos'}, $line->{'ref'}, $line->{'alt'});
+    my ($chr, $start, $end, $ref, $alt) = ($line->{'chrom'}, $line->{'posVcf'}, $line->{'posVcf'}, $line->{'refVcf'}, $line->{'altVcf'});
     #print("$chr\t$start\n");
     my @data = @{$line->{'data'}};
     if($data[0] eq ""){
@@ -704,6 +704,7 @@ sub parse_vcf {
       }
       my $start_end_string = $start<$end ? $start.'-'.$end : $end.'-'.$start;
       my %record = (
+        %{$line},
         rank => $rank,
         region => $chr.':'.$start_end_string,
         alt => $alt,
@@ -719,10 +720,8 @@ sub parse_vcf {
         strand => $strand,
         transcriptSupportLevel => ($info{transcript_support_level}|| '-'),
         ref => $ref,
-        gt => $line->{'gt'},
-        qual => $line->{'qual'},
-        filter => $line->{'filter'},
       );
+      delete $record{"data"};  # This particular value is very large and no longer needed
       if(length $tr->{warning}){
         $record{warning} = $tr->{warning};
       }

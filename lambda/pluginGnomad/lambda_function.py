@@ -41,42 +41,56 @@ def get_query_process(regions, ref_chrom):
         f"%POS\t%REF\t%ALT\t{'\\t'.join("%" + val for val in GNOMAD_COLUMNS.values())}\n",
         f"{GNOMAD_S3_PREFIX}{chrom}{GNOMAD_S3_SUFFIX}",
     ]
-    return CheckedProcess(args=args, error_message="bcftools error querying gnomAD")
+    return CheckedProcess(args, error_message="bcftools error querying gnomAD")
 
 
 def convert_to_regions_queries(sns_data):
-    regions = set()
+    regions_data = defaultdict(lambda: defaultdict(list))
     for data in sns_data:
-        positions = data["region"].split(":")[1]
-        start, end = positions.split("-")
-        regions.add(positions if start != end else start)
+        regions_data[data["posVcf"]][(data["refVcf"], data["altVcf"])].append(data)
     # Split into chunks of MAX_REGIONS_PER_QUERY
-    regions_list = sorted(list(regions), key=lambda x: int(x.split("-")[0]))
+    regions_list = sorted(list(regions_data.keys()))
     region_chunks = [
         regions_list[i : i + MAX_REGIONS_PER_QUERY]
         for i in range(0, len(regions_list), MAX_REGIONS_PER_QUERY)
     ]
-    return region_chunks
+    chunked_data = [
+        {
+            (pos, ref, alt): data_value
+            for pos in region_chunk
+            for (ref, alt), data_value in regions_data[pos].items()
+        }
+        for region_chunk in region_chunks
+    ]
+    return region_chunks, chunked_data
 
 
 def add_gnomad_columns(sns_data, ref_chrom, timer):
-    region_queries = convert_to_regions_queries(sns_data)
-    query_processes_sns_data = [
+    region_queries, chunked_data = convert_to_regions_queries(sns_data)
+    query_processes = [
         get_query_process(query_region, ref_chrom) for query_region in region_queries
     ]
-    regions_data = defaultdict(list)
-    for data in sns_data:
-        regions_data[
-            (data["region"].split(":")[1].split("-")[0], data["ref"], data["alt"])
-        ].append(data)
     lines_updated = 0
     completed_lines = []
-    for query_process in query_processes_sns_data:
+    remaining_data = []
+    for query_process, (chunk_i, regions_data) in zip(
+        query_processes, enumerate(chunked_data)
+    ):
+        if timer.out_of_time():
+            # Call self with remaining data
+            remaining_data = [
+                data
+                for later_region_data in chunked_data[chunk_i:]
+                for variant_data in later_region_data.values()
+                for data in variant_data
+            ]
+            break
         for line in query_process.stdout:
             line = line.strip()
             if not line:
                 continue
-            pos, ref, alt, *query_data = line.split("\t")
+            pos_s, ref, alt, *query_data = line.split("\t")
+            pos = int(pos_s)
             if (pos, ref, alt) not in regions_data:
                 continue
             for data in regions_data[(pos, ref, alt)]:
@@ -88,17 +102,13 @@ def add_gnomad_columns(sns_data, ref_chrom, timer):
                         )
                     }
                 )
-                completed_lines.append(data)
                 lines_updated += 1
-            del regions_data[(pos, ref, alt)]
-            if timer.out_of_time():
-                # Call self with remaining data
-                remaining_data = [
-                    data for pos_data in regions_data.values() for data in pos_data
-                ]
-                return completed_lines, remaining_data
+        completed_lines.extend(
+            [data for variant_data in regions_data.values() for data in variant_data]
+        )
         query_process.check()
-    return sns_data, []
+    print(f"Updated {lines_updated}/{len(completed_lines)} rows with gnomad data")
+    return completed_lines, remaining_data
 
 
 def lambda_handler(event, context):
@@ -126,7 +136,6 @@ def lambda_handler(event, context):
             assert (
                 len(complete_lines) > 0
             ), "Not able to make any progress getting gnomAD data"
-        print(f"Updated {len(complete_lines)}/{len(sns_data)} rows with gnomad data")
         base_filename = orchestrator.temp_file_name
         start_function(
             topic_arn=FORMAT_OUTPUT_SNS_TOPIC_ARN,

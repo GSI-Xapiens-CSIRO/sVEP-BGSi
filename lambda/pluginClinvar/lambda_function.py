@@ -1,8 +1,8 @@
 import os
-import subprocess
 
 
 from shared.utils import (
+    CheckedProcess,
     Orchestrator,
     download_bedfile,
     handle_failed_execution,
@@ -36,34 +36,25 @@ def add_clinvar_columns(in_rows, ref_chrom):
     num_rows_hit = 0
     results = []
     for in_row in in_rows:
-        _, positions = in_row["region"].split(":")
-        row_start, row_end = positions.split("-")
-        alt = in_row["alt"]
-        loc = f"{ref_chrom}:{positions}"
+        pos = in_row["posVcf"]
+        ref = in_row["refVcf"]
+        alt = in_row["altVcf"]
+        loc = f"{ref_chrom}:{pos}-{pos}"
         local_file = f"/tmp/{CLINVAR_REFERENCE}"
         args = [
             "tabix",
             local_file,
             loc,
         ]
-        query_process = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd="/tmp",
-            encoding="utf-8",
-        )
+        query_process = CheckedProcess(args)
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
+        query_process.check()
         is_matched = False
         for data in main_data:
             if not data:
                 continue
-            _, bed_start, bed_end, _, bed_alt, *clinvar_data = data.split("\t")
-            if (
-                bed_alt == alt
-                and bed_end == row_end
-                and int(bed_start) + 1 == int(row_start)
-            ):
+            _, bed_start, _, bed_ref, bed_alt, *clinvar_data = data.split("\t")
+            if bed_alt == alt and bed_ref == ref and int(bed_start) + 1 == pos:
                 is_matched = True
                 results.append(
                     dict(
