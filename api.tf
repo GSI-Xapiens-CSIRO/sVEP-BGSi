@@ -418,7 +418,7 @@ resource "aws_api_gateway_integration" "vcfstats-patch" {
   resource_id             = aws_api_gateway_method.vcfstats-patch.resource_id
   http_method             = aws_api_gateway_method.vcfstats-patch.http_method
   type                    = "AWS_PROXY"
-  uri                     = module.lambda-qcFigures.function_invoke_arn
+  uri                     = module.lambda-qcFigures.lambda_function_invoke_arn
   integration_http_method = "POST"
 }
 
@@ -454,7 +454,7 @@ resource "aws_api_gateway_deployment" "VPApi" {
       aws_api_gateway_integration.submit-options,
       aws_api_gateway_integration_response.submit-options,
       aws_api_gateway_method_response.submit-options,
-      aws_api_gateway_method.submit-patch / submit,
+      aws_api_gateway_method.submit-patch,
       aws_api_gateway_integration.submit-patch,
       aws_api_gateway_integration_response.submit-patch,
       aws_api_gateway_method_response.submit-patch,
@@ -476,7 +476,7 @@ resource "aws_api_gateway_deployment" "VPApi" {
       aws_api_gateway_integration.vcfstats-options,
       aws_api_gateway_integration_response.vcfstats-options,
       aws_api_gateway_method_response.vcfstats-options,
-      aws_api_gateway_method.vcfstats-patch / vcfstats,
+      aws_api_gateway_method.vcfstats-patch,
       aws_api_gateway_integration.vcfstats-patch,
       aws_api_gateway_integration_response.vcfstats-patch,
       aws_api_gateway_method_response.vcfstats-patch,
