@@ -332,6 +332,64 @@ resource "aws_api_gateway_integration_response" "vcfstats-post" {
   depends_on = [aws_api_gateway_integration.vcfstats-post]
 }
 
+resource "aws_api_gateway_method" "vcfstats-options" {
+  rest_api_id   = aws_api_gateway_rest_api.VPApi.id
+  resource_id   = aws_api_gateway_resource.vcfstats.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_response" "vcfstats-options" {
+  rest_api_id = aws_api_gateway_method.vcfstats-options.rest_api_id
+  resource_id = aws_api_gateway_method.vcfstats-options.resource_id
+  http_method = aws_api_gateway_method.vcfstats-options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+}
+
+resource "aws_api_gateway_integration" "vcfstats-options" {
+  rest_api_id = aws_api_gateway_method.vcfstats-options.rest_api_id
+  resource_id = aws_api_gateway_method.vcfstats-options.resource_id
+  http_method = aws_api_gateway_method.vcfstats-options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = <<TEMPLATE
+      {
+        "statusCode": 200
+      }
+    TEMPLATE
+  }
+}
+
+resource "aws_api_gateway_integration_response" "vcfstats-options" {
+  rest_api_id = aws_api_gateway_method.vcfstats-options.rest_api_id
+  resource_id = aws_api_gateway_method.vcfstats-options.resource_id
+  http_method = aws_api_gateway_method.vcfstats-options.http_method
+  status_code = aws_api_gateway_method_response.vcfstats-options.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,PATCH,POST'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  response_templates = {
+    "application/json" = ""
+  }
+
+  depends_on = [aws_api_gateway_integration.vcfstats-options]
+}
+
 #
 # Deployment
 #
@@ -351,7 +409,7 @@ resource "aws_api_gateway_deployment" "VPApi" {
       aws_api_gateway_integration.submit-options,
       aws_api_gateway_integration_response.submit-options,
       aws_api_gateway_method_response.submit-options,
-      aws_api_gateway_method.submit-patch,
+      aws_api_gateway_method.submit-patch / submit,
       aws_api_gateway_integration.submit-patch,
       aws_api_gateway_integration_response.submit-patch,
       aws_api_gateway_method_response.submit-patch,
@@ -369,6 +427,10 @@ resource "aws_api_gateway_deployment" "VPApi" {
       aws_api_gateway_integration_response.results-get,
       aws_api_gateway_method_response.results-get,
       # /vcfstats
+      aws_api_gateway_method.vcfstats-options,
+      aws_api_gateway_integration.vcfstats-options,
+      aws_api_gateway_integration_response.vcfstats-options,
+      aws_api_gateway_method_response.vcfstats-options,
       aws_api_gateway_method.vcfstats-post,
       aws_api_gateway_method_response.vcfstats-post,
       aws_api_gateway_integration.vcfstats-post,
