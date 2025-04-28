@@ -2,6 +2,7 @@ import json
 import os
 
 import boto3
+from datetime import datetime, timezone
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
@@ -84,6 +85,7 @@ def update_clinic_job(
         "job_name_lower": {
             "S": job_name.lower()
         },  # Ensure job_name is always lowercase for consistent querying
+        "created_at": {"S": datetime.now(timezone.utc)},
     }
 
     if project_name is not None:
