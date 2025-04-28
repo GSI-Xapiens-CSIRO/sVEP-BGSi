@@ -78,7 +78,13 @@ def update_clinic_job(
     skip_email=False,
 ):
     job_status = job_status if job_status is not None else "unknown"
-    update_fields = {"job_status": {"S": job_status}, "job_name": {"S": job_name}}
+    update_fields = {
+        "job_status": {"S": job_status},
+        "job_name": {"S": job_name},
+        "job_name_lower": {
+            "S": job_name.lower()
+        },  # Ensure job_name is always lowercase for consistent querying
+    }
 
     if project_name is not None:
         update_fields["project_name"] = {"S": project_name}
