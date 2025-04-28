@@ -154,6 +154,10 @@ def _sort(input_file, output_file):
 def _bgzip(input_file, output_file):
     command = f"bgzip -c {input_file} > {output_file}"
     execute_subprocess(command)
+    
+def _gzip_dc(input_file):
+    command = f"gzip -d {input_file}"
+    execute_subprocess(command)
 
 
 def _tabix_index(input_file):

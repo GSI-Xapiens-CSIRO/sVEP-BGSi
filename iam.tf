@@ -424,6 +424,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "s3:PutObject",
       "s3:DeleteObject",
       "s3:GetObject",
+      "s3:PutObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-temp.arn}/*",
@@ -1043,6 +1044,45 @@ data "aws_iam_policy_document" "lambda-formatOutput" {
     ]
     resources = [
       var.cognito-user-pool-arn,
+    ]
+  }
+}
+
+
+#
+# vcfstatsGraphic Lambda Function
+#
+data "aws_iam_policy_document" "lambda-qcFigures" {
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-references.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${var.data_portal_bucket_arn}",
+      "${var.data_portal_bucket_arn}/*",
     ]
   }
 }

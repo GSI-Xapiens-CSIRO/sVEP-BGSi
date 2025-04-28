@@ -300,6 +300,7 @@ module "lambda-pluginClinvar" {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
       CLINVAR_REFERENCE             = "clinvar.bed.gz"
+      FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
       PLUGIN_GNOMAD_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomad.arn
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
@@ -617,4 +618,33 @@ module "lambda-formatOutput" {
   layers = [
     local.python_modules_layer,
   ]
+}
+
+#
+# qcFigures Lambda Function
+#
+module "lambda-qcFigures" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-qcFigures"
+  description            = "Running vcfstats for generating graphic."
+  create_package         = false
+  image_uri              = module.docker_image_qcFigures_lambda.image_uri
+  package_type           = "Image"
+  memory_size            = 3000
+  timeout                = 900
+  ephemeral_storage_size = 10240
+  attach_policy_jsons    = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-qcFigures.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/qcFigures"
+  tags                   = var.common-tags
+  environment_variables = {
+    FILE_LOCATION   = var.data_portal_bucket_name
+    USER_POOL_ID    = var.cognito-user-pool-id
+    HTS_S3_HOST     = "s3.${var.region}.amazonaws.com"
+    RESULT_DURATION = local.result_duration
+  }
 }

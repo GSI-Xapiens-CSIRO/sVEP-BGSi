@@ -108,3 +108,9 @@ variable "cognito-user-pool-id" {
   description = "Cognito user pool Id."
 }
 
+# Hub configurations
+variable "hub_name" {
+  type        = string
+  description = "Configuration for the hub"
+  default     = "NONE"
+}
