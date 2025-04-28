@@ -68,6 +68,7 @@ def send_job_email(
 def update_clinic_job(
     job_id,
     job_status,
+    job_name=None,
     project_name=None,
     input_vcf=None,
     failed_step=None,
@@ -77,7 +78,8 @@ def update_clinic_job(
     skip_email=False,
 ):
     job_status = job_status if job_status is not None else "unknown"
-    update_fields = {"job_status": {"S": job_status}}
+    update_fields = {"job_status": {"S": job_status}, "job_name": {"S": job_name}}
+
     if project_name is not None:
         update_fields["project_name"] = {"S": project_name}
     if input_vcf is not None:
