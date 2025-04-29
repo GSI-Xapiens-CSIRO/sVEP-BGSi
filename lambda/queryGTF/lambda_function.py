@@ -55,12 +55,11 @@ def overlap_feature(request_id, all_coords, base_id, timer, ref_chrom):
         else:
             counter += 1
             send_data_to_plugins(request_id, base_id, counter, results, ref_chrom)
+            results = [data]
+            tot_size = cur_size
             if timer.out_of_time():
                 send_data_to_self(request_id, base_id, all_coords[idx:], ref_chrom)
-                return
-            else:
-                results = [data]
-                tot_size = cur_size
+                break
     counter += 1
     send_data_to_plugins(request_id, base_id, counter, results, ref_chrom)
 
