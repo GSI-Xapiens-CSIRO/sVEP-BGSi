@@ -67,6 +67,7 @@ def lambda_handler(event, _):
         request_id = event["requestContext"]["requestId"]
         project = body_dict["projectName"]
         location = body_dict["location"]
+        job_name = body_dict["jobName"]
 
         check_user_in_project(sub, project)
     except ValueError:
@@ -111,6 +112,7 @@ def lambda_handler(event, _):
     input_vcf = Path(parsed_location.path.lstrip("/")).name
     update_clinic_job(
         job_id=request_id,
+        job_name=job_name,
         job_status="pending",
         project_name=project,
         input_vcf=input_vcf,

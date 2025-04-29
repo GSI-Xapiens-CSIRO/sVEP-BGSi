@@ -2,6 +2,7 @@ import json
 import os
 
 import boto3
+from datetime import datetime, timezone
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
@@ -68,6 +69,7 @@ def send_job_email(
 def update_clinic_job(
     job_id,
     job_status,
+    job_name=None,
     project_name=None,
     input_vcf=None,
     failed_step=None,
@@ -77,9 +79,18 @@ def update_clinic_job(
     skip_email=False,
 ):
     job_status = job_status if job_status is not None else "unknown"
-    update_fields = {"job_status": {"S": job_status}}
+    update_fields = {
+        "job_status": {"S": job_status},
+    }
+
     if project_name is not None:
         update_fields["project_name"] = {"S": project_name}
+    if job_name is not None:
+        update_fields["job_name"] = {"S": job_name}
+        update_fields["job_name_lower"] = {"S": job_name.lower()}
+        # Added created_at at the first time a job is created
+        now = datetime.now(timezone.utc)
+        update_fields["created_at"] = {"S": now.strftime("%Y-%m-%dT%H:%M:%S.%f+0000")}
     if input_vcf is not None:
         update_fields["input_vcf"] = {"S": input_vcf}
     if failed_step is not None:
