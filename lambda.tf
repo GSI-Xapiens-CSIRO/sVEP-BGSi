@@ -240,5 +240,5 @@ resource "aws_lambda_permission" "cloudwatch_delete_clinical_workflow_invoke_per
   action        = "lambda:InvokeFunction"
   function_name = module.lambda-deleteClinicalWorkflow.lambda_function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.update_references_trigger.arn
+  source_arn    = aws_cloudwatch_event_rule.delete_clinical_trigger.arn
 }
