@@ -23,8 +23,8 @@ resource "aws_cloudwatch_event_rule" "delete_clinical_trigger" {
   schedule_expression = "cron(0 16 * * ? *)"
 }
 
-resource "aws_cloudwatch_event_target" "svep_delete_clinical_trigger" {
-  rule      = aws_cloudwatch_event_rule.svep_delete_clinical_trigger.name
+resource "aws_cloudwatch_event_target" "delete_clinical_trigger" {
+  rule      = aws_cloudwatch_event_rule.delete_clinical_trigger.name
   target_id = "lambda-deleteClinicalWorkflow"
   arn       = module.lambda-deleteClinicalWorkflow.lambda_function_arn
 }
