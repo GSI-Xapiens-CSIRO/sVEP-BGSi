@@ -648,3 +648,38 @@ module "lambda-qcFigures" {
     RESULT_DURATION = local.result_duration
   }
 }
+
+#
+# deleteClinicalWorkflow Lambda Function
+#
+module "lambda-deleteClinicalWorkflow" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-deleteClinicalWorkflow"
+  description            = "Delete pending after 2 days clinical workflow using cron job."
+  runtime                = "python3.12"
+  handler                = "lambda_function.lambda_handler"
+  memory_size            = 2048
+  timeout                = 900
+  ephemeral_storage_size = 8192
+  attach_policy_jsons    = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-deleteClinicalWorkflow.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/deleteClinicalWorkflow"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+    COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+    USER_POOL_ID                  = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}

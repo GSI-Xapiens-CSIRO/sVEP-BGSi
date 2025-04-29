@@ -231,3 +231,27 @@ resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.vcfstats.path_part}"
 }
+
+#
+# deleteClinicalWorkflow Lambda Function
+#
+resource "aws_lambda_permission" "sns_update_reference_files_invoke_permission" {
+  statement_id  = "SNSDeleteClinicalWorkflowAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-deleteClinicalWorkflow.lambda_function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.deleteClinicalWorkflow.arn
+}
+
+resource "aws_lambda_permission" "cloudwatch_update_reference_files_invoke_permission" {
+  statement_id  = "CloudwatchDeleteClinicalWorkflowAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-deleteClinicalWorkflow.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.update_references_trigger.arn
+}
+
+resource "aws_lambda_function_recursion_config" "update_reference_files_recursion" {
+  function_name  = module.lambda-deleteClinicalWorkflow.lambda_function_name
+  recursive_loop = "Allow"
+}
