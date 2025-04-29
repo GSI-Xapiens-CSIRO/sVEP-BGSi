@@ -78,6 +78,8 @@ def send_data_to_plugins(request_id, base_id, counter, results, ref_chrom):
 
 
 def send_data_to_self(request_id, base_id, remaining_coords, ref_chrom):
+    if not remaining_coords:
+        return
     print("Less Time remaining - call itself.")
     start_function(
         topic_arn=QUERY_GTF_SNS_TOPIC_ARN,
