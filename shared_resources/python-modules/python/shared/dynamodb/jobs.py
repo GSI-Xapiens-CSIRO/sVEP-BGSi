@@ -39,7 +39,7 @@ def scan_pending_jobs():
     old_pending_jobs = []
 
     for item in items:
-        created_date_str = item.get("created_date", {}).get("S")
+        created_date_str = item.get("created_at", {}).get("S")
         if not created_date_str:
             continue
 
