@@ -672,6 +672,7 @@ module "lambda-deleteClinicalWorkflow" {
   tags = var.common-tags
 
   environment_variables = {
+    SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
     DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
     COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
     USER_POOL_ID                  = var.cognito-user-pool-id
