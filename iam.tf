@@ -1187,7 +1187,8 @@ data "aws_iam_policy_document" "lambda-deleteClinicalWorkflow" {
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
       "dynamodb:DeleteItem",
-      "dynamodb:Scan"
+      "dynamodb:Scan",
+      "dynamodb:BatchWriteItem"
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
