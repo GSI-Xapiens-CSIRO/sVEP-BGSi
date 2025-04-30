@@ -2,7 +2,7 @@ import json
 import os
 
 import boto3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
@@ -22,6 +22,59 @@ def query_clinic_job(job_id):
     response = dynamodb_client.get_item(**kwargs)
     print(f"Received response: {json.dumps(response, default=str)}")
     return response.get("Item")
+
+
+def scan_pending_jobs():
+    # Get datetime 2 days ago
+    threshold = datetime.now(timezone.utc) - timedelta(days=2)
+
+    # Filter pending jobs from DynamoDB
+    response = dynamodb_client.scan(
+        TableName=DYNAMO_CLINIC_JOBS_TABLE,
+        FilterExpression="job_status = :status",
+        ExpressionAttributeValues={":status": {"S": "pending"}},
+    )
+
+    items = response.get("Items", [])
+    old_pending_jobs = []
+
+    for item in items:
+        created_date_str = item.get("created_date", {}).get("S")
+        if not created_date_str:
+            continue
+
+        try:
+            created_dt = datetime.fromisoformat(created_date_str)
+        except ValueError:
+            continue
+
+        if created_dt < threshold:
+            old_pending_jobs.append(item)
+
+    return old_pending_jobs
+
+
+def bulk_delete_jobs(items):
+    table_name = DYNAMO_CLINIC_JOBS_TABLE
+    # DynamoDB batch write item can only handle 25 items at a time
+    chunks = [items[i : i + 25] for i in range(0, len(items), 25)]
+
+    for chunk in chunks:
+        delete_requests = [
+            {
+                "DeleteRequest": {
+                    "Key": {"job_id": item["job_id"]}  # Include sort key too if needed
+                }
+            }
+            for item in chunk
+        ]
+
+        response = dynamodb_client.batch_write_item(
+            RequestItems={table_name: delete_requests}
+        )
+        unprocessed = response.get("UnprocessedItems", {})
+        if unprocessed:
+            print("⚠️ Unprocessed items:", unprocessed)
 
 
 def dynamodb_update_item(job_id, update_fields: dict):

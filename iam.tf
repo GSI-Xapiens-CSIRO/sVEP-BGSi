@@ -1102,15 +1102,6 @@ data "aws_iam_policy_document" "lambda-deleteClinicalWorkflow" {
 
   statement {
     actions = [
-      "s3:PutObject",
-    ]
-    resources = [
-      "${aws_s3_bucket.svep-regions.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
       "s3:DeleteObject",
       "s3:GetObject",
     ]
@@ -1124,6 +1115,8 @@ data "aws_iam_policy_document" "lambda-deleteClinicalWorkflow" {
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Scan"
     ]
     resources = [
       var.dynamo-clinic-jobs-table-arn,
