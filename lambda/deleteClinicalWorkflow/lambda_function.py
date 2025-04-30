@@ -13,7 +13,7 @@ def lambda_handler(event, _):
         if len(pending_jobs) > 0:
             print("[Crob Jobs] - Deleting pending jobs.")
             # Delete the pending jobs
-            bulk_delete_jobs(pending_jobs)
+            # bulk_delete_jobs(pending_jobs)
 
             for job in pending_jobs:
                 job_id = job["job_id"]["S"]
@@ -32,7 +32,7 @@ def lambda_handler(event, _):
                     project_name=project_name,
                     input_vcf=input_vcf,
                     user_id=user_id,
-                    is_from_failed_execution=False,
+                    is_from_failed_execution=True,  # Set true to avoid re running query_clinic_job
                 )
 
                 time.sleep(0.5)  # 500 milliseconds
