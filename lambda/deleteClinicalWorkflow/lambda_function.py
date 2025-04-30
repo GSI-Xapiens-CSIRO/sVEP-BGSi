@@ -81,3 +81,5 @@ def lambda_handler(event, _):
                 )
 
                 time.sleep(1)
+        else:
+            print("[Cron Jobs]: No pending jobs to delete.")
