@@ -1086,3 +1086,63 @@ data "aws_iam_policy_document" "lambda-qcFigures" {
     ]
   }
 }
+
+#
+# deleteClinicalWorkflow Lambda Function
+#
+data "aws_iam_policy_document" "lambda-deleteClinicalWorkflow" {
+  statement {
+    actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.sendJobEmail.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+    resources = [
+      aws_s3_bucket.svep-temp.arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+    resources = [
+      "${aws_s3_bucket.svep-temp.arn}/*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Scan",
+      "dynamodb:BatchWriteItem"
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [
+      var.svep-job-email-lambda-function-arn,
+    ]
+  }
+
+}

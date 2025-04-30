@@ -231,3 +231,14 @@ resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.vcfstats.path_part}"
 }
+
+#
+# deleteClinicalWorkflow Lambda Function
+#
+resource "aws_lambda_permission" "cloudwatch_delete_clinical_workflow_invoke_permission" {
+  statement_id  = "CloudwatchDeleteClinicalWorkflowAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-deleteClinicalWorkflow.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.delete_clinical_trigger.arn
+}
