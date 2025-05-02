@@ -88,6 +88,15 @@ def lambda_handler(event, _):
     if sample_count != 1:
         return bad_request("Only single-sample VCFs are supported.")
 
+    parsed_location = urlparse(location)
+    input_vcf = Path(parsed_location.path.lstrip("/")).name
+    update_clinic_job(
+        job_id=request_id,
+        job_status="pending",
+        project_name=project,
+        input_vcf=input_vcf,
+        user_id=sub,
+    )
     print(vcf_regions)
     start_function(
         QUERY_VCF_SNS_TOPIC_ARN,
@@ -106,17 +115,6 @@ def lambda_handler(event, _):
             "project": project,
         },
     )
-
-    parsed_location = urlparse(location)
-    input_vcf = Path(parsed_location.path.lstrip("/")).name
-    update_clinic_job(
-        job_id=request_id,
-        job_status="pending",
-        project_name=project,
-        input_vcf=input_vcf,
-        user_id=sub,
-    )
-
     return bundle_response(
         200,
         {
