@@ -3,14 +3,11 @@ import os
 
 from shared.utils import (
     CheckedProcess,
-    Orchestrator,
-    handle_failed_execution,
-    start_function,
+    orchestration,
     Timer,
 )
 
 FORMAT_OUTPUT_SNS_TOPIC_ARN = os.environ["FORMAT_OUTPUT_SNS_TOPIC_ARN"]
-PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
 GNOMAD_S3_PREFIX = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites."
 GNOMAD_S3_SUFFIX = ".vcf.bgz"
 MAX_REGIONS_PER_QUERY = 20  # Hard limit is probably around 5000
@@ -113,38 +110,22 @@ def add_gnomad_columns(sns_data, ref_chrom, timer):
 
 def lambda_handler(event, context):
     timer = Timer(context, MILLISECONDS_BEFORE_SPLIT)
-    orchestrator = Orchestrator(event)
-    message = orchestrator.message
-    sns_data = message["snsData"]
-    ref_chrom = message["refChrom"]
-    request_id = message["requestId"]
-
-    try:
-        complete_lines, remaining = add_gnomad_columns(sns_data, ref_chrom, timer)
+    with orchestration(event) as orc:
+        sns_data = orc.message["snsData"]
+        complete_lines, remaining = add_gnomad_columns(sns_data, orc.ref_chrom, timer)
         if remaining:
             print(f"remaining data length {len(remaining)}")
-            start_function(
-                topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
-                base_filename=base_filename,
-                message={
+            orc.resend_self(
+                message_update={
                     "snsData": remaining,
-                    "refChrom": ref_chrom,
-                    "requestId": request_id,
                 },
-                resend=True,
             )
             assert (
                 len(complete_lines) > 0
             ), "Not able to make any progress getting gnomAD data"
-        base_filename = orchestrator.temp_file_name
-        start_function(
+        orc.start_function(
             topic_arn=FORMAT_OUTPUT_SNS_TOPIC_ARN,
-            base_filename=base_filename,
             message={
                 "snsData": complete_lines,
-                "requestId": request_id,
             },
         )
-        orchestrator.mark_completed()
-    except Exception as e:
-        handle_failed_execution(request_id, e)

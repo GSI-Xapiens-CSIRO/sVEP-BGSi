@@ -1,12 +1,11 @@
 import os
+from collections import defaultdict
 
 
 from shared.utils import (
     CheckedProcess,
-    Orchestrator,
+    orchestration,
     download_bedfile,
-    handle_failed_execution,
-    start_function,
 )
 
 # Environment variables
@@ -77,27 +76,15 @@ def add_clinvar_columns(in_rows, ref_chrom):
 
 
 def lambda_handler(event, _):
-    orchestrator = Orchestrator(event)
-    message = orchestrator.message
-    sns_data = message["snsData"]
-    ref_chrom = message["refChrom"]
-    request_id = message["requestId"]
-
-    try:
-        sns_data = add_clinvar_columns(sns_data, ref_chrom)
-        base_filename = orchestrator.temp_file_name
+    with orchestration(event) as orc:
+        sns_data = orc.message["snsData"]
+        sns_data = add_clinvar_columns(sns_data, orc.ref_chrom)
         if sns_data:
-            start_function(
+            orc.start_function(
                 topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
-                base_filename=base_filename,
                 message={
                     "snsData": sns_data,
-                    "refChrom": ref_chrom,
-                    "requestId": request_id,
                 },
             )
         else:
             "No rows matched in clinvar, not continuing downstream plugins."
-        orchestrator.mark_completed()
-    except Exception as e:
-        handle_failed_execution(request_id, e)

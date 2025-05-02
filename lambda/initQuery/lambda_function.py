@@ -8,14 +8,12 @@ from shared.apiutils import bad_request, bundle_response
 from shared.utils import (
     chrom_matching,
     print_event,
-    sns_publish,
-    start_function,
+    orchestration,
 )
 from dynamodb import check_user_in_project
 from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
-from shared.utils import chrom_matching, print_event, sns_publish, start_function
 from shared.dynamodb import check_user_in_project, update_clinic_job
 
 lambda_client = boto3.client("lambda")
@@ -98,23 +96,22 @@ def lambda_handler(event, _):
         user_id=sub,
     )
     print(vcf_regions)
-    start_function(
-        QUERY_VCF_SNS_TOPIC_ARN,
-        request_id,
-        {
-            "requestId": request_id,
-            "regions": vcf_regions,
-            "location": location,
-            "mapping": chrom_mapping,
-        },
-    )
-    sns_publish(
-        CONCAT_STARTER_SNS_TOPIC_ARN,
-        {
-            "requestId": request_id,
-            "project": project,
-        },
-    )
+    with orchestration(request_id=request_id) as orc:
+        orc.start_function(
+            QUERY_VCF_SNS_TOPIC_ARN,
+            {
+                "regions": vcf_regions,
+                "location": location,
+                "mapping": chrom_mapping,
+            },
+        )
+        orc.start_function(
+            CONCAT_STARTER_SNS_TOPIC_ARN,
+            {
+                "project": project,
+            },
+            track=False,
+        )
     return bundle_response(
         200,
         {

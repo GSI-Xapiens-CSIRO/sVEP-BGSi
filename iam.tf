@@ -75,6 +75,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
 
   statement {
     actions = [
+      "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
     ]

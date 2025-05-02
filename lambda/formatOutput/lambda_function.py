@@ -1,10 +1,6 @@
 import os
 
-from shared.utils import (
-    Orchestrator,
-    s3,
-    handle_failed_execution,
-)
+from shared.utils import orchestration, s3
 
 
 # Environment variables
@@ -30,12 +26,6 @@ def format_output(sns_data, upload_filename):
 
 
 def lambda_handler(event, _):
-    orchestrator = Orchestrator(event)
-    message = orchestrator.message
-    sns_data = message["snsData"]
-    request_id = message["requestId"]
-    try:
-        format_output(sns_data, f"{orchestrator.temp_file_name}.tsv")
-        orchestrator.mark_completed()
-    except Exception as e:
-        handle_failed_execution(request_id, e)
+    with orchestration(event) as orc:
+        sns_data = orc.message["snsData"]
+        format_output(sns_data, f"{orc.temp_file_name}.tsv")
