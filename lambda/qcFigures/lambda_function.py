@@ -65,6 +65,17 @@ def get_formula_and_title(key, vcf_file):
         return False, False
     return formula["formula"], f"{formula["image_title"]} ({vcf_file})"
 
+def classify_error(stderr_msg):
+    if not stderr_msg:
+        return "vcfstat_failed", "No stderr output."
+    msg_lower = stderr_msg.lower()
+    if "keyerror" in msg_lower or "field not found" in msg_lower or "not present" in msg_lower:
+        return "no_data", stderr_msg.strip()
+    elif "error" in msg_lower or "failed" in msg_lower:
+        return "vcfstat_failed", stderr_msg.strip()
+    else:
+        return "other_error", stderr_msg.strip()
+
 
 def lambda_handler(event, context):
     event_body = event.get("body")
@@ -219,10 +230,20 @@ def lambda_handler(event, context):
 
     except subprocess.CalledProcessError as e:
         # TODO delete VCF file on /tmp/{input_vcf_file}
+        if e.stdout:
+            print(e.stdout)
+        if e.stderr:
+            print(e.stderr)
+
+        error_type, message = classify_error(e.stderr)
         return bundle_response(
             500,
             {
-                "body": {"message": f"Error running vcfstats: {str(e.stderr)}"},
+                "body":{
+                    "status": "error",
+                    "error_type": error_type,
+                    "message": message
+                }
             },
         )
     except Exception as e:
@@ -230,6 +251,10 @@ def lambda_handler(event, context):
         return bundle_response(
             500,
             {
-                "body": {"message": f"Error generating image: {str(e)}"},
+                "body": {
+                    "status": "error",
+                    "error_type": "other_error",
+                    "message": f"Error generating image: {str(e)}",
+                },
             },
         )
