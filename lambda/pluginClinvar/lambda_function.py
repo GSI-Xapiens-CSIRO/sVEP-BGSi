@@ -26,6 +26,7 @@ CLINVAR_COLUMNS = [
     "accession",
     "pubmed",
 ]
+FILTER_CLINVAR_EXCLUDE = set(os.environ["FILTER_CLINVAR_EXCLUDE"].split(",")) - {""}
 
 # Download reference genome and index
 download_bedfile(BUCKET_NAME, CLINVAR_REFERENCE)
@@ -72,7 +73,14 @@ def add_clinvar_columns(in_rows, ref_chrom):
     print(
         f"Matched {num_rows_hit}/{len(in_rows)} rows to Clinvar, for a total of {len(results)} rows"
     )
-    return results
+    # Filter out rows that are not clinically significant
+    passed_results = [
+        result for result in results if result["clinSig"] not in FILTER_CLINVAR_EXCLUDE
+    ]
+    print(
+        f"Passed {len(passed_results)}/{len(results)} records with clinSig not in {FILTER_CLINVAR_EXCLUDE}"
+    )
+    return passed_results
 
 
 def lambda_handler(event, _):

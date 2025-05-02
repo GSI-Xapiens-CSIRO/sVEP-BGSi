@@ -114,3 +114,16 @@ variable "hub_name" {
   description = "Configuration for the hub"
   default     = "NONE"
 }
+
+variable "filters" {
+  type = object({
+    clinvar_exclude  = optional(list(string), [])
+    # highest consequence rank to include, e.g. 12 for protein_altering_variant.
+    # see svep/lambda/pluginConsequence/consequence/constants.pm for values.
+    consequence_rank = optional(number, 99)
+    genes            = optional(list(string), [])
+    max_maf          = optional(number, 1)
+    min_qual         = optional(number, 0)
+  })
+  description = "Filters to apply to the svep records"
+}

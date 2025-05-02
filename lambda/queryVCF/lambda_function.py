@@ -8,6 +8,7 @@ from shared.utils import (
 
 
 # Environment variables
+FILTER_MIN_QUAL = float(os.environ["FILTER_MIN_QUAL"])
 QUERY_GTF_SNS_TOPIC_ARN = os.environ["QUERY_GTF_SNS_TOPIC_ARN"]
 QUERY_VCF_SUBMIT_SNS_TOPIC_ARN = os.environ["QUERY_VCF_SUBMIT_SNS_TOPIC_ARN"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
@@ -82,22 +83,32 @@ def trim_alleles(vcf_line_dict):
 
 
 def submit_query_gtf(orc, regions_list, base_id, timer):
-    total_coords = [
-        [
-            trim_alleles(
-                {
-                    key: value
-                    for key, value in zip(
-                        QUERY_KEYS,
-                        vcf_line.split("\t"),
-                    )
-                }
-            )
-            for vcf_line in regions_list[x : x + RECORDS_PER_SAMPLE]
-        ]
-        for x in range(0, len(regions_list), RECORDS_PER_SAMPLE)
+    all_lines = [
+        trim_alleles(
+            {
+                key: value
+                for key, value in zip(
+                    QUERY_KEYS,
+                    vcf_line.split("\t"),
+                )
+            }
+        )
+        for vcf_line in regions_list
     ]
-
+    # Filter out records with low quality
+    before_filter = len(all_lines)
+    passed_lines = [
+        line_dict
+        for line_dict in all_lines
+        if ((qual := line_dict["qual"]) == ".") or (float(qual) >= FILTER_MIN_QUAL)
+    ]
+    print(
+        f"Passed {len(passed_lines)}/{before_filter} records with QUAL >= {FILTER_MIN_QUAL} or unknown"
+    )
+    total_coords = [
+        passed_lines[x : x + RECORDS_PER_SAMPLE]
+        for x in range(0, len(passed_lines), RECORDS_PER_SAMPLE)
+    ]
     for idx in range(len(total_coords)):
         idx_base_id = f"{base_id}_{idx}"
         if timer.out_of_time():

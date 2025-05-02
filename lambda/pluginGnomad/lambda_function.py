@@ -24,6 +24,7 @@ GNOMAD_COLUMNS = {
     "an": "INFO/AN",
     "siftMax": "INFO/sift_max",
 }
+FILTER_MAX_MAF = float(os.environ["FILTER_MAX_MAF"])
 MILLISECONDS_BEFORE_SPLIT = 300000
 
 
@@ -105,7 +106,16 @@ def add_gnomad_columns(sns_data, ref_chrom, timer):
         )
         query_process.check()
     print(f"Updated {lines_updated}/{len(completed_lines)} rows with gnomad data")
-    return completed_lines, remaining_data
+    # Filter out rows with MAF > FILTER_MAX_MAF
+    rare_records = [
+        line_dict
+        for line_dict in completed_lines
+        if float(line_dict.get("af", 0)) <= FILTER_MAX_MAF
+    ]
+    print(
+        f"Passed {len(rare_records)}/{len(completed_lines)} records with af <= {FILTER_MAX_MAF}"
+    )
+    return rare_records, remaining_data
 
 
 def lambda_handler(event, context):
@@ -120,8 +130,8 @@ def lambda_handler(event, context):
                     "snsData": remaining,
                 },
             )
-            assert (
-                len(complete_lines) > 0
+            assert len(remaining) < len(
+                sns_data
             ), "Not able to make any progress getting gnomAD data"
         orc.start_function(
             topic_arn=FORMAT_OUTPUT_SNS_TOPIC_ARN,

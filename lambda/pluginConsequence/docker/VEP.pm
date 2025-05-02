@@ -85,11 +85,13 @@ my $mirnaFile =  $ENV{'MIRNA_REFERENCE'};
 my $fastaBase =  $ENV{'FASTA_REFERENCE_BASE'};
 my $outputLocation =  $ENV{'SVEP_REGIONS'};
 my $tempLocation =  $ENV{'SVEP_TEMP'};
+my $filterConsequenceRank = $ENV{'FILTER_CONSEQUENCE_RANK'};
 my $dynamoClinicJobsTable = $ENV{'DYNAMO_CLINIC_JOBS_TABLE'};
 my $functionName = $ENV{'AWS_LAMBDA_FUNCTION_NAME'};
 my $sendJobEmailArn = $ENV{'SEND_JOB_EMAIL_ARN'};
 my $maxSnsMessageSize = 260000;
 my $s3PayloadKey = "_s3_payload_key";
+my $processedRecords = 0;
 
 sub handle {
     my ($payload) = @_;
@@ -138,12 +140,15 @@ sub handle {
           }
         }
       }
-      my %outMessage = (
-        'snsData' => \@results,
-        'refChrom' => $refChrom,
-        'requestId' => $request_id,
-      );
-      start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
+      print("Passed ", scalar(@results), "/$processedRecords records with rank >= $filterConsequenceRank\n");
+      if (scalar(@results) > 0) {
+        my %outMessage = (
+          'snsData' => \@results,
+          'refChrom' => $refChrom,
+          'requestId' => $request_id,
+        );
+        start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
+      }
 
       my $tempOut = 's3://'.$tempLocation.'/'.$tempFileName;
       system("/usr/bin/aws s3 rm $tempOut");
@@ -725,7 +730,11 @@ sub parse_vcf {
       if(length $tr->{warning}){
         $record{warning} = $tr->{warning};
       }
-      push @results, \%record;
+      # Filter out records of low rank
+      $processedRecords++;
+      if($record{rank} <= $filterConsequenceRank){
+        push @results, \%record;
+      }
     }
     my @sorted = sort { $a->{rank} <=> $b->{rank} } @results;
     return @sorted;
