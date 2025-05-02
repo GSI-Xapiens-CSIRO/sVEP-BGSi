@@ -172,6 +172,7 @@ def lambda_handler(event, context):
                         subprocess.run(
                             vcfstats_params,
                             check=True,
+                            stderr=subprocess.PIPE,
                             cwd="/tmp",
                         )
                         print(f"Results saved in: {output_image}")
@@ -221,7 +222,7 @@ def lambda_handler(event, context):
         return bundle_response(
             500,
             {
-                "body": {"message": f"Error running vcfstats: {str(e)}"},
+                "body": {"message": f"Error running vcfstats: {str(e.stderr)}"},
             },
         )
     except Exception as e:
