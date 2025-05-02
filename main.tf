@@ -351,6 +351,40 @@ module "lambda-pluginGnomad" {
 }
 
 #
+# pluginGnomadOneKG Lambda Function
+#
+module "lambda-pluginGnomadOneKG" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginGnomadOneKG"
+  description   = "Add Gnomad 1kg annotations to sVEP result rows."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 900
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginGnomadOneKG.json
+  }
+  source_path = "${path.module}/lambda/pluginGnomadOneKG"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      FORMAT_OUTPUT_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
+      PLUGIN_GNOMAD_ONE_KG_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomadOneKG.arn
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
 # concat Lambda Function
 #
 module "lambda-concat" {
