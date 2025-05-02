@@ -27,7 +27,7 @@ def wait(request_id, project, time_started):
     time_waited = time.time() - time_started
     if time_waited >= MAX_WAIT_TIME:
         print(f"Waited {time_waited} seconds. Giving up.")
-        return
+        raise Exception(f"Pipeline timed out after {MAX_WAIT_TIME} seconds.")
     time.sleep(LIST_INTERVAL)
     message = {
         "requestId": request_id,
