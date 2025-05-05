@@ -8,21 +8,18 @@ from shared.apiutils import bad_request, bundle_response
 from shared.utils import (
     chrom_matching,
     print_event,
-    sns_publish,
-    start_function,
+    orchestration,
 )
 from dynamodb import check_user_in_project
 from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
-from shared.utils import chrom_matching, print_event, sns_publish, start_function
 from shared.dynamodb import check_user_in_project, update_clinic_job
 
 lambda_client = boto3.client("lambda")
 
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ["CONCAT_STARTER_SNS_TOPIC_ARN"]
-QUERY_VCF_SNS_TOPIC_ARN = os.environ["QUERY_VCF_SNS_TOPIC_ARN"]
 RESULT_DURATION = int(os.environ["RESULT_DURATION"])
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
@@ -89,25 +86,6 @@ def lambda_handler(event, _):
     if sample_count != 1:
         return bad_request("Only single-sample VCFs are supported.")
 
-    print(vcf_regions)
-    start_function(
-        QUERY_VCF_SNS_TOPIC_ARN,
-        request_id,
-        {
-            "requestId": request_id,
-            "regions": vcf_regions,
-            "location": location,
-            "mapping": chrom_mapping,
-        },
-    )
-    sns_publish(
-        CONCAT_STARTER_SNS_TOPIC_ARN,
-        {
-            "requestId": request_id,
-            "project": project,
-        },
-    )
-
     parsed_location = urlparse(location)
     input_vcf = Path(parsed_location.path.lstrip("/")).name
     update_clinic_job(
@@ -118,7 +96,21 @@ def lambda_handler(event, _):
         input_vcf=input_vcf,
         user_id=sub,
     )
-
+    print(vcf_regions)
+    with orchestration(request_id=request_id) as orc:
+        orc.next_function(
+            message={
+                "regions": vcf_regions,
+                "location": location,
+                "mapping": chrom_mapping,
+            },
+        )
+        orc.start_function(
+            CONCAT_STARTER_SNS_TOPIC_ARN,
+            {
+                "project": project,
+            },
+        )
     return bundle_response(
         200,
         {

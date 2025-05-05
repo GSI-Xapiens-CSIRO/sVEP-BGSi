@@ -1,3 +1,5 @@
+from collections import Counter
+from contextlib import contextmanager
 import os
 import shutil
 import json
@@ -14,6 +16,7 @@ from shared.dynamodb import query_clinic_job, update_clinic_job
 # Optional environment variables
 SVEP_TEMP = os.environ.get("SVEP_TEMP")
 REGION = os.environ.get("REGION")
+NEXT_FUNCTION_SNS_TOPIC_ARN = os.environ.get("NEXT_FUNCTION_SNS_TOPIC_ARN")
 
 # AWS clients and resources
 s3 = boto3.resource("s3")
@@ -29,6 +32,13 @@ MAX_SNS_EVENT_PRINT_LENGTH = 2048
 MAX_SNS_MESSAGE_SIZE = 260000
 S3_PAYLOAD_KEY = "_s3_payload_key"
 TEMP_FILE_FIELD = "tempFileName"
+REQUEST_ID_FIELD = "requestId"
+REF_CHROM_FIELD = "refChrom"
+RESERVED_FIELDS = {
+    TEMP_FILE_FIELD,
+    REQUEST_ID_FIELD,
+    REF_CHROM_FIELD,
+}
 
 
 class Timer:
@@ -41,20 +51,104 @@ class Timer:
 
 
 class Orchestrator:
-    def __init__(self, event):
-        # A flag to ensure that the temp file is deleted at the end of
-        # the function.
-        self.completed = False
-        self.message = get_sns_event(event)
-        self.temp_file_name = self.message[TEMP_FILE_FIELD]
+    def __init__(self, event=None, request_id=None):
+        self.function_calls = Counter()
+        self.resent = False
+        if event is not None:
+            self.message = get_sns_event(event)
+            self.topic_arn = event["Records"][0]["Sns"]["TopicArn"]
+            self.ref_chrom = self.message.get(REF_CHROM_FIELD)
+            self.temp_file_name = self.message[TEMP_FILE_FIELD]
+            if self.temp_file_name.startswith("_"):
+                self.track = False
+                self.temp_file_name = self.temp_file_name[1:]
+            else:
+                self.track = True
+            self.request_id = self.message[REQUEST_ID_FIELD]
+        else:
+            # Not created from upstream SNS, i.e. initQuery
+            self.message = None
+            self.topic_arn = None
+            self.ref_chrom = None
+            self.request_id = request_id
+            self.temp_file_name = request_id
+            self.track = False
 
-    def __del__(self):
-        assert self.completed, "Must call mark_completed at end of function."
+    def next_function(self, message, suffix=None, max_length=MAX_PRINT_LENGTH):
+        assert NEXT_FUNCTION_SNS_TOPIC_ARN, "NEXT_FUNCTION_SNS_TOPIC_ARN is not set."
+        self.start_function(
+            NEXT_FUNCTION_SNS_TOPIC_ARN, message, suffix, True, max_length
+        )
 
-    def mark_completed(self):
-        print(f"Deleting file: {self.temp_file_name}")
-        s3.Object(SVEP_TEMP, self.temp_file_name).delete()
-        self.completed = True
+    def resend_self(self, message_update=None, max_length=MAX_PRINT_LENGTH):
+        self._check_reserved_fields(message_update)
+        assert self.topic_arn is not None, "Cannot resend a non-SNS function."
+        assert not self.resent, "Can only resend once per invocation."
+        function_name = _get_function_name_from_arn(self.topic_arn)
+        base_name, old_index = self.temp_file_name.rsplit(function_name, 1)
+        old_index = old_index or 0  # Account for empty string
+        filename = f"{base_name}{function_name}{int(old_index) + 1}"
+        message = (
+            (self.message | message_update)
+            if message_update is not None
+            else self.message
+        )
+        self._start_function_with_filename(
+            self.topic_arn, message, filename, self.track, max_length
+        )
+        self.resent = True
+
+    def start_function(
+        self, topic_arn, message, suffix=None, track=False, max_length=MAX_PRINT_LENGTH
+    ):
+        self._check_reserved_fields(message)
+        base_filename = (
+            f"{self.temp_file_name}_{suffix}" if suffix else self.temp_file_name
+        )
+        function_name = _get_function_name_from_arn(topic_arn)
+        function_key = f"{base_filename}_{function_name}"
+        filename = (
+            f"{base_filename}_{self.function_calls[function_key]}_{function_name}"
+        )
+        self.function_calls[function_key] += 1
+        self._start_function_with_filename(
+            topic_arn, message, filename, track, max_length
+        )
+
+    def _check_reserved_fields(self, message):
+        for field in RESERVED_FIELDS:
+            if field in message:
+                raise ValueError(f"Field {field} is set by the orchestrator.")
+
+    def _start_function_with_filename(
+        self, topic_arn, message, filename, track, max_length
+    ):
+        message[REQUEST_ID_FIELD] = self.request_id
+        if self.ref_chrom is not None:
+            message[REF_CHROM_FIELD] = self.ref_chrom
+        if track:
+            _create_temp_file(filename)
+        else:
+            filename = f"_{filename}"
+        message[TEMP_FILE_FIELD] = filename
+        sns_publish(topic_arn, message, max_length, filename)
+
+    def _mark_completed(self):
+        if self.track:
+            print(f"Deleting file: {self.temp_file_name}")
+            s3.Object(SVEP_TEMP, self.temp_file_name).delete()
+
+
+@contextmanager
+def orchestration(event=None, request_id=None):
+    orchestrator = Orchestrator(event, request_id)
+    try:
+        yield orchestrator
+        orchestrator._mark_completed()
+        print("Completed successfully.")
+    except Exception as e:
+        handle_failed_execution(orchestrator.request_id, e)
+        print("Completed unsuccessfully.")
 
 
 class ProcessError(Exception):
@@ -219,22 +313,6 @@ def sns_publish(
     }
     truncated_print(f"Publishing to SNS: {json.dumps(kwargs)}", max_length)
     sns.publish(**kwargs)
-
-
-def start_function(
-    topic_arn, base_filename, message, resend=False, max_length=MAX_PRINT_LENGTH
-):
-    assert TEMP_FILE_FIELD not in message
-    function_name = _get_function_name_from_arn(topic_arn)
-    if resend:
-        base_name, old_index = base_filename.rsplit(function_name, 1)
-        old_index = old_index or 0  # Account for empty string
-        filename = f"{base_name}{function_name}{int(old_index) + 1}"
-    else:
-        filename = f"{base_filename}_{function_name}"
-    message[TEMP_FILE_FIELD] = filename
-    _create_temp_file(filename)
-    sns_publish(topic_arn, message, max_length, filename)
 
 
 def truncated_print(string, max_length=MAX_PRINT_LENGTH):

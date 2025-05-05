@@ -3,15 +3,10 @@ import os
 
 from shared.utils import (
     CheckedProcess,
-    Orchestrator,
-    handle_failed_execution,
-    start_function,
+    orchestration,
     Timer,
 )
 
-FORMAT_OUTPUT_SNS_TOPIC_ARN = os.environ["FORMAT_OUTPUT_SNS_TOPIC_ARN"]
-PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
-PLUGIN_GNOMAD_ONE_KG_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_ONE_KG_SNS_TOPIC_ARN"]
 GNOMAD_S3_PREFIX = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites."
 GNOMAD_S3_SUFFIX = ".vcf.bgz"
 MAX_REGIONS_PER_QUERY = 20  # Hard limit is probably around 5000
@@ -28,6 +23,7 @@ GNOMAD_COLUMNS = {
     "an": "INFO/AN",
     "siftMax": "INFO/sift_max",
 }
+FILTER_MAX_MAF = float(os.environ["FILTER_MAX_MAF"])
 MILLISECONDS_BEFORE_SPLIT = 300000
 
 
@@ -109,43 +105,35 @@ def add_gnomad_columns(sns_data, ref_chrom, timer):
         )
         query_process.check()
     print(f"Updated {lines_updated}/{len(completed_lines)} rows with gnomad data")
-    return completed_lines, remaining_data
+    # Filter out rows with MAF > FILTER_MAX_MAF
+    rare_records = [
+        line_dict
+        for line_dict in completed_lines
+        if float(line_dict.get("af", 0)) <= FILTER_MAX_MAF
+    ]
+    print(
+        f"Passed {len(rare_records)}/{len(completed_lines)} records with af <= {FILTER_MAX_MAF}"
+    )
+    return rare_records, remaining_data
 
 
 def lambda_handler(event, context):
     timer = Timer(context, MILLISECONDS_BEFORE_SPLIT)
-    orchestrator = Orchestrator(event)
-    message = orchestrator.message
-    sns_data = message["snsData"]
-    ref_chrom = message["refChrom"]
-    request_id = message["requestId"]
-
-    try:
-        complete_lines, remaining = add_gnomad_columns(sns_data, ref_chrom, timer)
+    with orchestration(event) as orc:
+        sns_data = orc.message["snsData"]
+        complete_lines, remaining = add_gnomad_columns(sns_data, orc.ref_chrom, timer)
         if remaining:
             print(f"remaining data length {len(remaining)}")
-            start_function(
-                topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
-                base_filename=base_filename,
-                message={
+            orc.resend_self(
+                message_update={
                     "snsData": remaining,
-                    "refChrom": ref_chrom,
-                    "requestId": request_id,
                 },
-                resend=True,
             )
-            assert (
-                len(complete_lines) > 0
+            assert len(remaining) < len(
+                sns_data
             ), "Not able to make any progress getting gnomAD data"
-        base_filename = orchestrator.temp_file_name
-        start_function(
-            topic_arn=PLUGIN_GNOMAD_ONE_KG_SNS_TOPIC_ARN,
-            base_filename=base_filename,
+        orc.next_function(
             message={
                 "snsData": complete_lines,
-                "requestId": request_id,
             },
         )
-        orchestrator.mark_completed()
-    except Exception as e:
-        handle_failed_execution(request_id, e)
