@@ -55,7 +55,6 @@ def lambda_handler(event, _):
                 {
                     "project": project,
                 },
-                track=False,
             )
         else:
             wait(orc, time_started)

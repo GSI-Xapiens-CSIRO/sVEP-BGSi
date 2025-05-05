@@ -80,7 +80,7 @@ use Encode qw(encode);
 my $config = {};
 my $fastaLocation = "s3://$ENV{'REFERENCE_LOCATION'}/";
 my $spliceFile =  $ENV{'SPLICE_REFERENCE'};
-my $pluginClinvarSnsTopicArn =  $ENV{'PLUGIN_CLINVAR_SNS_TOPIC_ARN'};
+my $nextFunctionSnsTopicArn =  $ENV{'NEXT_FUNCTION_SNS_TOPIC_ARN'};
 my $mirnaFile =  $ENV{'MIRNA_REFERENCE'};
 my $fastaBase =  $ENV{'FASTA_REFERENCE_BASE'};
 my $outputLocation =  $ENV{'SVEP_REGIONS'};
@@ -147,7 +147,7 @@ sub handle {
           'refChrom' => $refChrom,
           'requestId' => $request_id,
         );
-        start_function($pluginClinvarSnsTopicArn, $tempFileName, \%outMessage);
+        start_function($nextFunctionSnsTopicArn, $tempFileName, \%outMessage);
       }
 
       my $tempOut = 's3://'.$tempLocation.'/'.$tempFileName;

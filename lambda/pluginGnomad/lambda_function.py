@@ -7,7 +7,6 @@ from shared.utils import (
     Timer,
 )
 
-FORMAT_OUTPUT_SNS_TOPIC_ARN = os.environ["FORMAT_OUTPUT_SNS_TOPIC_ARN"]
 GNOMAD_S3_PREFIX = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/vcf/genomes/gnomad.genomes.v4.1.sites."
 GNOMAD_S3_SUFFIX = ".vcf.bgz"
 MAX_REGIONS_PER_QUERY = 20  # Hard limit is probably around 5000
@@ -133,8 +132,7 @@ def lambda_handler(event, context):
             assert len(remaining) < len(
                 sns_data
             ), "Not able to make any progress getting gnomAD data"
-        orc.start_function(
-            topic_arn=FORMAT_OUTPUT_SNS_TOPIC_ARN,
+        orc.next_function(
             message={
                 "snsData": complete_lines,
             },

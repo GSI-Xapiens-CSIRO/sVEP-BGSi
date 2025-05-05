@@ -44,7 +44,7 @@ def concat(orc, project, request_id):
             print("last page")
             print(page_num)
             message["lastPage"] = 1
-        orc.start_function(CREATEPAGES_SNS_TOPIC_ARN, message, track=False)
+        orc.start_function(CREATEPAGES_SNS_TOPIC_ARN, message)
     print("Finished sending to createPages")
 
 

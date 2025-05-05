@@ -57,7 +57,6 @@ def publish_result(orc, request_id, project, page_num, prefix):
                     "prefix": new_prefix,
                     "lastPage": 1 if idx == total_len else 0,
                 },
-                track=False,
             )
     elif bucket_len == page_num and bucket_len < 10:
         print("last page and all combined")
@@ -72,7 +71,6 @@ def publish_result(orc, request_id, project, page_num, prefix):
                 "pageNum": page_num,
                 "prefix": prefix,
             },
-            track=False,
         )
         # trigger another lambda to concat all pages
     elif bucket_len == 1:

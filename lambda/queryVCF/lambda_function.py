@@ -9,7 +9,6 @@ from shared.utils import (
 
 # Environment variables
 FILTER_MIN_QUAL = float(os.environ["FILTER_MIN_QUAL"])
-QUERY_GTF_SNS_TOPIC_ARN = os.environ["QUERY_GTF_SNS_TOPIC_ARN"]
 QUERY_VCF_SUBMIT_SNS_TOPIC_ARN = os.environ["QUERY_VCF_SUBMIT_SNS_TOPIC_ARN"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
@@ -125,11 +124,11 @@ def submit_query_gtf(orc, regions_list, base_id, timer):
                     message={
                         "coords": remaining_coords[i : i + BATCH_CHUNK_SIZE],
                     },
+                    track=True,
                 )
             break
         else:
-            orc.start_function(
-                topic_arn=QUERY_GTF_SNS_TOPIC_ARN,
+            orc.next_function(
                 suffix=idx_base_id,
                 message={
                     "coords": total_coords[idx],

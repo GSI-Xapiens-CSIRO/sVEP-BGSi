@@ -13,11 +13,7 @@ from shared.utils import (
 BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 FILTER_GENES = set(os.environ["FILTER_GENES"].split(",")) - {""}
 REFERENCE_GENOME = os.environ["REFERENCE_GENOME"]
-PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN = os.environ["PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
-TOPICS = [
-    PLUGIN_CONSEQUENCE_SNS_TOPIC_ARN,
-]
 
 MILLISECONDS_BEFORE_SPLIT = 4000
 PAYLOAD_SIZE = 260000
@@ -71,13 +67,11 @@ def overlap_feature(orc, all_coords, timer):
 def send_data_to_plugins(orc, results):
     if not results:
         return
-    for topic in TOPICS:
-        orc.start_function(
-            topic_arn=topic,
-            message={
-                "snsData": results,
-            },
-        )
+    orc.next_function(
+        message={
+            "snsData": results,
+        },
+    )
 
 
 def send_data_to_self(orc, remaining_coords):

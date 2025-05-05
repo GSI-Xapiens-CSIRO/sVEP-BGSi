@@ -16,6 +16,7 @@ from shared.dynamodb import query_clinic_job, update_clinic_job
 # Optional environment variables
 SVEP_TEMP = os.environ.get("SVEP_TEMP")
 REGION = os.environ.get("REGION")
+NEXT_FUNCTION_SNS_TOPIC_ARN = os.environ.get("NEXT_FUNCTION_SNS_TOPIC_ARN")
 
 # AWS clients and resources
 s3 = boto3.resource("s3")
@@ -73,6 +74,12 @@ class Orchestrator:
             self.temp_file_name = request_id
             self.track = False
 
+    def next_function(self, message, suffix=None, max_length=MAX_PRINT_LENGTH):
+        assert NEXT_FUNCTION_SNS_TOPIC_ARN, "NEXT_FUNCTION_SNS_TOPIC_ARN is not set."
+        self.start_function(
+            NEXT_FUNCTION_SNS_TOPIC_ARN, message, suffix, True, max_length
+        )
+
     def resend_self(self, message_update=None, max_length=MAX_PRINT_LENGTH):
         self._check_reserved_fields(message_update)
         assert self.topic_arn is not None, "Cannot resend a non-SNS function."
@@ -92,7 +99,7 @@ class Orchestrator:
         self.resent = True
 
     def start_function(
-        self, topic_arn, message, suffix=None, track=True, max_length=MAX_PRINT_LENGTH
+        self, topic_arn, message, suffix=None, track=False, max_length=MAX_PRINT_LENGTH
     ):
         self._check_reserved_fields(message)
         base_filename = (

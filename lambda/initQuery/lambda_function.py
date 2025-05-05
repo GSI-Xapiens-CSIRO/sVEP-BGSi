@@ -20,7 +20,6 @@ lambda_client = boto3.client("lambda")
 
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ["CONCAT_STARTER_SNS_TOPIC_ARN"]
-QUERY_VCF_SNS_TOPIC_ARN = os.environ["QUERY_VCF_SNS_TOPIC_ARN"]
 RESULT_DURATION = int(os.environ["RESULT_DURATION"])
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
@@ -97,9 +96,8 @@ def lambda_handler(event, _):
     )
     print(vcf_regions)
     with orchestration(request_id=request_id) as orc:
-        orc.start_function(
-            QUERY_VCF_SNS_TOPIC_ARN,
-            {
+        orc.next_function(
+            message={
                 "regions": vcf_regions,
                 "location": location,
                 "mapping": chrom_mapping,
@@ -110,7 +108,6 @@ def lambda_handler(event, _):
             {
                 "project": project,
             },
-            track=False,
         )
     return bundle_response(
         200,

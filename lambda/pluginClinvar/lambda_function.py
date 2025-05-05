@@ -11,7 +11,6 @@ from shared.utils import (
 # Environment variables
 BUCKET_NAME = os.environ["REFERENCE_LOCATION"]
 CLINVAR_REFERENCE = os.environ["CLINVAR_REFERENCE"]
-PLUGIN_GNOMAD_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_SNS_TOPIC_ARN"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 # Just the columns after the identifying columns
 CLINVAR_COLUMNS = [
@@ -88,8 +87,7 @@ def lambda_handler(event, _):
         sns_data = orc.message["snsData"]
         sns_data = add_clinvar_columns(sns_data, orc.ref_chrom)
         if sns_data:
-            orc.start_function(
-                topic_arn=PLUGIN_GNOMAD_SNS_TOPIC_ARN,
+            orc.next_function(
                 message={
                     "snsData": sns_data,
                 },
