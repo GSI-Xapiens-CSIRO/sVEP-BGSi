@@ -66,6 +66,7 @@ def get_formula_and_title(key, vcf_file):
     return formula["formula"], f"{formula["image_title"]} ({vcf_file})"
 
 def classify_error(stderr_msg):
+    stderr_msg = stderr_msg.decode('utf-8', errors='ignore')
     if not stderr_msg:
         return "vcfstat_failed", "No stderr output."
     msg_lower = stderr_msg.lower()
