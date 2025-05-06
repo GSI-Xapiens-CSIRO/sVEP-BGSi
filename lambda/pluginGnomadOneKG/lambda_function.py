@@ -14,6 +14,8 @@ PLUGIN_GNOMAD_ONE_KG_SNS_TOPIC_ARN = os.environ["PLUGIN_GNOMAD_ONE_KG_SNS_TOPIC_
 # Change to appropriate 1KG location
 KGENOMES_S3_PREFIX = "https://1000genomes.s3.amazonaws.com/release/20130502/"
 KGENOMES_S3_SUFFIX = ".vcf.gz"
+GNOMAD_S3_PREFIX = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/3.1.2/vcf/genomes/gnomad.genomes.v3.1.2.sites."
+GNOMAD_S3_SUFFIX = ".vcf.bgz"
 
 MAX_REGIONS_PER_QUERY = 20
 MILLISECONDS_BEFORE_SPLIT = 300000
@@ -26,8 +28,7 @@ KGENOMES_COLUMNS = {
 }
 
 def get_query_process(regions, ref_chrom):
-    chrom = f"chr{ref_chrom}"  # or just use the number if 1KG doesn't use 'chr'
-    vcf_url = f"{KGENOMES_S3_PREFIX}ALL.{ref_chrom}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes{KGENOMES_S3_SUFFIX}"
+    chrom = f"chr{ref_chrom}"
     args = [
         "bcftools",
         "query",
@@ -35,7 +36,7 @@ def get_query_process(regions, ref_chrom):
         ",".join(f"{chrom}:{region}" for region in regions),
         "--format",
         f"%POS\t%REF\t%ALT\t{'\\t'.join('%' + val for val in KGENOMES_COLUMNS.values())}\n",
-        vcf_url,
+        f"{GNOMAD_S3_PREFIX}{chrom}{GNOMAD_S3_SUFFIX}",
     ]
     return CheckedProcess(args, error_message="bcftools error querying 1000 Genomes")
 

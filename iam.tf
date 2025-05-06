@@ -492,6 +492,7 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
       aws_sns_topic.formatOutput.arn,
       aws_sns_topic.pluginGnomad.arn,
       aws_sns_topic.sendJobEmail.arn,
+      aws_sns_topic.pluginGnomadOneKG.arn,
     ]
   }
 
