@@ -2,7 +2,7 @@ import os
 
 import boto3
 
-from shared.utils import get_sns_event, sns_publish, handle_failed_execution
+from shared.utils import orchestration
 
 
 # AWS clients and resources
@@ -13,7 +13,7 @@ CREATEPAGES_SNS_TOPIC_ARN = os.environ["CREATEPAGES_SNS_TOPIC_ARN"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 
 
-def concat(request_id, project):
+def concat(orc, project, request_id):
     page_num = 0
     paginator = s3.get_paginator("list_objects_v2")
     # Change later on
@@ -24,7 +24,6 @@ def concat(request_id, project):
     }
     page_iterator = paginator.paginate(**operation_parameters)
     message = {
-        "requestId": request_id,
         "prefix": f"{request_id}_page",
         "project": project,
     }
@@ -45,15 +44,12 @@ def concat(request_id, project):
             print("last page")
             print(page_num)
             message["lastPage"] = 1
-        sns_publish(CREATEPAGES_SNS_TOPIC_ARN, message)
+        orc.start_function(CREATEPAGES_SNS_TOPIC_ARN, message)
     print("Finished sending to createPages")
 
 
 def lambda_handler(event, _):
-    message = get_sns_event(event)
-    request_id = message["requestId"]
-    project = message["project"]
-    try:
-        concat(request_id, project)
-    except Exception as e:
-        handle_failed_execution(request_id, e)
+    with orchestration(event) as orc:
+        project = orc.message["project"]
+        request_id = orc.request_id
+        concat(orc, project, request_id)
