@@ -49,6 +49,8 @@ locals {
     "ac",
     "an",
     "siftMax",
+    "af1KG",
+    "afKhv",
   ])
 }
 
