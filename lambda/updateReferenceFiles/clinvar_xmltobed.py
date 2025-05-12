@@ -82,7 +82,7 @@ def print_bed_lines(child, skipped, processed_produced):
     except AttributeError as e:
         omim_id = "-"
     try:
-        rs_id = simple_allele.find("XRefList").find('XRef[@DB="dbSNP"]').attrib["ID"]
+        rs_id = child.find('.//XRef[@DB="dbSNP"]').attrib["ID"]
         if not rs_id.startswith("rs"):
             rs_id = f"rs{rs_id}"
     except AttributeError as e:
