@@ -73,7 +73,7 @@ def query_references_table(id):
         print(f"Received unexpected ClientError: {json.dumps(e.response, default=str)}")
         raise e
     print(f"Received response: {json.dumps(response, default=str)}")
-    return response
+    return response.get("Item", {}).get("version", {}).get("S")
 
 
 def update_references_table(id, version):
