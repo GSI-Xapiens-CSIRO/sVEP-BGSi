@@ -70,9 +70,9 @@ def classify_error(stderr_msg):
     if not stderr_msg:
         return "vcfstat_failed", "No stderr output."
     msg_lower = stderr_msg.lower()
-    if "keyerror" in msg_lower or "field not found" in msg_lower or "not present" in msg_lower:
-        return "no_data", stderr_msg.strip()
-    elif "error" in msg_lower or "failed" in msg_lower:
+    # if "keyerror" in msg_lower or "field not found" in msg_lower or "not present" in msg_lower:
+    #     return "no_data", stderr_msg.strip()
+    if "keyerror" in msg_lower or "failed" in msg_lower:
         return "vcfstat_failed", stderr_msg.strip()
     else:
         return "other_error", stderr_msg.strip()
