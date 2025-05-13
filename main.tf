@@ -21,6 +21,7 @@ locals {
     "region",
     "alt",
     "consequence",
+    "varName",
     "geneName",
     "geneId",
     "feature",

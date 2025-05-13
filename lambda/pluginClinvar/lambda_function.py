@@ -15,6 +15,7 @@ os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 # Just the columns after the identifying columns
 CLINVAR_COLUMNS = [
     "variationId",
+    "varName",
     "rsId",
     "omimId",
     "classification",
