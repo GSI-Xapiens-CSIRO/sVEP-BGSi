@@ -6,7 +6,7 @@ from shared.utils import (
     Timer,
 )
 
-GNOMAD_S3_PREFIX = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/3.1.2/vcf/genomes/gnomad.genomes.v3.1.2.sites."
+GNOMAD_S3_PREFIX = "https://gnomad-public-us-east-1.s3.amazonaws.com/release/3.1.2/vcf/genomes/gnomad.genomes.v3.1.2.hgdp_tgp."
 GNOMAD_S3_SUFFIX = ".vcf.bgz"
 
 MAX_REGIONS_PER_QUERY = 20
