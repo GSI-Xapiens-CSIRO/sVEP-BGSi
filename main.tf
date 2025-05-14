@@ -21,6 +21,7 @@ locals {
     "region",
     "alt",
     "consequence",
+    "varName",
     "geneName",
     "geneId",
     "feature",
@@ -585,6 +586,7 @@ module "lambda-updateReferenceFiles" {
     FASTA_BASE                         = var.fasta_file_base
     MIRNA_BASE                         = var.mirna_file_base
     UPDATEREFERENCEFILES_SNS_TOPIC_ARN = aws_sns_topic.updateReferenceFiles.arn
+    EC2_IAM_INSTANCE_PROFILE           = aws_iam_instance_profile.ec2_references_instance_profile.name
   }
 
   layers = [

@@ -1,7 +1,9 @@
 import hashlib
 import os
+import xml.etree.ElementTree as ET
 
 from shared.utils import fetch_remote_content, query_references_table
+from clinvar import CLINVAR_FTP_PATH, CLINVAR_FTP_PREFIX, CLINVAR_FTP_SUFFIX
 
 REFERENCE_LOCATION = os.environ["REFERENCE_LOCATION"]
 
@@ -9,6 +11,27 @@ ENSEMBL_VERSION_URL = "https://ftp.ensembl.org/pub/VERSION"
 MIRNA_GFF_URL = "https://www.mirbase.org/download/hsa.gff3"
 
 
+def check_clinvar_version():
+    id = "clinvar_version"
+    clinvar_index_html = fetch_remote_content(CLINVAR_FTP_PATH)
+    root = ET.fromstring(clinvar_index_html)
+    links = [anchor.attrib["href"] for anchor in root.findall(".//a")]
+    clinvar_files = [
+        link
+        for link in links
+        if link.startswith(CLINVAR_FTP_PREFIX) and link.endswith(CLINVAR_FTP_SUFFIX)
+    ]
+    versions = [
+        link[len(CLINVAR_FTP_PREFIX): -len(CLINVAR_FTP_SUFFIX)]
+        for link in clinvar_files
+    ]
+    # One is the constant-named file, the other(s) is/are the versioned file(s)
+    static_versions = [version for version in versions if not version.startswith("00")]
+    latest_version = max(static_versions)
+    local_clinvar_version = query_references_table(id)
+    return [latest_version != local_clinvar_version, latest_version]
+   
+   
 def check_ensembl_version():
     id = "ensembl_version"
     local_ensembl_version = query_references_table(id)

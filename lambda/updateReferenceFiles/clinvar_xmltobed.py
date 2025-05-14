@@ -53,6 +53,7 @@ def fast_iter(context, func, *args, **kwargs):
 
 def print_bed_lines(child, skipped, processed_produced):
     variation_id = child.attrib["VariationID"]
+    var_name = child.attrib["VariationName"]
     classified_record = child.find("ClassifiedRecord")
     if classified_record is None:
         # We could use this instead, but then the germline_classification is broken
@@ -82,7 +83,7 @@ def print_bed_lines(child, skipped, processed_produced):
     except AttributeError as e:
         omim_id = "-"
     try:
-        rs_id = simple_allele.find("XRefList").find('XRef[@DB="dbSNP"]').attrib["ID"]
+        rs_id = child.find('.//XRef[@DB="dbSNP"]').attrib["ID"]
         if not rs_id.startswith("rs"):
             rs_id = f"rs{rs_id}"
     except AttributeError as e:
@@ -167,6 +168,7 @@ def print_bed_lines(child, skipped, processed_produced):
                         ref,
                         location["alternateAlleleVCF"],
                         variation_id,
+                        var_name,
                         rs_id,
                         omim_id,
                         rsv.classification,
