@@ -58,6 +58,14 @@ locals {
     "siftMax",
     "af1KG",
     "afKhv",
+    "misZ",
+    "misOe",
+    "misOeCiLower",
+    "misOeCiUpper",
+    "lofPli",
+    "lofOe",
+    "lofOeCiUpper",
+    "lofOeCiLower",
   ])
 }
 
@@ -372,11 +380,46 @@ module "lambda-pluginGnomadOneKG" {
   environment = {
     variables = {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomadConstraint.arn
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+#
+# pluginGnomadConstraint Lambda Function
+#
+module "lambda-pluginGnomadConstraint" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginGnomadConstraint"
+  description   = "Add Gnomad Constraint annotations to sVEP result rows."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 900
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginGnomadConstraint.json
+  }
+  source_path = "${path.module}/lambda/pluginGnomadConstraint"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
       NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+      REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
+      CONSTRAINT_REFERENCE          = var.gnomad-constraint-tsv-reference
+      GENE_INDEX_REFERENCE          = var.gnomad-constraint-index
     }
   }
 

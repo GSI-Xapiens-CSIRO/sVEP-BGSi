@@ -220,6 +220,17 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_one_kg_invoke_permission"
   source_arn    = aws_sns_topic.pluginGnomadOneKG.arn
 
 }
+#
+# pluginGnomadConstraint Lambda Function
+#
+resource "aws_lambda_permission" "plugin_plugin_gnomad_constraint_invoke_permission" {
+  statement_id  = "SNSPluginGnomadAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-pluginGnomadConstraint.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.pluginGnomadConstraint.arn
+
+}
 
 #
 # formatOutput Lambda Function
