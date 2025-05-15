@@ -108,6 +108,11 @@ variable "cognito-user-pool-id" {
   description = "Cognito user pool Id."
 }
 
+variable "svep-references-table-name" {
+  type        = string
+  description = "Name of the references table"
+}
+
 # Hub configurations
 variable "hub_name" {
   type        = string

@@ -2,7 +2,7 @@
 resource "aws_dynamodb_table" "svep_references" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
-  name         = "svep-references"
+  name         = var.svep-references-table-name
   tags         = var.common-tags
 
   attribute {
