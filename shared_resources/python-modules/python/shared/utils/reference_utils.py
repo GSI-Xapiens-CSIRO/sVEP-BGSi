@@ -85,9 +85,6 @@ def update_references_table(id, version):
             },
         },
         "UpdateExpression": "SET version = :version",
-        "ExpressionAttributeNames": {
-            "#id": "id",
-        },
         "ExpressionAttributeValues": {
             ":version": {
                 "S": version,
