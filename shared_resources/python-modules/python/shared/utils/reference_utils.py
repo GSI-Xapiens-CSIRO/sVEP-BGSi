@@ -85,7 +85,6 @@ def update_references_table(id, version):
             },
         },
         "UpdateExpression": "SET version = :version",
-        "ConditionExpression": "attribute_exists(#id) OR attribute_not_exists(#id)",
         "ExpressionAttributeNames": {
             "#id": "id",
         },
