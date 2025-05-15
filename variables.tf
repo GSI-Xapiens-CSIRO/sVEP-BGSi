@@ -108,6 +108,11 @@ variable "cognito-user-pool-id" {
   description = "Cognito user pool Id."
 }
 
+variable "svep-references-table-name" {
+  type        = string
+  description = "Name of the references table"
+}
+
 # Hub configurations
 variable "hub_name" {
   type        = string
@@ -117,7 +122,7 @@ variable "hub_name" {
 
 variable "filters" {
   type = object({
-    clinvar_exclude  = optional(list(string), [])
+    clinvar_exclude = optional(list(string), [])
     # highest consequence rank to include, e.g. 12 for protein_altering_variant.
     # see svep/lambda/pluginConsequence/consequence/constants.pm for values.
     consequence_rank = optional(number, 99)
