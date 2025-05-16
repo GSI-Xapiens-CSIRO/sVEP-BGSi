@@ -9,6 +9,6 @@ output "send_job_email_lambda_function_arn" {
 }
 
 output "svep-temp-bucket-arn" {
-  value       = aws_s3_bucket.svep-temp
+  value       = aws_s3_bucket.svep-temp.arn
   description = "S3 bucket arn for the svep temp."
 }
