@@ -7,3 +7,8 @@ output "send_job_email_lambda_function_arn" {
   value       = module.lambda-sendJobEmail.function_arn
   description = "Lambda function ARN for sending Jobs email"
 }
+
+output "svep-temp-bucket-arn" {
+  value       = aws_s3_bucket.svep-temp.arn
+  description = "S3 bucket arn for the svep temp."
+}

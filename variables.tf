@@ -107,6 +107,16 @@ variable "cognito-user-pool-id" {
   type        = string
   description = "Cognito user pool Id."
 }
+variable "gnomad-constraint-tsv-reference" {
+  type        = string
+  description = "Database for gnomad Constraint"
+  default     = "gnomad.v4.1.constraint_metrics.tsv"
+}
+variable "gnomad-constraint-index" {
+  type        = string
+  description = "Cognito user pool Id."
+  default     = "gnomad.v4.1.constraint_metrics.tsv.idx"
+}
 
 variable "svep-references-table-name" {
   type        = string
