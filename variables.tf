@@ -118,6 +118,11 @@ variable "gnomad-constraint-index" {
   default     = "gnomad.v4.1.constraint_metrics.tsv.idx"
 }
 
+variable "svep-references-table-name" {
+  type        = string
+  description = "Name of the references table"
+}
+
 # Hub configurations
 variable "hub_name" {
   type        = string
