@@ -3,16 +3,16 @@ import os
 
 import boto3
 
-from shared.utils import update_references_table
 
-CLINVAR_FTP_PATH="https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/weekly_release"
-CLINVAR_FTP_PREFIX="ClinVarVCVRelease_"
-CLINVAR_FTP_SUFFIX=".xml.gz"
-OUTPUT_BED="clinvar.bed.gz"
+CLINVAR_FTP_PATH = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/weekly_release"
+CLINVAR_FTP_PREFIX = "ClinVarVCVRelease_"
+CLINVAR_FTP_SUFFIX = ".xml.gz"
+OUTPUT_BED = "clinvar.bed.gz"
 EC2_IAM_INSTANCE_PROFILE = os.environ["EC2_IAM_INSTANCE_PROFILE"]
 REFERENCE_LOCATION = os.environ["REFERENCE_LOCATION"]
 AWS_REGION = os.environ["AWS_REGION"]
 FUNCTION_NAME = os.environ["AWS_LAMBDA_FUNCTION_NAME"]
+DYNAMO_SVEP_REFERENCES_TABLE = os.environ["DYNAMO_SVEP_REFERENCES_TABLE"]
 
 REGION_AMI_MAP = {
     "ap-southeast-2": "ami-0822a7a2356687b0f",
@@ -31,16 +31,20 @@ def update_clinvar(clinvar_version):
         clinvar_xmltobed = processing_file.read()
 
     with open("clinvar.sh") as user_data_file:
-        ec2_startup = user_data_file.read().replace(
-            "__FTP_PATH__", CLINVAR_FTP_PATH
-        ).replace(
-            "__CLINVAR_FILE__", f"{CLINVAR_FTP_PREFIX}{clinvar_version}{CLINVAR_FTP_SUFFIX}"
-        ).replace(
-            "__OUTPUT_BED__", OUTPUT_BED
-        ).replace(
-            "__REFERENCE_BUCKET__", REFERENCE_LOCATION
-        ).replace(
-            "__clinvar_xmltobed.py__", clinvar_xmltobed
+        ec2_startup = (
+            user_data_file.read()
+            .replace("__FTP_PATH__", CLINVAR_FTP_PATH)
+            .replace(
+                "__CLINVAR_FILE__",
+                f"{CLINVAR_FTP_PREFIX}{clinvar_version}{CLINVAR_FTP_SUFFIX}",
+            )
+            .replace("__OUTPUT_BED__", OUTPUT_BED)
+            .replace("__REFERENCE_BUCKET__", REFERENCE_LOCATION)
+            .replace("__clinvar_xmltobed.py__", clinvar_xmltobed)
+            .replace("__REGION__", AWS_REGION)
+            .replace("__TABLE__", DYNAMO_SVEP_REFERENCES_TABLE)
+            .replace("__ID__", "clinvar_version")
+            .replace("__VERSION__", clinvar_version)
         )
     try:
         # Launch EC2 instance
@@ -75,10 +79,6 @@ def update_clinvar(clinvar_version):
         print(f"Error launching EC2 instance: {str(e)}")
         return {"statusCode": 500, "body": json.dumps("Error launching EC2 instance")}
     print(f"Launched EC2 instance {instance_id} To create clinvar reference")
-    update_references_table(
-        id="clinvar_version",
-        version=clinvar_version,
-    )
     return {
         "statusCode": 200,
         "body": json.dumps(f"Launched EC2 instance {instance_id}"),

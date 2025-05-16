@@ -7,6 +7,10 @@ FTP_PATH="__FTP_PATH__"
 CLINVAR_FILE="__CLINVAR_FILE__"
 OUTPUT_BED="__OUTPUT_BED__"
 REFERENCE_BUCKET="__REFERENCE_BUCKET__"
+REGION="__REGION__"
+TABLE="__TABLE__"
+ID="__ID__"
+VERSION="__VERSION__"
 
 FULL_PATH="${FTP_PATH}/${CLINVAR_FILE}"
 
@@ -36,3 +40,9 @@ md5sum -c "${CLINVAR_FILE}.md5"
 bgzip -cd "${CLINVAR_FILE}" | python3 xmltobed.py | sort -k 1,1 -k 2,2n -k 3,3n | bgzip -c > "${OUTPUT_BED}"
 tabix --csi "${OUTPUT_BED}"
 aws s3 cp --recursive --exclude "*" --include "${OUTPUT_BED}*" . "s3://${REFERENCE_BUCKET}/"
+aws dynamodb update-item \
+  --region "${REGION}" \
+  --table-name "${TABLE}" \
+  --key '{"id": {"S": "'"${ID}"'"}}' \
+  --update-expression "SET version = :version" \
+  --expression-attribute-values '{":version": {"S": "'"${VERSION}"'"}}'

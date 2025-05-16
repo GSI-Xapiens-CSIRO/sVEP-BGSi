@@ -1122,6 +1122,15 @@ data "aws_iam_policy_document" "ec2_references_policy" {
       "${aws_s3_bucket.svep-references.arn}/*",
     ]
   }
+  statement {
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      aws_dynamodb_table.svep_references.arn,
+    ]
+  }
 }
 
 #
