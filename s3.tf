@@ -34,7 +34,7 @@ resource "aws_s3_bucket" "svep-results" {
 
 resource "aws_s3_bucket" "svep-references" {
   bucket_prefix = "svep-backend-references-"
-  force_destroy = false
+  force_destroy = true
   tags          = var.common-tags
 }
 
