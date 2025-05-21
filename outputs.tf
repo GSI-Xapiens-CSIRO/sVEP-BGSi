@@ -7,3 +7,13 @@ output "send_job_email_lambda_function_arn" {
   value       = module.lambda-sendJobEmail.function_arn
   description = "Lambda function ARN for sending Jobs email"
 }
+
+output "temp-bucket-name" {
+  value       = aws_s3_bucket.svep-temp.bucket
+  description = "Temporary bucket name"
+}
+
+output "temp-bucket-arn" {
+  value       = aws_s3_bucket.svep-temp.arn
+  description = "Temporary bucket ARN"
+}
