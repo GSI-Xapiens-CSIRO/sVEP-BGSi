@@ -70,6 +70,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
     ]
     resources = [
       var.dynamo-project-users-table-arn,
+      var.dynamo-clinic-jobs-table-arn,
     ]
   }
 
