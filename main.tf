@@ -339,7 +339,7 @@ module "lambda-pluginGnomad" {
   environment = {
     variables = {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
-      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
+      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomadOneKG.arn
       FILTER_MAX_MAF                = var.filters.max_maf
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
