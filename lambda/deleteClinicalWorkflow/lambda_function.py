@@ -14,15 +14,30 @@ RETRY_DELAY = 30
 
 
 def clean_bucket(bucket, job_id):
-    response = s3.list_objects_v2(Bucket=bucket, Prefix=job_id)
-
     print(
         f"[Cron Jobs - clean_bucket()]: Cleaning bucket {bucket} for job_id {job_id}."
     )
 
-    if "Contents" in response:
-        delete_objects = [{"Key": d["Key"]} for d in response["Contents"]]
-        s3.delete_objects(Bucket=bucket, Delete={"Objects": delete_objects})
+    continuation_token = None
+
+    while True:
+        list_kwargs = {
+            "Bucket": bucket,
+            "Prefix": job_id,
+        }
+        if continuation_token:
+            list_kwargs["ContinuationToken"] = continuation_token
+
+        response = s3.list_objects_v2(**list_kwargs)
+
+        if "Contents" in response:
+            delete_objects = [{"Key": d["Key"]} for d in response["Contents"]]
+            s3.delete_objects(Bucket=bucket, Delete={"Objects": delete_objects})
+
+        if response.get("IsTruncated"):
+            continuation_token = response.get("NextContinuationToken")
+        else:
+            break
 
 
 def clean_with_retries(bucket, job_id):
@@ -48,6 +63,7 @@ def clean_with_retries(bucket, job_id):
 
 
 def lambda_handler(event, _):
+    print(f"Event Received: {json.dumps(event)}")
     if event.get("source") == "aws.events":
         pending_jobs = scan_pending_jobs()
 
