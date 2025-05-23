@@ -38,12 +38,7 @@ def parse_value(val):
         return val
 
 
-def get_query_process(gene_index, index_file, constraint_file, constraint_cache):
-    gene, _ = gene_index.split(":")
-
-    if gene in constraint_cache:
-        return constraint_cache[gene]
-
+def get_query_process(gene, index_file, constraint_file):
     results = []
 
     if gene in index_file:
@@ -63,70 +58,46 @@ def get_query_process(gene_index, index_file, constraint_file, constraint_cache)
             }
         else:
             break
-    return constraint_cache.setdefault(gene, constraints_data)
+    return constraints_data
 
 
 def convert_to_genes_queries(sns_data):
     genes_data = defaultdict(list)
     for data in sns_data:
         genes_data[data["geneName"]].append(data)
-    genes_list = []
-    chunk_datas = []
-    for key, value in genes_data.items():
-        chunk_data = []
-        i = 0
-        for gene_data in value:
-            if len(chunk_data) == MAX_ROW_PER_CHUNK:
-                gene_index = f"{key}:{i}"
-                genes_list.append(gene_index)
-                chunk_datas.append(chunk_data)
-                chunk_data = []
-                i += 1
-
-            chunk_data.append(gene_data)
-
-        if chunk_data:
-            gene_index = f"{key}:{i}"
-            genes_list.append(gene_index)
-            chunk_datas.append(chunk_data)
-
-    return genes_list, chunk_datas
+    return genes_data
 
 
 def add_constraint_columns(sns_data, timer):
-    genes_list, chunked_datas = convert_to_genes_queries(sns_data)
+    genes_data = convert_to_genes_queries(sns_data)
 
     with open(f"/tmp/{GENE_INDEX_REFERENCE}") as injson:
         index_file = json.load(injson)
-
-    constraint_cache = {}
-    with open(f"/tmp/{CONSTRAINT_REFERENCE}") as constraint_file:
-        query_processes = [
-            get_query_process(gene_index, index_file, constraint_file, constraint_cache)
-            for gene_index in genes_list
-        ]
 
     lines_updated = 0
     completed_lines = []
     remaining_data = []
 
-    for query_process, (chunk_i, gene_datas) in zip(
-        query_processes, enumerate(chunked_datas)
-    ):
-        if timer.out_of_time():
-            remaining_data = [
-                data for datas in chunked_datas[chunk_i:] for data in datas
-            ]
-            break
+    with open(f"/tmp/{CONSTRAINT_REFERENCE}") as constraint_file:
+        for gene, gene_datas in genes_data.items():
 
-        for data in gene_datas:
-            transcript = data["transcriptId"]
-            transcript = transcript.split(".")[0]
-            if transcript in query_process:
-                data.update(query_process[transcript])
-                lines_updated += 1
+            constraint_info = get_query_process(gene, index_file, constraint_file)
+            for i, data in enumerate(gene_datas):
+                if timer.out_of_time():
+                    remaining_data = gene_datas[i:] + [
+                        item
+                        for g, datas in list(genes_data.items())[
+                            list(genes_data.keys()).index(gene) + 1 :
+                        ]
+                        for item in datas
+                    ]
+                    break
+                transcript = data["transcriptId"].split(".")[0]
+                if transcript in constraint_info:
+                    data.update(constraint_info[transcript])
+                    lines_updated += 1
 
-        completed_lines.extend(gene_datas)
+            completed_lines.extend(gene_datas)
 
     print(
         f"Updated {lines_updated}/{len(completed_lines)} rows with Constraint Genomes data"

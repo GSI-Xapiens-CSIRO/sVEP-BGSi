@@ -411,7 +411,7 @@ module "lambda-pluginGnomadConstraint" {
       USER_POOL_ID                  = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
-      CONSTRAINT_REFERENCE          = var.gnomad-constraint-tsv-reference
+      CONSTRAINT_REFERENCE          = "gnomad.v4.1.constraint_metrics.tsv"
       GENE_INDEX_REFERENCE          = var.gnomad-constraint-index
     }
   }
