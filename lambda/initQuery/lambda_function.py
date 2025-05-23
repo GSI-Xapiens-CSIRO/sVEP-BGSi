@@ -14,7 +14,11 @@ from dynamodb import check_user_in_project
 from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
-from shared.dynamodb import check_user_in_project, update_clinic_job
+from shared.dynamodb import (
+    check_user_in_project,
+    update_clinic_job,
+    does_clinic_job_exist_by_name,
+)
 
 lambda_client = boto3.client("lambda")
 
@@ -65,6 +69,19 @@ def lambda_handler(event, _):
         project = body_dict["projectName"]
         location = body_dict["location"]
         job_name = body_dict["jobName"]
+
+        job_name_already_exists = does_clinic_job_exist_by_name(job_name.lower())
+
+        if job_name_already_exists:
+            return bundle_response(
+                200,
+                {
+                    "Success": False,
+                    "Response": "Job name already exist",
+                    "RequestId": request_id,
+                    "ProjectName": project,
+                },
+            )
 
         check_user_in_project(sub, project)
     except ValueError:

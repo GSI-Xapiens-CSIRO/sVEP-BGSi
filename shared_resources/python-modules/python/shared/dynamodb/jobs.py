@@ -13,6 +13,16 @@ DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
 SEND_JOB_EMAIL_ARN = os.environ.get("SEND_JOB_EMAIL_ARN", "")
 
 
+def does_clinic_job_exist_by_name(job_name_lower):
+    response = dynamodb_client.scan(
+        TableName=DYNAMO_CLINIC_JOBS_TABLE,
+        FilterExpression="job_name_lower = :val",
+        ExpressionAttributeValues={":val": {"S": job_name_lower}},
+    )
+    print(f"Calling dynamodb.scan with kwargs: {json.dumps(response, default=str)}")
+    return len(response.get("Items", [])) > 0
+
+
 def query_clinic_job(job_id):
     kwargs = {
         "TableName": DYNAMO_CLINIC_JOBS_TABLE,
