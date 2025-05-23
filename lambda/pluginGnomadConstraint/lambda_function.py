@@ -43,6 +43,8 @@ def get_query_process(gene, index_file, constraint_file):
 
     if gene in index_file:
         constraint_file.seek(index_file[gene])
+    else:
+        return {}
 
     constraints_data = {}
     for result in constraint_file:
