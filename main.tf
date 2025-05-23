@@ -412,7 +412,6 @@ module "lambda-pluginGnomadConstraint" {
       SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
       CONSTRAINT_REFERENCE          = "gnomad.v4.1.constraint_metrics.tsv"
-      GENE_INDEX_REFERENCE          = var.gnomad-constraint-index
     }
   }
 

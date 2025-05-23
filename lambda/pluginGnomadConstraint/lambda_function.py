@@ -12,7 +12,7 @@ from shared.utils import (
 
 REFERENCE_LOCATION = os.environ["REFERENCE_LOCATION"]
 CONSTRAINT_REFERENCE = os.environ["CONSTRAINT_REFERENCE"]
-GENE_INDEX_REFERENCE = os.environ["GENE_INDEX_REFERENCE"]
+GENE_INDEX_REFERENCE = f"{CONSTRAINT_REFERENCE}.idx"
 
 MAX_ROW_PER_CHUNK = 300
 MILLISECONDS_BEFORE_SPLIT = 300000
@@ -43,10 +43,9 @@ def get_query_process(gene, index_file, constraint_file):
 
     if gene in index_file:
         constraint_file.seek(index_file[gene])
-        results = constraint_file.readlines()
 
     constraints_data = {}
-    for result in results:
+    for result in constraint_file:
         line = result.strip()
         if not line:
             continue
