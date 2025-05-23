@@ -209,6 +209,28 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
   source_arn    = aws_sns_topic.pluginGnomad.arn
 
 }
+#
+# pluginGnomadOneKG Lambda Function
+#
+resource "aws_lambda_permission" "plugin_plugin_gnomad_one_kg_invoke_permission" {
+  statement_id  = "SNSPluginGnomadAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-pluginGnomadOneKG.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.pluginGnomadOneKG.arn
+
+}
+#
+# pluginGnomadConstraint Lambda Function
+#
+resource "aws_lambda_permission" "plugin_plugin_gnomad_constraint_invoke_permission" {
+  statement_id  = "SNSPluginGnomadAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-pluginGnomadConstraint.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.pluginGnomadConstraint.arn
+
+}
 
 #
 # formatOutput Lambda Function
@@ -230,4 +252,15 @@ resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
   function_name = module.lambda-qcFigures.lambda_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.vcfstats.path_part}"
+}
+
+#
+# deleteClinicalWorkflow Lambda Function
+#
+resource "aws_lambda_permission" "cloudwatch_delete_clinical_workflow_invoke_permission" {
+  statement_id  = "CloudwatchDeleteClinicalWorkflowAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-deleteClinicalWorkflow.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.delete_clinical_trigger.arn
 }

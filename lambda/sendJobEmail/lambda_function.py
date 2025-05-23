@@ -23,10 +23,6 @@ def lambda_handler(event, _):
     user_id = message.get("user_id", None)
     is_from_failed_execution = message.get("is_from_failed_execution", False)
 
-    if (job_status == "pending") or (job_status == "expired"):
-        print(f"Skipping email for job status: {job_status}")
-        return
-
     # prevent re querying the job if it's already queried from handle_failed_execution
     # in handle_failed_execution already queried the job using query_clinic_job
     job = (
