@@ -30,11 +30,13 @@ CONSTRAINT_COLUMNS = {
 download_to_tmp(REFERENCE_LOCATION, CONSTRAINT_REFERENCE, raise_on_notfound=True)
 download_to_tmp(REFERENCE_LOCATION, GENE_INDEX_REFERENCE, raise_on_notfound=True)
 
+
 def parse_value(val):
     try:
         return float(val)
     except ValueError:
         return val
+
 
 def get_query_process(gene_index, index_file, constraint_file, constraint_cache):
     gene, _ = gene_index.split(":")
@@ -56,7 +58,8 @@ def get_query_process(gene_index, index_file, constraint_file, constraint_cache)
         geneName, genId, transcript, *query_data = line.split("\t")
         if gene == geneName:
             constraints_data[transcript] = {
-                key: parse_value(query_data[index]) for key, index in CONSTRAINT_COLUMNS.items()
+                key: parse_value(query_data[index])
+                for key, index in CONSTRAINT_COLUMNS.items()
             }
         else:
             break
