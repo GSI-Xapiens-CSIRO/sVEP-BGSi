@@ -147,7 +147,7 @@ def update_clinic_job(
         update_fields["job_name_lower"] = {"S": job_name.lower()}
         # Added created_at at the first time a job is created
         now = datetime.now(timezone.utc)
-        update_fields["created_at"] = {"S": now.isoformat()}
+        update_fields["created_at"] = {"S": now.strftime("%Y-%m-%dT%H:%M:%S.%f+0000")}
     if input_vcf is not None:
         update_fields["input_vcf"] = {"S": input_vcf}
     if failed_step is not None:
