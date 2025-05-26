@@ -1,15 +1,15 @@
-import json
-import os
-
 import boto3
+import os
+import json
 from datetime import datetime, timedelta, timezone
+
+dynamodb_client = boto3.client("dynamodb")
 
 lambda_client = boto3.client("lambda")
 dynamodb_client = boto3.client("dynamodb")
 sns = boto3.client("sns")
 
 DYNAMO_CLINIC_JOBS_TABLE = os.environ.get("DYNAMO_CLINIC_JOBS_TABLE", "")
-DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
 SEND_JOB_EMAIL_ARN = os.environ.get("SEND_JOB_EMAIL_ARN", "")
 
 
@@ -35,33 +35,37 @@ def query_clinic_job(job_id):
 
 
 def scan_pending_jobs():
-    # Get datetime 2 days ago
-    threshold = datetime.now(timezone.utc) - timedelta(days=2)
+    # Get timestamp 2 days ago in ISO 8601 format
+    threshold_time = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat()
+    print(f"[scan_pending_jobs] - Threshold timestamp: {threshold_time}")
 
-    # Filter pending jobs from DynamoDB
-    response = dynamodb_client.scan(
-        TableName=DYNAMO_CLINIC_JOBS_TABLE,
-        FilterExpression="job_status = :status",
-        ExpressionAttributeValues={":status": {"S": "pending"}},
-    )
+    all_items = []
+    last_evaluated_key = None
 
-    items = response.get("Items", [])
-    old_pending_jobs = []
+    while True:
+        scan_kwargs = {
+            "TableName": DYNAMO_CLINIC_JOBS_TABLE,
+            "FilterExpression": "job_status = :status AND created_at < :threshold",
+            "ExpressionAttributeValues": {
+                ":status": {"S": "pending"},
+                ":threshold": {"S": threshold_time},
+            },
+        }
 
-    for item in items:
-        created_date_str = item.get("created_at", {}).get("S")
-        if not created_date_str:
-            continue
+        if last_evaluated_key:
+            scan_kwargs["ExclusiveStartKey"] = last_evaluated_key
 
-        try:
-            created_dt = datetime.fromisoformat(created_date_str)
-        except ValueError:
-            continue
+        response = dynamodb_client.scan(**scan_kwargs)
+        items = response.get("Items", [])
+        all_items.extend(items)
 
-        if created_dt < threshold:
-            old_pending_jobs.append(item)
+        last_evaluated_key = response.get("LastEvaluatedKey")
+        if not last_evaluated_key:
+            break
 
-    return old_pending_jobs
+    print(f"[scan_pending_jobs] - Found {len(all_items)} old pending jobs.")
+    print(f"[scan_pending_jobs] - Items: {all_items}")
+    return all_items
 
 
 def bulk_delete_jobs(items):
@@ -180,12 +184,3 @@ def update_clinic_job(
         user_id=user_id,
         is_from_failed_execution=is_from_failed_execution,
     )
-
-
-def check_user_in_project(sub, project):
-    response = dynamodb_client.get_item(
-        TableName=DYNAMO_PROJECT_USERS_TABLE,
-        Key={"name": {"S": project}, "uid": {"S": sub}},
-    )
-
-    assert "Item" in response, "User not found in project"
