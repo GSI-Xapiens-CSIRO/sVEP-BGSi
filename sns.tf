@@ -58,6 +58,26 @@ resource "aws_sns_topic_subscription" "pluginGnomad" {
   endpoint  = module.lambda-pluginGnomad.function_arn
 }
 
+resource "aws_sns_topic" "pluginGnomadOneKG" {
+  name = "svep-backend-pluginGnomadOneKG"
+}
+
+resource "aws_sns_topic_subscription" "pluginGnomadOneKG" {
+  topic_arn = aws_sns_topic.pluginGnomadOneKG.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-pluginGnomadOneKG.function_arn
+}
+
+resource "aws_sns_topic" "pluginGnomadConstraint" {
+  name = "svep-backend-pluginGnomadConstraint"
+}
+
+resource "aws_sns_topic_subscription" "pluginGnomadConstraint" {
+  topic_arn = aws_sns_topic.pluginGnomadConstraint.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-pluginGnomadConstraint.function_arn
+}
+
 resource "aws_sns_topic" "concat" {
   name = "svep-backend-concat"
 }

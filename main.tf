@@ -49,6 +49,16 @@ locals {
     "ac",
     "an",
     "siftMax",
+    "af1KG",
+    "afKhv",
+    "misZ",
+    "misOe",
+    "misOeCiLower",
+    "misOeCiUpper",
+    "lofPli",
+    "lofOe",
+    "lofOeCiUpper",
+    "lofOeCiLower",
   ])
 }
 
@@ -329,12 +339,79 @@ module "lambda-pluginGnomad" {
   environment = {
     variables = {
       SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
-      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
+      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomadOneKG.arn
       FILTER_MAX_MAF                = var.filters.max_maf
       DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
       COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
       USER_POOL_ID                  = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+
+#
+# pluginGnomadOneKG Lambda Function
+#
+module "lambda-pluginGnomadOneKG" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginGnomadOneKG"
+  description   = "Add Gnomad 1kg annotations to sVEP result rows."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 900
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginGnomadOneKG.json
+  }
+  source_path = "${path.module}/lambda/pluginGnomadOneKG"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.pluginGnomadConstraint.arn
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+    }
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
+}
+#
+# pluginGnomadConstraint Lambda Function
+#
+module "lambda-pluginGnomadConstraint" {
+  source        = "github.com/bhosking/terraform-aws-lambda"
+  function_name = "svep-backend-pluginGnomadConstraint"
+  description   = "Add Gnomad Constraint annotations to sVEP result rows."
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.12"
+  memory_size   = 2048
+  timeout       = 900
+  policy = {
+    json = data.aws_iam_policy_document.lambda-pluginGnomadConstraint.json
+  }
+  source_path = "${path.module}/lambda/pluginGnomadConstraint"
+  tags        = var.common-tags
+  environment = {
+    variables = {
+      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.formatOutput.arn
+      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                  = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+      REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
+      CONSTRAINT_REFERENCE          = "gnomad.v4.1.constraint_metrics.tsv"
     }
   }
 
@@ -639,4 +716,40 @@ module "lambda-qcFigures" {
     HTS_S3_HOST     = "s3.${var.region}.amazonaws.com"
     RESULT_DURATION = local.result_duration
   }
+}
+
+#
+# deleteClinicalWorkflow Lambda Function
+#
+module "lambda-deleteClinicalWorkflow" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-deleteClinicalWorkflow"
+  description            = "Delete pending after 2 days clinical workflow using cron job."
+  runtime                = "python3.12"
+  handler                = "lambda_function.lambda_handler"
+  memory_size            = 2048
+  timeout                = 900
+  ephemeral_storage_size = 8192
+  attach_policy_jsons    = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-deleteClinicalWorkflow.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/deleteClinicalWorkflow"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
+    DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
+    COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
+    USER_POOL_ID                  = var.cognito-user-pool-id
+    SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+  }
+
+  layers = [
+    local.binaries_layer,
+    local.python_modules_layer,
+  ]
 }
