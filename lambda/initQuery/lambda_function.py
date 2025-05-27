@@ -69,7 +69,9 @@ def lambda_handler(event, _):
         location = body_dict["location"]
         job_name = body_dict["jobName"]
 
-        job_name_already_exists = does_clinic_job_exist_by_name(job_name.lower())
+        job_name_already_exists = does_clinic_job_exist_by_name(
+            job_name.lower(), project
+        )
 
         if job_name_already_exists:
             return bundle_response(
