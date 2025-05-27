@@ -10,7 +10,6 @@ from shared.utils import (
     print_event,
     orchestration,
 )
-from dynamodb import check_user_in_project
 from urllib.parse import urlparse
 
 from shared.apiutils import bad_request, bundle_response
