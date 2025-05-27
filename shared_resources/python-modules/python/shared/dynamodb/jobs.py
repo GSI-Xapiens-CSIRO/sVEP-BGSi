@@ -12,16 +12,31 @@ sns = boto3.client("sns")
 DYNAMO_CLINIC_JOBS_TABLE = os.environ.get("DYNAMO_CLINIC_JOBS_TABLE", "")
 SEND_JOB_EMAIL_ARN = os.environ.get("SEND_JOB_EMAIL_ARN", "")
 DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
+JOBS_TABLE_PROJECT_NAME_INDEX = os.environ["CLINIC_JOBS_PROJECT_NAME_INDEX"]
 
 
-def does_clinic_job_exist_by_name(job_name_lower):
-    response = dynamodb_client.scan(
+def does_clinic_job_exist_by_name(job_name_lower, project_name):
+    project_name = project_name.strip()
+    job_name_lower = job_name_lower.strip()
+
+    response = dynamodb_client.query(
         TableName=DYNAMO_CLINIC_JOBS_TABLE,
-        FilterExpression="job_name_lower = :val",
-        ExpressionAttributeValues={":val": {"S": job_name_lower}},
+        IndexName=JOBS_TABLE_PROJECT_NAME_INDEX,
+        KeyConditionExpression="project_name = :project",
+        FilterExpression="job_name_lower = :job",
+        ExpressionAttributeValues={
+            ":project": {"S": project_name},
+            ":job": {"S": job_name_lower},
+        },
     )
-    print(f"Calling dynamodb.scan with kwargs: {json.dumps(response, default=str)}")
-    return len(response.get("Items", [])) > 0
+
+    print(
+        f"[DEBUG] Cleaned Params: project_name='{project_name}', job_name_lower='{job_name_lower}'"
+    )
+    print(f"[DEBUG] Query result count: {response.get('Count', 0)}")
+    print(f"[DEBUG] Full response: {json.dumps(response, default=str)}")
+
+    return response.get("Count", 0) > 0
 
 
 def query_clinic_job(job_id):
