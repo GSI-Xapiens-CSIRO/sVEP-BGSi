@@ -11,6 +11,7 @@ sns = boto3.client("sns")
 
 DYNAMO_CLINIC_JOBS_TABLE = os.environ.get("DYNAMO_CLINIC_JOBS_TABLE", "")
 SEND_JOB_EMAIL_ARN = os.environ.get("SEND_JOB_EMAIL_ARN", "")
+DYNAMO_PROJECT_USERS_TABLE = os.environ.get("DYNAMO_PROJECT_USERS_TABLE", "")
 
 
 def query_clinic_job(job_id):
@@ -174,3 +175,12 @@ def update_clinic_job(
         user_id=user_id,
         is_from_failed_execution=is_from_failed_execution,
     )
+
+
+def check_user_in_project(sub, project):
+    response = dynamodb_client.get_item(
+        TableName=DYNAMO_PROJECT_USERS_TABLE,
+        Key={"name": {"S": project}, "uid": {"S": sub}},
+    )
+
+    assert "Item" in response, "User not found in project"
