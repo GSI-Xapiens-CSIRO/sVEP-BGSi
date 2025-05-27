@@ -38,6 +38,13 @@ resource "aws_s3_bucket" "svep-references" {
   tags          = var.common-tags
 }
 
+resource "aws_s3_bucket_versioning" "svep-references" {
+  bucket = aws_s3_bucket.svep-references.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_s3_bucket_cors_configuration" "svep-results-cors" {
   bucket = aws_s3_bucket.svep-results.id
 
