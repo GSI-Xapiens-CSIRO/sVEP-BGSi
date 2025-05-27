@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
     resources = [
       var.dynamo-project-users-table-arn,
       var.dynamo-clinic-jobs-table-arn,
-      "${aws_dynamodb_table.clinic_jobs.arn}/index/${local.clinic_jobs_project_name_index}",
+      "${var.dynamo-clinic-jobs-table-arn}/index/${local.clinic_jobs_project_name_index}",
     ]
   }
 
