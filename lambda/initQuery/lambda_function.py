@@ -16,8 +16,8 @@ from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import (
     check_user_in_project,
     update_clinic_job,
-    does_clinic_job_exist_by_name,
 )
+from dynamodb import does_clinic_job_exist_by_name
 
 lambda_client = boto3.client("lambda")
 
