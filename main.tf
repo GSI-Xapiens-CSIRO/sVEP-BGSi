@@ -82,18 +82,19 @@ module "lambda-initQuery" {
 
   environment = {
     variables = {
-      CONCAT_STARTER_SNS_TOPIC_ARN  = aws_sns_topic.concatStarter.arn
-      NEXT_FUNCTION_SNS_TOPIC_ARN   = aws_sns_topic.queryVCF.arn
-      RESULT_DURATION               = local.result_duration
-      RESULT_SUFFIX                 = local.result_suffix
-      SLICE_SIZE_MBP                = local.slice_size_mbp
-      SVEP_TEMP                     = aws_s3_bucket.svep-temp.bucket
-      HTS_S3_HOST                   = "s3.${var.region}.amazonaws.com"
-      DYNAMO_PROJECT_USERS_TABLE    = var.dynamo-project-users-table
-      DYNAMO_CLINIC_JOBS_TABLE      = var.dynamo-clinic-jobs-table
-      COGNITO_SVEP_JOB_EMAIL_LAMBDA = var.svep-job-email-lambda-function-arn
-      USER_POOL_ID                  = var.cognito-user-pool-id
-      SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
+      CONCAT_STARTER_SNS_TOPIC_ARN   = aws_sns_topic.concatStarter.arn
+      NEXT_FUNCTION_SNS_TOPIC_ARN    = aws_sns_topic.queryVCF.arn
+      RESULT_DURATION                = local.result_duration
+      RESULT_SUFFIX                  = local.result_suffix
+      SLICE_SIZE_MBP                 = local.slice_size_mbp
+      SVEP_TEMP                      = aws_s3_bucket.svep-temp.bucket
+      HTS_S3_HOST                    = "s3.${var.region}.amazonaws.com"
+      DYNAMO_PROJECT_USERS_TABLE     = var.dynamo-project-users-table
+      DYNAMO_CLINIC_JOBS_TABLE       = var.dynamo-clinic-jobs-table
+      COGNITO_SVEP_JOB_EMAIL_LAMBDA  = var.svep-job-email-lambda-function-arn
+      USER_POOL_ID                   = var.cognito-user-pool-id
+      SEND_JOB_EMAIL_ARN             = aws_sns_topic.sendJobEmail.arn
+      CLINIC_JOBS_PROJECT_NAME_INDEX = local.clinic_jobs_project_name_index
     }
   }
 
