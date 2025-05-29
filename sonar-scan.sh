@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # === CONFIGURATION ===
-SONAR_HOST_URL="http://16.79.20.54:9000"
+SONAR_HOST_URL="https://16.79.20.54:9000"
 SONAR_TOKEN="sqa_6b8f8df263ddb5d2f2bc4fa6f7439f8266fb8965"
 PROJECT_DIR=$(pwd)
 
