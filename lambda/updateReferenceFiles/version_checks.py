@@ -8,6 +8,7 @@ from clinvar import CLINVAR_FTP_PATH, CLINVAR_FTP_PREFIX, CLINVAR_FTP_SUFFIX
 REFERENCE_LOCATION = os.environ["REFERENCE_LOCATION"]
 
 ENSEMBL_VERSION_URL = "https://ftp.ensembl.org/pub/VERSION"
+GNOMAD_CONSTRAINTS_VERSION = os.environ["GNOMAD_CONSTRAINTS_VERSION"]
 MIRNA_GFF_URL = "https://www.mirbase.org/download/hsa.gff3"
 
 
@@ -22,7 +23,7 @@ def check_clinvar_version():
         if link.startswith(CLINVAR_FTP_PREFIX) and link.endswith(CLINVAR_FTP_SUFFIX)
     ]
     versions = [
-        link[len(CLINVAR_FTP_PREFIX): -len(CLINVAR_FTP_SUFFIX)]
+        link[len(CLINVAR_FTP_PREFIX) : -len(CLINVAR_FTP_SUFFIX)]
         for link in clinvar_files
     ]
     # One is the constant-named file, the other(s) is/are the versioned file(s)
@@ -30,8 +31,8 @@ def check_clinvar_version():
     latest_version = max(static_versions)
     local_clinvar_version = query_references_table(id)
     return [latest_version != local_clinvar_version, latest_version]
-   
-   
+
+
 def check_ensembl_version():
     id = "ensembl_version"
     local_ensembl_version = query_references_table(id)
@@ -39,6 +40,15 @@ def check_ensembl_version():
         fetch_remote_content(ENSEMBL_VERSION_URL).decode("utf-8").strip()
     )
     return remote_ensembl_version != local_ensembl_version, remote_ensembl_version
+
+
+def check_gnomad_constraints_version():
+    id = "gnomad_constraints_version"
+    local_gnomad_version = query_references_table(id)
+    return (
+        GNOMAD_CONSTRAINTS_VERSION != local_gnomad_version,
+        GNOMAD_CONSTRAINTS_VERSION,
+    )
 
 
 def check_mirna_hash():
