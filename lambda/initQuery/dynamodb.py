@@ -30,11 +30,11 @@ def does_clinic_job_exist_by_name(job_name_lower, project_name):
             ":job": {"S": job_name_lower},
         },
     )
-
     print(
-        f"[DEBUG] Cleaned Params: project_name='{project_name}', job_name_lower='{job_name_lower}'"
+        f"[does_clinic_job_exist_by_name] Query result count: {response.get('Count', 0)}"
     )
-    print(f"[DEBUG] Query result count: {response.get('Count', 0)}")
-    print(f"[DEBUG] Full response: {json.dumps(response, default=str)}")
+    print(
+        f"[does_clinic_job_exist_by_name] Full response: {json.dumps(response, default=str)}"
+    )
 
     return response.get("Count", 0) > 0
