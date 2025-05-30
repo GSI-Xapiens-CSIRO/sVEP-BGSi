@@ -20,9 +20,6 @@ def check_user_in_project(sub, project):
 
 
 def does_clinic_job_exist_by_name(job_name_lower, project_name):
-    project_name = project_name.strip()
-    job_name_lower = job_name_lower.strip()
-
     response = dynamodb_client.query(
         TableName=DYNAMO_CLINIC_JOBS_TABLE,
         IndexName=JOBS_TABLE_PROJECT_NAME_INDEX,
