@@ -26,11 +26,43 @@ QUERY_KEYS = [
     "altVcf",
     "qual",
     "filter",
+    "dbIds",
     "gt",
 ]
 
 
-def get_query_lines(location, chrom, start, end):
+def get_info_tags(location):
+    args = [
+        "bcftools",
+        "head",
+        location,
+    ]
+    process = CheckedProcess(args)
+    tags = {
+        line.split("ID=")[1].split(",")[0]
+        for line in process.stdout
+        if line.startswith("##INFO=<ID=")
+    }
+    process.check()
+    return tags
+
+
+def get_db_tags(location):
+    tags = get_info_tags(location)
+    db_tags = "|".join(
+        f"%INFO/{tag}"
+        for tag in [
+            "ONCDISDBINCL",
+            "CLNDISDB",
+            "CLNDISDBINCL",
+            "SCIDISDBINCL",
+        ]
+        if tag in tags
+    )
+    return db_tags
+
+
+def get_query_lines(location, chrom, start, end, db_tags):
     norm_args = [
         "bcftools",
         "norm",
@@ -48,7 +80,7 @@ def get_query_lines(location, chrom, start, end):
         "bcftools",
         "query",
         "--format",
-        "%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t[%GT]\n",
+        f"%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t{db_tags or '.'}\t[%GT]\n",
     ]
     query_process = CheckedProcess(query_args, stdin=norm_process.stdout)
     lines = query_process.stdout.read().splitlines()
@@ -143,6 +175,7 @@ def lambda_handler(event, context):
         message = orc.message
         vcf_regions = message["regions"]
         location = message["location"]
+        db_tags = get_db_tags(location)
         chrom_mapping = message["mapping"]
         for index, region in enumerate(vcf_regions):
             if first_timer.out_of_time():
@@ -161,7 +194,7 @@ def lambda_handler(event, context):
                 region_base_id = f"{chrom}_{start_str}"
                 start = round(1000000 * float(start_str) + 1)
                 end = start + round(1000000 * SLICE_SIZE_MBP - 1)
-                query_lines = get_query_lines(location, chrom, start, end)
+                query_lines = get_query_lines(location, chrom, start, end, db_tags)
                 submit_query_gtf(
                     orc,
                     query_lines,
