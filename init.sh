@@ -55,7 +55,7 @@ cp ${SOURCE}/samtools-1.21/samtools ./layers/binaries/bin/
 
 # gzip & gunzip
 cd ${SOURCE}
-wget http://ftp.gnu.org/gnu/gzip/gzip-1.12.tar.gz
+wget https://ftp.gnu.org/gnu/gzip/gzip-1.12.tar.gz
 tar -xzvf gzip-1.12.tar.gz && rm gzip-1.12.tar.gz
 cd gzip-1.12 && ./configure && make
 cd ${REPOSITORY_DIRECTORY}

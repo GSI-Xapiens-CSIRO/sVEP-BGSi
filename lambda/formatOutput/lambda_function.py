@@ -1,4 +1,5 @@
 import os
+import re
 
 from shared.utils import orchestration, s3
 
@@ -8,10 +9,27 @@ SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 COLUMNS = os.environ["COLUMNS"].split(",")
 OUTPUT_NAME = "output.tsv"
 NULL_VALUE = "-"
+OMIM_PATTERN = re.compile(r"OMIM:(\d+)")
+
+
+def post_process_rows(rows):
+    for row in rows:
+        row["omimId"] = (
+            ",".join(
+                set(
+                    OMIM_PATTERN.findall(
+                        f'{row.get("dbIds", "")}|OMIM:{row.get("omimId", "")}'
+                    )
+                )
+            )
+            or "-"
+        )
 
 
 def format_output(sns_data, upload_filename):
     filename = f"/tmp/{OUTPUT_NAME}"
+    print(f"postprocessing {len(sns_data)} rows")
+    post_process_rows(sns_data)
     print(f"Formatting {len(sns_data)} rows as TSV")
     with open(filename, "w") as tsv_file:
         print(

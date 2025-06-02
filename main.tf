@@ -412,7 +412,7 @@ module "lambda-pluginGnomadConstraint" {
       USER_POOL_ID                  = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN            = aws_sns_topic.sendJobEmail.arn
       REFERENCE_LOCATION            = aws_s3_bucket.svep-references.bucket
-      CONSTRAINT_REFERENCE          = "gnomad.v4.1.constraint_metrics.tsv"
+      CONSTRAINT_REFERENCE          = "gnomad_constraint_metrics.tsv"
     }
   }
 
@@ -619,6 +619,7 @@ module "lambda-updateReferenceFiles" {
   environment_variables = {
     REFERENCE_LOCATION                 = aws_s3_bucket.svep-references.bucket
     DYNAMO_SVEP_REFERENCES_TABLE       = aws_dynamodb_table.svep_references.name
+    GNOMAD_CONSTRAINTS_VERSION         = "4.1"
     GTF_BASE                           = var.gtf_file_base
     SPLICE_BASE                        = var.splice_file_base
     FASTA_BASE                         = var.fasta_file_base
