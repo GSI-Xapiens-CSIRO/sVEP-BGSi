@@ -19,11 +19,11 @@ output "temp-bucket-arn" {
 }
 
 output "region-bucket-name" {
-  value       = aws_s3_bucket.svep-region.bucket
+  value       = aws_s3_bucket.svep-regions.bucket
   description = "Regions bucket name"
 }
 
 output "region-bucket-arn" {
-  value       = aws_s3_bucket.svep-region.arn
+  value       = aws_s3_bucket.svep-regions.bucket
   description = "Regions bucket ARN"
 }
