@@ -24,6 +24,6 @@ output "region-bucket-name" {
 }
 
 output "region-bucket-arn" {
-  value       = aws_s3_bucket.svep-regions.bucket
+  value       = aws_s3_bucket.svep-regions.arn
   description = "Regions bucket ARN"
 }
