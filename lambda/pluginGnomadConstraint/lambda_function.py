@@ -27,9 +27,11 @@ CONSTRAINT_COLUMNS = {
     "lofOeCiLower": 18,
 }
 
-download_to_tmp(REFERENCE_LOCATION, CONSTRAINT_REFERENCE, raise_on_notfound=True)
-download_to_tmp(REFERENCE_LOCATION, GENE_INDEX_REFERENCE, raise_on_notfound=True)
-
+try:
+    download_to_tmp(REFERENCE_LOCATION, CONSTRAINT_REFERENCE, raise_on_notfound=True)
+    download_to_tmp(REFERENCE_LOCATION, GENE_INDEX_REFERENCE, raise_on_notfound=True)
+except:
+    pass
 
 def parse_value(val):
     try:
@@ -71,15 +73,20 @@ def convert_to_genes_queries(sns_data):
 
 def add_constraint_columns(sns_data, timer):
     genes_data = convert_to_genes_queries(sns_data)
+    
+    gene_index_path = f"/tmp/{GENE_INDEX_REFERENCE}"
+    constraint_ref_path = f"/tmp/{CONSTRAINT_REFERENCE}"
+    if not (os.path.exists(gene_index_path) and os.path.exists(constraint_ref_path)):
+        raise Exception(f"Unable to load {GENE_INDEX_REFERENCE} or {CONSTRAINT_REFERENCE} file.")
 
-    with open(f"/tmp/{GENE_INDEX_REFERENCE}") as injson:
+    with open(gene_index_path) as injson:
         index_file = json.load(injson)
 
     lines_updated = 0
     completed_lines = []
     remaining_data = []
 
-    with open(f"/tmp/{CONSTRAINT_REFERENCE}") as constraint_file:
+    with open(constraint_ref_path) as constraint_file:
         for gene, gene_datas in genes_data.items():
 
             constraint_info = get_query_process(gene, index_file, constraint_file)
