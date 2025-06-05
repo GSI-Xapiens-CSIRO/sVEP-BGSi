@@ -42,7 +42,7 @@ resource "aws_cloudfront_origin_request_policy" "api" {
 
 resource "aws_cloudfront_distribution" "api_distribution" {
   origin {
-    domain_name = split("/", aws_api_gateway_deployment.VPApi.invoke_url)[2]
+    domain_name = split("/", aws_api_gateway_stage.VPApi.invoke_url)[2]
     origin_id   = local.api_gateway_origin_id
 
     custom_origin_config {
