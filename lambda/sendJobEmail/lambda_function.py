@@ -8,7 +8,7 @@ from shared.utils import get_sns_event
 
 lambda_client = boto3.client("lambda")
 
-COGNITO_SVEP_JOB_EMAIL_LAMBDA = os.environ.get("COGNITO_SVEP_JOB_EMAIL_LAMBDA", "")
+COGNITO_CLINIC_JOB_EMAIL_LAMBDA = os.environ.get("COGNITO_CLINIC_JOB_EMAIL_LAMBDA", "")
 
 
 def lambda_handler(event, _):
@@ -67,7 +67,7 @@ def lambda_handler(event, _):
     print(f"[send_job_email] - payload: {payload}")
 
     response = lambda_client.invoke(
-        FunctionName=COGNITO_SVEP_JOB_EMAIL_LAMBDA,
+        FunctionName=COGNITO_CLINIC_JOB_EMAIL_LAMBDA,
         InvocationType="RequestResponse",
         Payload=json.dumps(payload),
     )

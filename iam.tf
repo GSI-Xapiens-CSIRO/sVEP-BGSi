@@ -91,7 +91,7 @@ data "aws_iam_policy_document" "lambda-initQuery" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -166,7 +166,7 @@ data "aws_iam_policy_document" "lambda-queryVCF" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -220,7 +220,7 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -238,7 +238,7 @@ data "aws_iam_policy_document" "lambda-queryVCFsubmit" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -312,7 +312,7 @@ data "aws_iam_policy_document" "lambda-queryGTF" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -394,7 +394,7 @@ data "aws_iam_policy_document" "lambda-pluginConsequence" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -468,7 +468,7 @@ data "aws_iam_policy_document" "lambda-pluginClinvar" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -542,7 +542,7 @@ data "aws_iam_policy_document" "lambda-pluginGnomad" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -616,7 +616,7 @@ data "aws_iam_policy_document" "lambda-pluginGnomadOneKG" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -690,7 +690,7 @@ data "aws_iam_policy_document" "lambda-pluginGnomadConstraint" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -753,7 +753,7 @@ data "aws_iam_policy_document" "lambda-concat" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -819,7 +819,7 @@ data "aws_iam_policy_document" "lambda-concatStarter" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -893,7 +893,7 @@ data "aws_iam_policy_document" "lambda-createPages" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -965,7 +965,7 @@ data "aws_iam_policy_document" "lambda-concatPages" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -1182,7 +1182,7 @@ data "aws_iam_policy_document" "lambda-sendJobEmail" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -1255,7 +1255,7 @@ data "aws_iam_policy_document" "lambda-formatOutput" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
@@ -1362,7 +1362,7 @@ data "aws_iam_policy_document" "lambda-deleteClinicalWorkflow" {
       "lambda:InvokeFunction",
     ]
     resources = [
-      var.svep-job-email-lambda-function-arn,
+      var.clinic-job-email-lambda-function-arn,
     ]
   }
 
