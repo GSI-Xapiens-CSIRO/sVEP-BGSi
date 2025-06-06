@@ -113,6 +113,7 @@ def lambda_handler(event, _):
         project_name=project,
         input_vcf=input_vcf,
         user_id=sub,
+        skip_email=True,
     )
     print(vcf_regions)
     with orchestration(request_id=request_id) as orc:

@@ -98,9 +98,9 @@ variable "dynamo-clinic-jobs-stream-arn" {
   description = "Dynamo clinic jobs stream ARN"
 }
 
-variable "svep-job-email-lambda-function-arn" {
+variable "clinic-job-email-lambda-function-arn" {
   type        = string
-  description = "Lambda function ARN for sending SVEP Job emails"
+  description = "Lambda function ARN for sending Clinic Job emails"
 }
 
 variable "cognito-user-pool-id" {

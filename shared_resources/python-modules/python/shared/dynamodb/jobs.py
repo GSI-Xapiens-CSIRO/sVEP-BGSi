@@ -162,6 +162,7 @@ def update_clinic_job(
 
     if skip_email:
         print(f"[update_clinic_job] - Skipping email for job: {job_id}")
+        return
 
     if job_status == "pending":
         print(f"[update_clinic_job] - Skipping email for job status: {job_status}")
