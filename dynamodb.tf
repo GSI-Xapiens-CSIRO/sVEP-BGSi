@@ -8,9 +8,7 @@ resource "aws_dynamodb_table" "svep_references" {
   hash_key     = "id"
   name         = var.svep-references-table-name
 
-  tags = merge(var.common-tags, {
-    backup = "true"
-  })
+  tags = merge(var.common-tags, var.common-tags-backup)
 
   attribute {
     name = "id"

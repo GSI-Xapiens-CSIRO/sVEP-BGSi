@@ -12,6 +12,10 @@ variable "common-tags" {
   }
 }
 
+variable "common-tags-backup" {
+  type        = map(string)
+  description = "Tags needed to enable and configure backups."
+}
 
 variable "data_portal_bucket_arn" {
   type        = string
