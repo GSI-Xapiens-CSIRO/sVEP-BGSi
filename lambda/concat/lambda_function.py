@@ -29,7 +29,7 @@ def concat(orc, project, request_id):
     }
     for page in page_iterator:
         print(page)
-        page_contents = page["Contents"]
+        page_contents = page.get("Contents", [])
         page_keys = [d["Key"] for d in page_contents]
         page_num += 1
         message.update(
