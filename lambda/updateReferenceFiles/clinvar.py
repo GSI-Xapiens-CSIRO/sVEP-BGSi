@@ -5,8 +5,7 @@ import boto3
 
 
 CLINVAR_FTP_PATH = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/weekly_release"
-CLINVAR_FTP_PREFIX = "ClinVarVCVRelease_"
-CLINVAR_FTP_SUFFIX = ".xml.gz"
+CLINVAR_FTP_FILE = "ClinVarVCVRelease_00-latest_weekly.xml.gz"
 OUTPUT_BED = "clinvar.bed.gz"
 EC2_IAM_INSTANCE_PROFILE = os.environ["EC2_IAM_INSTANCE_PROFILE"]
 REFERENCE_LOCATION = os.environ["REFERENCE_LOCATION"]
@@ -34,10 +33,7 @@ def update_clinvar(clinvar_version):
         ec2_startup = (
             user_data_file.read()
             .replace("__FTP_PATH__", CLINVAR_FTP_PATH)
-            .replace(
-                "__CLINVAR_FILE__",
-                f"{CLINVAR_FTP_PREFIX}{clinvar_version}{CLINVAR_FTP_SUFFIX}",
-            )
+            .replace("__CLINVAR_FILE__", CLINVAR_FTP_FILE)
             .replace("__OUTPUT_BED__", OUTPUT_BED)
             .replace("__REFERENCE_BUCKET__", REFERENCE_LOCATION)
             .replace("__clinvar_xmltobed.py__", clinvar_xmltobed)
