@@ -720,6 +720,36 @@ module "lambda-qcFigures" {
 }
 
 #
+# qcNotes Lambda Function
+#
+module "lambda-qcNotes" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name          = "svep-backend-qcNotes"
+  description            = "Running qcNotes API."
+  runtime                = "python3.12"
+  handler                = "lambda_function.lambda_handler"
+  memory_size            = 128
+  timeout                = 60
+  source_path            = "${path.module}/lambda/qcNotes"
+  attach_policy_jsons    = true
+  number_of_policy_jsons = 1
+  tags                   = var.common-tags
+
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-qcNotes.json
+  ]
+
+  environment_variables = {
+    FILE_LOCATION   = var.data_portal_bucket_name
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
 # deleteClinicalWorkflow Lambda Function
 #
 module "lambda-deleteClinicalWorkflow" {

@@ -255,6 +255,17 @@ resource "aws_lambda_permission" "vcfstats_graphic_invoke_permission" {
 }
 
 #
+# qcNotes Lambda Function
+#
+resource "aws_lambda_permission" "qcNotes_invoke_permission" {
+  statement_id  = "SvepAPIQcNotesAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-qcNotes.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.qcnotes.path_part}"
+}
+
+#
 # deleteClinicalWorkflow Lambda Function
 #
 resource "aws_lambda_permission" "cloudwatch_delete_clinical_workflow_invoke_permission" {

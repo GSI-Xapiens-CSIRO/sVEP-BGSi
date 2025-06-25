@@ -484,6 +484,19 @@ resource "aws_api_gateway_deployment" "VPApi" {
       aws_api_gateway_method_response.vcfstats-post,
       aws_api_gateway_integration.vcfstats-post,
       aws_api_gateway_integration_response.vcfstats-post,
+      # /qcnotes
+      aws_api_gateway_method.qcnotes-options,
+      aws_api_gateway_integration.qcnotes-options,
+      aws_api_gateway_integration_response.qcnotes-options,
+      aws_api_gateway_method_response.qcnotes-options,
+      aws_api_gateway_method.qcnotes-post,
+      aws_api_gateway_integration.qcnotes-post,
+      aws_api_gateway_integration_response.qcnotes-post,
+      aws_api_gateway_method_response.qcnotes-post,
+      aws_api_gateway_method.qcnotes-get,
+      aws_api_gateway_integration.qcnotes-get,
+      aws_api_gateway_integration_response.qcnotes-get,
+      aws_api_gateway_method_response.qcnotes-get,
     ]))
   }
 }
