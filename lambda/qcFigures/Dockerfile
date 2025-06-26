@@ -14,6 +14,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 ENV RUSTUP_HOME=/root/.rustup
 ENV CARGO_HOME=/root/.cargo
+ENV MPLCONFIGDIR="/tmp/.config/matplotlib"
+RUN mkdir -p "/tmp/.config/matplotlib"
 
 RUN rustc --version && cargo --version
 
