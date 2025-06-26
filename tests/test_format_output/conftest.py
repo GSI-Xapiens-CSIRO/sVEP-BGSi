@@ -8,13 +8,13 @@ import boto3
 from test_utils.mock_resources import setup_resources
 
 sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "../lambda/formatOutput"))
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "../../lambda/formatOutput"))
 )
 sys.path.append(
     os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
-            "../shared_resources/python-modules/python",
+            "../../shared_resources/python-modules/python",
         )
     )
 )

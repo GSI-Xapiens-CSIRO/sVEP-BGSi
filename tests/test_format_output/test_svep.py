@@ -1,6 +1,9 @@
 from unittest.mock import patch
+import os
+import csv
 
 import botocore
+import boto3
 from moto import mock_aws
 
 orig = botocore.client.BaseClient._make_api_call
@@ -33,3 +36,25 @@ def test_svep_formatoutput(resources_dict):
             event,
             {},
         )
+
+        s3_client = boto3.client("s3")
+        content = (
+            s3_client.get_object(
+                Bucket=os.environ["SVEP_REGIONS"],
+                Key="3c79842a-e94f-4f70-8bf8-6c382de6f9aa_0_svep-backend-queryVCF_chr1_200_0_0_svep-backend-queryGTF_0_svep-backend-pluginConsequence_svep-backend-pluginClinvar_0_svep-backend-pluginGnomad_0_svep-backend-pluginGnomadOneKG_0_svep-backend-pluginGnomadConstraint_0_svep-backend-formatOutput.tsv",
+            )["Body"]
+            .read()
+            .decode("utf-8")
+        )
+
+        content = content.split("\n")
+        content = [line.split("\t") for line in content if line.strip() != ""]
+        target = open(os.path.join(os.path.dirname(__file__), "target_output.tsv")).read().split("\n")
+        target = [line.split("\t") for line in target if line.strip() != ""]
+
+        for m, row in enumerate(content):
+            for n, col in enumerate(row):
+                if n == 21:
+                    col = sorted(col.split(","))
+                    target[m][n] = sorted(target[m][n].split(","))
+                assert col == target[m][n], f"Mismatch at row {m}, column {n}: {col} != {target[m][n]}"
