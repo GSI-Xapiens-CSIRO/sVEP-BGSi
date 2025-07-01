@@ -3,6 +3,7 @@ import hashlib
 from pathlib import Path
 
 DIRECTORY = str(Path(__file__).resolve().parent)
+HASH_FILE = ".hash.txt"
 
 
 def sha1_of_file(filepath: str):
@@ -21,10 +22,14 @@ def hash_dir(dir_path: str):
     for path, _, files in os.walk(dir_path):
         # we sort to guarantee that files will always go in the same order
         for file in sorted(files):
+            if file == HASH_FILE:
+                continue
             file_hash = sha1_of_file(os.path.join(path, file))
             sha.update(file_hash.encode())
-
-    return sha.hexdigest()
+    hash = sha.hexdigest()
+    with open(f"{DIRECTORY}/{HASH_FILE}", "w") as f:
+        f.write(hash)
+    return hash
 
 
 if __name__ == "__main__":

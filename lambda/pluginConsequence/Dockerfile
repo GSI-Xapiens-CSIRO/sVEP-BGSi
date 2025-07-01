@@ -34,5 +34,7 @@ ENV PERL5LIB=${LAMBDA_TASK_ROOT}:${LAMBDA_TASK_ROOT}/consequence:${LAMBDA_TASK_R
 # Set PATH to include custom VEP lib directory
 ENV PATH=${LAMBDA_TASK_ROOT}/lib:${PATH}
 
+COPY ./.hash.txt ${LAMBDA_TASK_ROOT}/
+
 # Define entry point
 ENTRYPOINT ["/lambda-entrypoint.sh", "VEP::handle"]

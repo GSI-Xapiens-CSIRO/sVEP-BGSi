@@ -15,6 +15,7 @@ layers/binaries/lib/*
 *.pyc
 build
 libraries
+.hash.txt
 
 # shared resources
 lambda/qcFigures/shared
