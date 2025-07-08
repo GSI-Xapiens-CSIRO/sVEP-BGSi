@@ -21,7 +21,7 @@ def get_s3_file_content_if_exists(bucket_name, file_name):
 
 
 def get_notes(project_name, file_name):
-    notes_file_name = f"projects/{project_name}/project-files/{file_name}_notes.txt"
+    notes_file_name = f"projects/{project_name}/qc-figures/{file_name}/notes.txt"
     notes_content = get_s3_file_content_if_exists(BUCKET_NAME, notes_file_name)
 
     return bundle_response(
@@ -34,7 +34,7 @@ def get_notes(project_name, file_name):
 
 
 def update_notes(project_name, file_name, notes):
-    notes_file_name = f"projects/{project_name}/project-files/{file_name}_notes.txt"
+    notes_file_name = f"projects/{project_name}/qc-figures/{file_name}/notes.txt"
     s3_client.put_object(Bucket=BUCKET_NAME, Key=notes_file_name, Body=notes)
 
     return bundle_response(
