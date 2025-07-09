@@ -91,7 +91,7 @@ module "lambda-initQuery" {
       HTS_S3_HOST                     = "s3.${var.region}.amazonaws.com"
       DYNAMO_PROJECT_USERS_TABLE      = var.dynamo-project-users-table
       DYNAMO_CLINIC_JOBS_TABLE        = var.dynamo-clinic-jobs-table
-      DYNAMO_REFERENCES_TABLE         = aws_dynamodb_table.svep_references.name
+      DYNAMO_SVEP_REFERENCES_TABLE    = aws_dynamodb_table.svep_references.name
       COGNITO_CLINIC_JOB_EMAIL_LAMBDA = var.clinic-job-email-lambda-function-arn
       USER_POOL_ID                    = var.cognito-user-pool-id
       SEND_JOB_EMAIL_ARN              = aws_sns_topic.sendJobEmail.arn
