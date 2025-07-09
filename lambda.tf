@@ -266,6 +266,17 @@ resource "aws_lambda_permission" "qcNotes_invoke_permission" {
 }
 
 #
+# updateReferenceFiles Lambda Function
+#
+resource "aws_lambda_permission" "cloudwatch_svep_reference_update_permission" {
+  statement_id  = "CloudwatchSvepReferenceUpdateAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-updateReferenceFiles.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.update_references_trigger.arn
+}
+
+#
 # deleteClinicalWorkflow Lambda Function
 #
 resource "aws_lambda_permission" "cloudwatch_delete_clinical_workflow_invoke_permission" {
