@@ -4,11 +4,14 @@ import os
 import subprocess
 import boto3
 
+from botocore.client import ClientError
+
 from shared.apiutils import bad_request, bundle_response
 from shared.utils import (
     chrom_matching,
     print_event,
     orchestration,
+    query_references_table,
 )
 from urllib.parse import urlparse
 
@@ -29,6 +32,7 @@ SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 REGIONS = chrom_matching.get_regions(SLICE_SIZE_MBP)
+REFERENCE_IDS = ["clinvar_version", "ensembl_version", "gnomad_constraints_version"]
 
 
 def get_translated_regions_and_mapping(location):
@@ -104,6 +108,20 @@ def lambda_handler(event, _):
     if sample_count != 1:
         return bad_request("Only single-sample VCFs are supported.")
 
+    reference_versions = {}
+    try:
+        for reference_id in REFERENCE_IDS:
+            reference_versions[reference_id] = query_references_table(reference_id)
+    except ClientError as e:
+        return bad_request(
+            "Unable to retrieve reference versions. Please contact an AWS administrator."
+        )
+
+    if any(version is None for version in reference_versions.values()):
+        return bad_request(
+            "Some reference versions are missing. Please contact an AWS administrator."
+        )
+
     parsed_location = urlparse(location)
     input_vcf = Path(parsed_location.path.lstrip("/")).name
     update_clinic_job(
@@ -113,6 +131,7 @@ def lambda_handler(event, _):
         project_name=project,
         input_vcf=input_vcf,
         user_id=sub,
+        reference_versions=reference_versions,
         skip_email=True,
     )
     print(vcf_regions)
