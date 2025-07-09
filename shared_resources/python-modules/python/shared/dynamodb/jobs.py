@@ -134,6 +134,7 @@ def update_clinic_job(
     error_message=None,
     user_id=None,
     is_from_failed_execution=False,
+    reference_versions={},
     skip_email=False,
 ):
     job_status = job_status if job_status is not None else "unknown"
@@ -157,6 +158,9 @@ def update_clinic_job(
         update_fields["error_message"] = {"S": error_message}
     if user_id is not None:
         update_fields["uid"] = {"S": user_id}
+    if reference_versions:
+        for reference_id, reference_version in reference_versions.items():
+            update_fields[reference_id] = {"S": reference_version}
 
     dynamodb_update_item(job_id, update_fields)
 
