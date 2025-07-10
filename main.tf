@@ -148,7 +148,7 @@ module "lambda-queryVCF" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 28
+  timeout       = 140
   policy = {
     json = data.aws_iam_policy_document.lambda-queryVCF.json
   }
