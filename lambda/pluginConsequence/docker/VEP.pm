@@ -793,6 +793,10 @@ sub vf_to_consequences {
     $line->{Consequence} = join ",", keys %{{map {$_ => 0} map { $_->SO_term} @ocs}};
     #$line = $ocs[0]->$term_method || $ocs[0]->SO_term;
     my $conLine = $line->{Consequence};
+    if (!defined $ocs[0]) {
+      print("No overlap consequences found for this variation feature.\n");
+      return $conLine, 99; # Return a high rank to filter out this record
+    }
     my $rank = $ocs[0]->rank;
     #print Dumper $line;
 
