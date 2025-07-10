@@ -801,7 +801,7 @@ sub _get_alternate_cds{
   ### append UTR if available as stop may be disrupted
   my $utr = $self->transcript_variation->_three_prime_utr();
 
-  if (defined $utr) {
+  if (defined $utr && $utr) {
   ### append the UTR to the alternative CDS
     $alt_cds->seq($alt_cds->seq() . $utr->seq());
   }

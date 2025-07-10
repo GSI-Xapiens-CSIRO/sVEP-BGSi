@@ -22,7 +22,8 @@ from .lambda_utils import (
     truncated_print,
     handle_failed_execution,
     download_bedfile,
-    download_to_tmp
+    download_to_tmp,
+    s3_list_objects,
 )
 from .reference_utils import (
     truncate_tmp,

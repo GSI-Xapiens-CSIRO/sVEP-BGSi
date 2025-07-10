@@ -1487,18 +1487,20 @@ sub _ins_del_stop_altered {
 
         # new sequence shorter, we know it has been altered
         return $cache->{ins_del_stop_altered} = 1 if length($utr_and_translateable) < length($translateable);
+        # This is where it gets choppy, because again we don't have the Seq constructor. return 0 for now
+        # TODO: Implement this part of the logic (will require utr_and_translateable to be set correctly)
 
         # now we need the codon from the new seq at the equivalent end pos from translateable
         # and to translate it to check if it is still a stop
-        my $pep = Bio::Seq->new(
-            -seq        => substr($utr_and_translateable, length($translateable) - 3, 3),
-            -moltype    => 'dna',
-            -alphabet   => 'dna',
-        )->translate(
-            undef, undef, undef, $bvfo->_codon_table
-        )->seq;
+        # my $pep = Bio::Seq->new(
+        #     -seq        => substr($utr_and_translateable, length($translateable) - 3, 3),
+        #     -moltype    => 'dna',
+        #     -alphabet   => 'dna',
+        # )->translate(
+        #     undef, undef, undef, $bvfo->_codon_table
+        # )->seq;
 
-        $cache->{ins_del_stop_altered} = !($pep && $pep eq '*');
+        # $cache->{ins_del_stop_altered} = !($pep && $pep eq '*');
     }
 
     return $cache->{ins_del_stop_altered};

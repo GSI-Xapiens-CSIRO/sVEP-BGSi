@@ -148,7 +148,7 @@ module "lambda-queryVCF" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 28
+  timeout       = 140
   policy = {
     json = data.aws_iam_policy_document.lambda-queryVCF.json
   }
@@ -259,7 +259,7 @@ module "lambda-pluginConsequence" {
   image_uri           = module.docker_image_pluginConsequence_lambda.image_uri
   package_type        = "Image"
   memory_size         = 2048
-  timeout             = 60
+  timeout             = 600
   attach_policy_jsons = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-pluginConsequence.json
@@ -330,7 +330,7 @@ module "lambda-pluginGnomad" {
   description   = "Add Gnomad annotations to sVEP result rows."
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
-  memory_size   = 2048
+  memory_size   = 256
   timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-pluginGnomad.json
@@ -364,7 +364,7 @@ module "lambda-pluginGnomadOneKG" {
   description   = "Add Gnomad 1kg annotations to sVEP result rows."
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
-  memory_size   = 2048
+  memory_size   = 256
   timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-pluginGnomadOneKG.json
@@ -433,7 +433,7 @@ module "lambda-concat" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 28
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-concat.json
   }
@@ -502,7 +502,7 @@ module "lambda-createPages" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 28
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-createPages.json
   }
@@ -536,8 +536,8 @@ module "lambda-concatPages" {
   description   = "concatenates all the page files created by createPages lambda."
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
-  memory_size   = 2048
-  timeout       = 28
+  memory_size   = 3008
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-concatPages.json
   }
@@ -638,11 +638,11 @@ module "lambda-clearTempAndRegions" {
   source = "terraform-aws-modules/lambda/aws"
 
   function_name       = "svep-backend-clearTempAndRegions"
-  description         = "Clears temp and regions buckets for sVEP executions that fail"
+  description         = "Clears temp and regions buckets for finished sVEP executions"
   runtime             = "python3.12"
   handler             = "lambda_function.lambda_handler"
-  memory_size         = 2048
-  timeout             = 600
+  memory_size         = 256
+  timeout             = 900
   attach_policy_jsons = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-clearTempAndRegions.json
@@ -653,8 +653,9 @@ module "lambda-clearTempAndRegions" {
   tags = var.common-tags
 
   environment_variables = {
-    SVEP_TEMP    = aws_s3_bucket.svep-temp.bucket
-    SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
+    CLEAR_TEMP_AND_REGIONS_SNS_TOPIC_ARN = aws_sns_topic.clearTempAndRegions.arn
+    SVEP_TEMP                            = aws_s3_bucket.svep-temp.bucket
+    SVEP_REGIONS                         = aws_s3_bucket.svep-regions.bucket
   }
 }
 

@@ -24,7 +24,7 @@ do
     my $result = eval { VEP::handle($event_data) };
 
     if ($@) {
-      print STDERR "Perl error: $@\n";
+      print STDERR "[ERROR] Perl error: $@\n";
       $result = encode_json({ error => $@ });
     }
 

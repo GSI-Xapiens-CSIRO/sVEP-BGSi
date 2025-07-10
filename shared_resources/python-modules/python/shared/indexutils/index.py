@@ -1,9 +1,11 @@
 from collections import defaultdict
 import io
+import re
 from typing import Dict, List
 
 
 REGION_COLUMN_INDEX = 1
+NUMS_UNDERSCORES = re.compile(r"[^0-9_]")
 
 
 def create_index(file: io.BytesIO) -> Dict[str, Dict[str, List]]:
@@ -84,3 +86,10 @@ def create_index(file: io.BytesIO) -> Dict[str, Dict[str, List]]:
             index[chrom]["chromosome_end"].append(end)
 
     return index
+
+
+def filename_order(filename):
+    return tuple(
+        int(part) if part else 0
+        for part in NUMS_UNDERSCORES.sub("", filename).split("_")
+    )

@@ -913,6 +913,9 @@ sub _generic_utr {
     my $tran = $self->transcript;
     my $key = $three_five.'_prime_utr';
 
+    # TODO: Implement utr handling
+    # feature_Slice function is not implemented
+    return 0;
     unless(exists($tran->{_variation_effect_feature_cache}->{$key})) {
 
         # transfer to feature slice so we don't subseq whole chromosome

@@ -925,7 +925,6 @@ data "aws_iam_policy_document" "lambda-concatPages" {
   statement {
     actions = [
       "s3:GetObject",
-      "s3:DeleteObject",
     ]
     resources = [
       "${aws_s3_bucket.svep-regions.arn}/*",
@@ -1170,6 +1169,15 @@ data "aws_iam_policy_document" "lambda-clearTempAndRegions" {
     ]
     resources = [
       var.dynamo-clinic-jobs-stream-arn,
+    ]
+  }
+
+  statement {
+    actions = [
+      "SNS:Publish",
+    ]
+    resources = [
+      aws_sns_topic.clearTempAndRegions.arn,
     ]
   }
 }
