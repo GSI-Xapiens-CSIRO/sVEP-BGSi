@@ -259,7 +259,7 @@ module "lambda-pluginConsequence" {
   image_uri           = module.docker_image_pluginConsequence_lambda.image_uri
   package_type        = "Image"
   memory_size         = 2048
-  timeout             = 60
+  timeout             = 600
   attach_policy_jsons = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-pluginConsequence.json
