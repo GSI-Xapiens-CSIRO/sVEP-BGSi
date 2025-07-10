@@ -638,11 +638,11 @@ module "lambda-clearTempAndRegions" {
   source = "terraform-aws-modules/lambda/aws"
 
   function_name       = "svep-backend-clearTempAndRegions"
-  description         = "Clears temp and regions buckets for sVEP executions that fail"
+  description         = "Clears temp and regions buckets for finished sVEP executions"
   runtime             = "python3.12"
   handler             = "lambda_function.lambda_handler"
-  memory_size         = 2048
-  timeout             = 600
+  memory_size         = 256
+  timeout             = 900
   attach_policy_jsons = true
   policy_jsons = [
     data.aws_iam_policy_document.lambda-clearTempAndRegions.json
@@ -653,8 +653,9 @@ module "lambda-clearTempAndRegions" {
   tags = var.common-tags
 
   environment_variables = {
-    SVEP_TEMP    = aws_s3_bucket.svep-temp.bucket
-    SVEP_REGIONS = aws_s3_bucket.svep-regions.bucket
+    CLEAR_TEMP_AND_REGIONS_SNS_TOPIC_ARN = aws_sns_topic.clearTempAndRegions.arn
+    SVEP_TEMP                            = aws_s3_bucket.svep-temp.bucket
+    SVEP_REGIONS                         = aws_s3_bucket.svep-regions.bucket
   }
 }
 

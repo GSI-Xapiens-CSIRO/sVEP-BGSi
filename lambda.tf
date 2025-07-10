@@ -187,6 +187,14 @@ resource "aws_lambda_event_source_mapping" "clinic_jobs_stream_event_source" {
   }
 }
 
+resource "aws_lambda_permission" "clearTempAndRegions_invoke_permission" {
+  statement_id  = "SNSclearTempAndRegionsAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-clearTempAndRegions.lambda_function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.clearTempAndRegions.arn
+}
+
 #
 # sendJobEmail Lambda Function
 #

@@ -20,13 +20,6 @@ SVEP_RESULTS = os.environ["SVEP_RESULTS"]
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
 
-def clean_regions(request_id):
-    response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=request_id)
-    if "Contents" in response:
-        delete_objects = [{"Key": d["Key"]} for d in response["Contents"]]
-        s3.delete_objects(Bucket=SVEP_REGIONS, Delete={"Objects": delete_objects})
-
-
 def publish_result(orc, request_id, project, all_keys, page_num, prefix):
     start_time = time.time()
     filename = f"{request_id}{RESULT_SUFFIX}"
@@ -53,7 +46,6 @@ def publish_result(orc, request_id, project, all_keys, page_num, prefix):
         )
         print(f"time taken = {(time.time()-start_time) * 1000}")
         print("Done concatenating")
-        clean_regions(request_id)
         update_clinic_job(request_id, job_status="completed")
     else:
         print("createPages failed to create one of the page")

@@ -147,3 +147,13 @@ resource "aws_sns_topic_subscription" "formatOutput" {
   protocol  = "lambda"
   endpoint  = module.lambda-formatOutput.function_arn
 }
+
+resource "aws_sns_topic" "clearTempAndRegions" {
+  name = "svep-backend-clearTempAndRegions"
+}
+
+resource "aws_sns_topic_subscription" "clearTempAndRegions" {
+  topic_arn = aws_sns_topic.clearTempAndRegions.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-clearTempAndRegions.lambda_function_arn
+}
