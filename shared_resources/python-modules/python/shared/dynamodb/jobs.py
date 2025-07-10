@@ -159,8 +159,12 @@ def update_clinic_job(
     if user_id is not None:
         update_fields["uid"] = {"S": user_id}
     if reference_versions:
-        for reference_id, reference_version in reference_versions.items():
-            update_fields[reference_id] = {"S": reference_version}
+        update_fields["reference_versions"] = {
+            "M": {
+                reference_id: {"S": reference_version}
+                for reference_id, reference_version in reference_versions.items()
+            }
+        }
 
     dynamodb_update_item(job_id, update_fields)
 
