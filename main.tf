@@ -433,7 +433,7 @@ module "lambda-concat" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 28
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-concat.json
   }
@@ -502,7 +502,7 @@ module "lambda-createPages" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
   memory_size   = 2048
-  timeout       = 28
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-createPages.json
   }
@@ -536,8 +536,8 @@ module "lambda-concatPages" {
   description   = "concatenates all the page files created by createPages lambda."
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
-  memory_size   = 2048
-  timeout       = 28
+  memory_size   = 3008
+  timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-concatPages.json
   }
