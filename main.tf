@@ -330,7 +330,7 @@ module "lambda-pluginGnomad" {
   description   = "Add Gnomad annotations to sVEP result rows."
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
-  memory_size   = 2048
+  memory_size   = 256
   timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-pluginGnomad.json
@@ -364,7 +364,7 @@ module "lambda-pluginGnomadOneKG" {
   description   = "Add Gnomad 1kg annotations to sVEP result rows."
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.12"
-  memory_size   = 2048
+  memory_size   = 256
   timeout       = 900
   policy = {
     json = data.aws_iam_policy_document.lambda-pluginGnomadOneKG.json
