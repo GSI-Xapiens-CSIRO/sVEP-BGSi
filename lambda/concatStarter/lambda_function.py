@@ -12,7 +12,7 @@ s3 = boto3.client("s3")
 # Environment variables
 CONCAT_SNS_TOPIC_ARN = os.environ["CONCAT_SNS_TOPIC_ARN"]
 LIST_INTERVAL = 5
-MAX_WAIT_TIME = 2 * 60 * 60  # 2 hours
+MAX_WAIT_TIME = 6 * 60 * 60  # 6 hours
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
 SVEP_TEMP = os.environ["SVEP_TEMP"]
 
