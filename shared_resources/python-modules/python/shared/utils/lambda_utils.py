@@ -340,3 +340,20 @@ def handle_failed_execution(job_id, error_message):
         user_id=job.get("uid", {}).get("S"),
         is_from_failed_execution=True,
     )
+
+
+def s3_list_objects(bucket, prefix):
+    continuation_token = True
+    keys = []
+    kwargs = {
+        "Bucket": bucket,
+        "Prefix": prefix,
+    }
+    while continuation_token:
+        print(f"Calling s3.list_objects_v2 with kwargs: {kwargs}")
+        response = s3_client.list_objects_v2(**kwargs)
+        print(f"Received response: {json.dumps(response, default=str)}")
+        keys.extend(obj["Key"] for obj in response.get("Contents", []))
+        continuation_token = response.get("NextContinuationToken")
+        kwargs["ContinuationToken"] = continuation_token
+    return keys

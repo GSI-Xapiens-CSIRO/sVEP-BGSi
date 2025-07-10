@@ -4,8 +4,8 @@ import gzip
 
 import boto3
 
-from shared.utils import orchestration, s3
-from shared.indexutils import create_index
+from shared.utils import orchestration, s3, s3_list_objects
+from shared.indexutils import create_index, filename_order
 from shared.dynamodb import update_clinic_job
 
 
@@ -32,7 +32,8 @@ def append(page_keys, page_num, prefix):
 def publish_result(orc, request_id, project, page_num, prefix):
     filename = f"{prefix}{page_num}concatenated.tsv"
     print(prefix)
-    bucket_len = len(s3_list_objects(SVEP_REGIONS, prefix))
+    prefix_keys = sorted(s3_list_objects(SVEP_REGIONS, prefix), key=filename_order)
+    bucket_len = len(prefix_keys)
     if bucket_len != page_num:
         print("calling itself again to make sure all files are done.")
         orc.resend_self(
@@ -42,31 +43,27 @@ def publish_result(orc, request_id, project, page_num, prefix):
         )
     elif bucket_len == page_num and bucket_len > 10:
         new_prefix = f"{prefix}_round"
-        prefix_files = s3_list_objects(SVEP_REGIONS, prefix)
-        prefix_keys = [d["Key"] for d in prefix_files]
-        all_keys = [prefix_keys[x : x + 20] for x in range(0, len(prefix_keys), 20)]
-        print(f"length of all keys = {len(all_keys)}")
-        total_len = len(all_keys)
-        for idx, key in enumerate(all_keys, start=1):
+        key_groups = [prefix_keys[x : x + 20] for x in range(0, len(prefix_keys), 20)]
+        print(f"number of key groups = {len(key_groups)}")
+        last_index = len(key_groups) - 1
+        for idx, key_group in enumerate(key_groups):
             orc.start_function(
                 orc.topic_arn,
                 {
                     "project": project,
-                    "pageKeys": all_keys[idx - 1],
-                    "pageNum": idx,
+                    "pageKeys": key_group,
+                    "pageNum": idx + 1,
                     "prefix": new_prefix,
-                    "lastPage": 1 if idx == total_len else 0,
+                    "lastPage": 1 if idx == last_index else 0,
                 },
             )
     elif bucket_len == page_num and bucket_len < 10:
         print("last page and all combined")
-        files = s3_list_objects(SVEP_REGIONS, prefix)
-        all_keys = [d["Key"] for d in files]
         orc.start_function(
             CONCATPAGES_SNS_TOPIC_ARN,
             {
                 "project": project,
-                "allKeys": all_keys,
+                "allKeys": prefix_keys,
                 "lastFile": filename,
                 "pageNum": page_num,
                 "prefix": prefix,
@@ -77,12 +74,11 @@ def publish_result(orc, request_id, project, page_num, prefix):
         result_file = (
             f"s3://{SVEP_RESULTS}/projects/{project}/clinical-workflows/{filename}"
         )
-        prefix_files = s3_list_objects(SVEP_REGIONS, prefix)
-        prefix_keys = prefix_files[0]["Key"]
-        copy_source = {"Bucket": SVEP_REGIONS, "Key": prefix_keys}
+        only_key = prefix_keys[0]
+        copy_source = {"Bucket": SVEP_REGIONS, "Key": only_key}
         s3_client.copy(copy_source, SVEP_RESULTS, result_file)
         # download the file and create index
-        s3_client.download_file(SVEP_REGIONS, prefix_keys, f"/tmp/{filename}")
+        s3_client.download_file(SVEP_REGIONS, only_key, f"/tmp/{filename}")
 
         with open(f"/tmp/{filename}", "rb") as fp:
             index = create_index(fp)
@@ -96,11 +92,6 @@ def publish_result(orc, request_id, project, page_num, prefix):
         os.remove(f"/tmp/{filename}")
 
         update_clinic_job(request_id, job_status="completed", skip_email=True)
-
-
-def s3_list_objects(bucket, prefix):
-    response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
-    return response["Contents"]
 
 
 def lambda_handler(event, _):

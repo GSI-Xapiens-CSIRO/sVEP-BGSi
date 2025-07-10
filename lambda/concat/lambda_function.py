@@ -1,50 +1,37 @@
 import os
 
-import boto3
+from shared.indexutils import filename_order
+from shared.utils import orchestration, s3_list_objects
 
-from shared.utils import orchestration
-
-
-# AWS clients and resources
-s3 = boto3.client("s3")
 
 # Environment variables
 CREATEPAGES_SNS_TOPIC_ARN = os.environ["CREATEPAGES_SNS_TOPIC_ARN"]
 SVEP_REGIONS = os.environ["SVEP_REGIONS"]
+PAGE_SIZE = 600
 
 
 def concat(orc, project, request_id):
-    page_num = 0
-    paginator = s3.get_paginator("list_objects_v2")
-    # Change later on
-    operation_parameters = {
-        "Bucket": SVEP_REGIONS,
-        "Prefix": request_id,
-        "PaginationConfig": {"PageSize": 600},
-    }
-    page_iterator = paginator.paginate(**operation_parameters)
+    keys = sorted(s3_list_objects(SVEP_REGIONS, request_id), key=filename_order)
     message = {
         "prefix": f"{request_id}_page",
         "project": project,
     }
-    for page in page_iterator:
-        print(page)
-        page_contents = page.get("Contents", [])
-        page_keys = [d["Key"] for d in page_contents]
-        page_num += 1
+    page_num = 1
+    while True:
+        page_keys = keys[:PAGE_SIZE]
+        keys = keys[PAGE_SIZE:]
         message.update(
             {
                 "pageKeys": page_keys,
                 "pageNum": page_num,
+                "lastPage": 0 if keys else 1,
             }
         )
-        if "NextContinuationToken" in page:
-            message["lastPage"] = 0
-        else:
-            print("last page")
-            print(page_num)
-            message["lastPage"] = 1
         orc.start_function(CREATEPAGES_SNS_TOPIC_ARN, message)
+        if not keys:
+            print(f"last page: {page_num}")
+            break
+        page_num += 1
     print("Finished sending to createPages")
 
 

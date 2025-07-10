@@ -6,7 +6,7 @@ import gzip
 
 import boto3
 
-from shared.utils import orchestration
+from shared.utils import orchestration, s3_list_objects
 from shared.indexutils import create_index
 from shared.dynamodb import update_clinic_job
 
@@ -23,8 +23,8 @@ os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 def publish_result(orc, request_id, project, all_keys, page_num, prefix):
     start_time = time.time()
     filename = f"{request_id}{RESULT_SUFFIX}"
-    response = s3.list_objects_v2(Bucket=SVEP_REGIONS, Prefix=prefix)
-    if len(response["Contents"]) == page_num:
+    file_count = len(s3_list_objects(SVEP_REGIONS, prefix))
+    if file_count == page_num:
         paths = [f"{SVEP_REGIONS}/{d}" for d in all_keys]
         merged_content = b""
         for file in paths:
