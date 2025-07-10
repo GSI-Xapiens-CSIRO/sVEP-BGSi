@@ -121,8 +121,9 @@ class Orchestrator:
                 raise ValueError(f"Field {field} is set by the orchestrator.")
 
     def _start_function_with_filename(
-        self, topic_arn, message, filename, track, max_length
+        self, topic_arn, in_message, filename, track, max_length
     ):
+        message = in_message.copy()
         message[REQUEST_ID_FIELD] = self.request_id
         if self.ref_chrom is not None:
             message[REF_CHROM_FIELD] = self.ref_chrom
