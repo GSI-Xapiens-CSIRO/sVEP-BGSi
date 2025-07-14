@@ -225,7 +225,7 @@ def lambda_handler(event, context):
                 200,
                 {
                     "message": "Image generated and uploaded successfully",
-                    "images": {},
+                    "images": images,
                 },
             )
 
