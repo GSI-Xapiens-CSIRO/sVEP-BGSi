@@ -51,6 +51,8 @@ locals {
     "siftMax",
     "af1KG",
     "afKhv",
+    "ac1KG",
+    "an1KG",
     "misZ",
     "misOe",
     "misOeCiLower",
