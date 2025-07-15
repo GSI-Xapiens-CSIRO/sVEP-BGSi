@@ -231,6 +231,7 @@ def lambda_handler(event, context):
 
     except subprocess.CalledProcessError as e:
         # TODO delete VCF file on /tmp/{input_vcf_file}
+        print("Error: {}".format(str(e)))
         if e.stdout:
             print(e.stdout)
         if e.stderr:
