@@ -12,7 +12,12 @@ GNOMAD_S3_SUFFIX = ".vcf.bgz"
 MAX_REGIONS_PER_QUERY = 20
 MILLISECONDS_BEFORE_SPLIT = 300000
 
-KGENOMES_COLUMNS = {"af1KG": "INFO/AF", "afKhv": "INFO/AF_khv"}
+KGENOMES_COLUMNS = {
+    "af1KG": "INFO/AF",
+    "afKhv": "INFO/AF_khv",
+    "ac1KG": "INFO/AC",
+    "an1KG": "INFO/AN",
+}
 
 
 def get_query_process(regions, ref_chrom):
