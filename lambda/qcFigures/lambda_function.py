@@ -42,19 +42,24 @@ mapping_formula = {
         "title": "Allele Frequency",
         "image_title": f"Allele Frequency",
         "identifier": "allele-frequency",
+        "additional_args": [
+            "--macro",
+            "/var/task/violin_monkey_patch.py",
+        ],
     },
     "snp_pass": {
         "formula": "COUNT(1, VARTYPE[snp]) ~ SUBST[A>T,A>G,A>C,T>A,T>G,T>C,G>A,G>T,G>C,C>A,C>T,C>G]",
         "title": "Only with SNP's Pass all filters",
         "image_title": f"Number of substitutions of SNPs (passed)",
         "identifier": "number-of-substitutions-of-snps-passed",
+        "additional_args": ["--passed"],
     },
 }
 
 
 def get_result_type(file_name):
     for key, value in mapping_formula.items():
-        identifier = value['identifier']
+        identifier = value["identifier"]
         if identifier in file_name:
             return key, value["title"]
 
@@ -65,12 +70,17 @@ def get_formula_and_title(key, vcf_file):
         return False, False
     return formula["formula"], f"{formula["image_title"]} ({vcf_file})"
 
+
 def classify_error(stderr_msg):
-    stderr_msg = stderr_msg.decode('utf-8', errors='ignore')
+    stderr_msg = stderr_msg.decode("utf-8", errors="ignore")
     if not stderr_msg:
         return "vcfstat_failed", "No stderr output."
     msg_lower = stderr_msg.lower()
-    if "keyerror" in msg_lower or "field not found" in msg_lower or "not present" in msg_lower:
+    if (
+        "keyerror" in msg_lower
+        or "field not found" in msg_lower
+        or "not present" in msg_lower
+    ):
         return "no_data", stderr_msg.strip()
     elif "error" in msg_lower or "failed" in msg_lower:
         return "vcfstat_failed", stderr_msg.strip()
@@ -99,27 +109,25 @@ def lambda_handler(event, context):
 
         contents = response and "Contents" in response
         image_files = contents and [obj["Key"] for obj in response["Contents"]]
-        formula = mapping_formula.get(key,False)
-        if not formula:
+        formula_details = mapping_formula.get(key, {})
+        if not formula_details:
             return bundle_response(
-                        400,
-                        {
-                            "message": "Formula not found. Please check key parameter.",
-                            "images": {},
-                        },
-                    )
-        identifier = formula['identifier']
+                400,
+                {
+                    "message": "Formula not found. Please check key parameter.",
+                    "images": {},
+                },
+            )
+        identifier = formula_details["identifier"]
         if image_files and any(identifier in image_file for image_file in image_files):
             print("get existing Images")
             print(response)
 
             images = {}
             for image_file in image_files:
-                image_file_name = image_file.split('/')[-1]
+                image_file_name = image_file.split("/")[-1]
                 if identifier in image_file_name:
-                    output_vcfstats_file = (
-                        f"projects/{project_name}/qc-figures/{file_name}/{image_file_name}"
-                    )
+                    output_vcfstats_file = f"projects/{project_name}/qc-figures/{file_name}/{image_file_name}"
 
                     result_url = generate_presigned_get_url(
                         BUCKET_NAME,
@@ -176,10 +184,7 @@ def lambda_handler(event, context):
                             formula,
                             "--title",
                             image_title,
-                        ]
-
-                        if key == "snp_pass":
-                            vcfstats_params.append("--passed")
+                        ] + formula_details.get("additional_args", [])
 
                         subprocess.run(
                             vcfstats_params,
@@ -239,13 +244,7 @@ def lambda_handler(event, context):
         error_type, message = classify_error(e.stderr)
         return bundle_response(
             500,
-            {
-                "body":{
-                    "status": "error",
-                    "error_type": error_type,
-                    "message": message
-                }
-            },
+            {"body": {"status": "error", "error_type": error_type, "message": message}},
         )
     except Exception as e:
         # TODO delete VCF file on /tmp
