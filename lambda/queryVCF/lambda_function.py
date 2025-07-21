@@ -13,10 +13,10 @@ QUERY_VCF_SUBMIT_SNS_TOPIC_ARN = os.environ["QUERY_VCF_SUBMIT_SNS_TOPIC_ARN"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
 os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
 
-MILLISECONDS_BEFORE_SPLIT = 15000
-MILLISECONDS_BEFORE_SECOND_SPLIT = 6000
+MILLISECONDS_BEFORE_SPLIT = 130000
+MILLISECONDS_BEFORE_SECOND_SPLIT = 120000
 RECORDS_PER_SAMPLE = 700
-BATCH_CHUNK_SIZE = 10
+BATCH_CHUNK_SIZE = 20
 PAYLOAD_SIZE = 260000
 
 QUERY_KEYS = [
@@ -146,9 +146,8 @@ def submit_query_gtf(orc, regions_list, base_id, timer):
             # Call self with remaining data
             remaining_coords = total_coords[idx:]
             print(f"remaining coords length {len(remaining_coords)}")
-            # Since coords are generally similar size because it's
-            # made of chr, loc, ref, alt - we know 10 batches of 700
-            # records can be handled by SNS
+            # These payloads will likely trigger s3 uploads, but it's faster than splitting into
+            # smaller chunks and starting more smaller functions.
             for i in range(0, len(remaining_coords), BATCH_CHUNK_SIZE):
                 orc.start_function(
                     topic_arn=QUERY_VCF_SUBMIT_SNS_TOPIC_ARN,

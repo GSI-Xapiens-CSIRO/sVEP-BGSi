@@ -121,8 +121,9 @@ class Orchestrator:
                 raise ValueError(f"Field {field} is set by the orchestrator.")
 
     def _start_function_with_filename(
-        self, topic_arn, message, filename, track, max_length
+        self, topic_arn, in_message, filename, track, max_length
     ):
+        message = in_message.copy()
         message[REQUEST_ID_FIELD] = self.request_id
         if self.ref_chrom is not None:
             message[REF_CHROM_FIELD] = self.ref_chrom
@@ -340,3 +341,20 @@ def handle_failed_execution(job_id, error_message):
         user_id=job.get("uid", {}).get("S"),
         is_from_failed_execution=True,
     )
+
+
+def s3_list_objects(bucket, prefix):
+    continuation_token = True
+    keys = []
+    kwargs = {
+        "Bucket": bucket,
+        "Prefix": prefix,
+    }
+    while continuation_token:
+        print(f"Calling s3.list_objects_v2 with kwargs: {kwargs}")
+        response = s3_client.list_objects_v2(**kwargs)
+        print(f"Received response: {json.dumps(response, default=str)}")
+        keys.extend(obj["Key"] for obj in response.get("Contents", []))
+        continuation_token = response.get("NextContinuationToken")
+        kwargs["ContinuationToken"] = continuation_token
+    return keys

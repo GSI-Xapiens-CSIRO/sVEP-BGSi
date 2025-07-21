@@ -28,6 +28,7 @@ RUN pip install --upgrade pip wheel setuptools \
     && pip install -r requirements.txt --verbose
 
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}/
+COPY violin_monkey_patch.py ${LAMBDA_TASK_ROOT}/
 ADD shared ${LAMBDA_TASK_ROOT}/shared
 
 COPY ./.hash.txt ${LAMBDA_TASK_ROOT}/
