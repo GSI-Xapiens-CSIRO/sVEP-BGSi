@@ -19,36 +19,36 @@ RECORDS_PER_SAMPLE = 700
 BATCH_CHUNK_SIZE = 20
 PAYLOAD_SIZE = 260000
 
-QUERY_KEYS = [
-    "chrom",
-    "posVcf",
-    "refVcf",
-    "altVcf",
-    "qual",
-    "filter",
-    "dbIds",
-    "gt",
-]
+REQUESTED_FORMAT_TAGS = {
+    "gt": "GT",
+    "dp": "DP",
+    "gq": "GQ",
+    "mq": "MQ",
+    "qd": "QD",
+}
 
 
-def get_info_tags(location):
+def get_info_format_tags(location):
     args = [
         "bcftools",
         "head",
         location,
     ]
     process = CheckedProcess(args)
-    tags = {
-        line.split("ID=")[1].split(",")[0]
-        for line in process.stdout
-        if line.startswith("##INFO=<ID=")
-    }
+    info_tags = set()
+    format_tags = set()
+    for line in process.stdout:
+        if line.startswith("##INFO=<ID="):
+            info_tags.add(line.split("ID=")[1].split(",")[0])
+        elif line.startswith("##FORMAT=<ID="):
+            format_tags.add(line.split("ID=")[1].split(",")[0])
     process.check()
-    return tags
+    print("Found INFO tags:", info_tags)
+    print("Found FORMAT tags:", format_tags)
+    return info_tags, format_tags
 
 
-def get_db_tags(location):
-    tags = get_info_tags(location)
+def get_db_tags(tags):
     db_tags = "|".join(
         f"%INFO/{tag}"
         for tag in [
@@ -62,7 +62,26 @@ def get_db_tags(location):
     return db_tags
 
 
-def get_query_lines(location, chrom, start, end, db_tags):
+def get_query_fields(location):
+    info_tags, format_tags = get_info_format_tags(location)
+    db_tags = get_db_tags(info_tags)
+    return {
+        "chrom": "%CHROM",
+        "posVcf": "%POS",
+        "refVcf": "%REF",
+        "altVcf": "%ALT",
+        "qual": "%QUAL",
+        "filter": "%FILTER",
+        **({"dbIds": db_tags} if db_tags else {}),
+        **{
+            field: f"[%{tag}]"
+            for field, tag in REQUESTED_FORMAT_TAGS.items()
+            if tag in format_tags
+        },
+    }
+
+
+def get_query_lines(location, chrom, start, end, query_values):
     norm_args = [
         "bcftools",
         "norm",
@@ -80,7 +99,7 @@ def get_query_lines(location, chrom, start, end, db_tags):
         "bcftools",
         "query",
         "--format",
-        f"%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%FILTER\t{db_tags or '.'}\t[%GT]\n",
+        "\t".join(query_values) + "\n",
     ]
     query_process = CheckedProcess(query_args, stdin=norm_process.stdout)
     lines = query_process.stdout.read().splitlines()
@@ -113,13 +132,13 @@ def trim_alleles(vcf_line_dict):
     return vcf_line_dict
 
 
-def submit_query_gtf(orc, regions_list, base_id, timer):
+def submit_query_gtf(orc, regions_list, base_id, timer, query_keys):
     all_lines = [
         trim_alleles(
             {
                 key: value
                 for key, value in zip(
-                    QUERY_KEYS,
+                    query_keys,
                     vcf_line.split("\t"),
                 )
             }
@@ -174,7 +193,8 @@ def lambda_handler(event, context):
         message = orc.message
         vcf_regions = message["regions"]
         location = message["location"]
-        db_tags = get_db_tags(location)
+        query_fields = get_query_fields(location)
+        print(f"query fields: {query_fields}")
         chrom_mapping = message["mapping"]
         for index, region in enumerate(vcf_regions):
             if first_timer.out_of_time():
@@ -193,10 +213,9 @@ def lambda_handler(event, context):
                 region_base_id = f"{chrom}_{start_str}"
                 start = round(1000000 * float(start_str) + 1)
                 end = start + round(1000000 * SLICE_SIZE_MBP - 1)
-                query_lines = get_query_lines(location, chrom, start, end, db_tags)
+                query_lines = get_query_lines(
+                    location, chrom, start, end, query_fields.values()
+                )
                 submit_query_gtf(
-                    orc,
-                    query_lines,
-                    region_base_id,
-                    second_timer,
+                    orc, query_lines, region_base_id, second_timer, query_fields.keys()
                 )

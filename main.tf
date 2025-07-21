@@ -59,6 +59,10 @@ locals {
     "lofOe",
     "lofOeCiUpper",
     "lofOeCiLower",
+    "dp",
+    "gq",
+    "mq",
+    "qd",
   ])
 }
 
