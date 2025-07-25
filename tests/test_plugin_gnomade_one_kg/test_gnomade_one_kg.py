@@ -15,9 +15,11 @@ def test_svep_formatoutput(resources_dict):
     assert result == (
         [
             {
+                "ac1KG": "562",
                 "posVcf": 80113242,
                 "refVcf": "G",
                 "altVcf": "A",
+                "an1KG": "6760",
                 "af1KG": "0.0831361",
                 "afKhv": "0.232673",
             }
