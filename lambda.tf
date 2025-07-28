@@ -33,6 +33,17 @@ resource "aws_lambda_permission" "get_results_invoke_permission" {
 }
 
 #
+# batchSubmit Lambda Function
+#
+resource "aws_lambda_permission" "batch_submit_invoke_permission" {
+  statement_id  = "APIBatchSubmitAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-batchSubmit.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.batch-submit.path_part}"
+}
+
+#
 # queryVCF Lambda Function
 #
 resource "aws_lambda_permission" "query_vcf_invoke_permission" {
