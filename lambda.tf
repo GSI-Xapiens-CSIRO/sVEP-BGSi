@@ -13,6 +13,14 @@ resource "aws_lambda_function_recursion_config" "init_query_recursion" {
   recursive_loop = "Allow"
 }
 
+resource "aws_lambda_permission" "initquery_invoke_permission_sns" {
+  statement_id  = "SNSInitQueryAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-initQuery.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.initQuery.arn
+}
+
 #
 # getResults Lambda Function
 #
