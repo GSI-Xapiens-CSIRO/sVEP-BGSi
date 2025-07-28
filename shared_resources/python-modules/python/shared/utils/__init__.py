@@ -9,6 +9,7 @@ from .chrom_matching import (
 from .lambda_utils import (
     s3,
     CheckedProcess,
+    LoggingClient,
     Timer,
     orchestration,
     _truncate_string,
