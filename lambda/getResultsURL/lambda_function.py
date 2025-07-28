@@ -13,11 +13,14 @@ from shared.utils import (
 from shared.indexutils import search_index_entry, get_index_page
 from dynamodb import check_user_in_project
 
-
 # Environment variables
 RESULT_BUCKET = os.environ["SVEP_RESULTS"]
 RESULT_DURATION = int(os.environ["RESULT_DURATION"])
 RESULT_SUFFIX = os.environ["RESULT_SUFFIX"]
+
+# Load FILTERS from environment variable
+FILTERS = json.loads(os.environ.get("FILTERS", "{}"))
+
 s3_resource = boto3.resource("s3")
 s3_client = boto3.client("s3")
 
@@ -58,7 +61,6 @@ def lambda_handler(event, _):
         check_user_in_project(sub, project_name)
 
         if 0 < read_size_from_s3(RESULT_BUCKET, results_path) < 5 * 10**6:
-            # if the file is less than 5MB, return the content directly
             content = read_from_s3(
                 RESULT_BUCKET,
                 results_path,
@@ -73,6 +75,7 @@ def lambda_handler(event, _):
                     "pages": {"-": 1},
                     "page": 1,
                     "content": content.decode("utf-8"),
+                    "filters": FILTERS,
                 },
             )
 
@@ -87,7 +90,6 @@ def lambda_handler(event, _):
             if chromosome not in chromosomes:
                 return bad_request("Invalid chromosome.")
 
-            # position takes priority
             if position:
                 entry = search_index_entry(index, chromosome, int(position))
             else:
@@ -111,10 +113,10 @@ def lambda_handler(event, _):
                     },
                     "page": entry["page"],
                     "content": content.decode("utf-8"),
+                    "filters": FILTERS,
                 },
             )
         else:
-            # TODO remove this when we do not need backward compatibility
             result_url = generate_presigned_get_url(
                 RESULT_BUCKET,
                 results_path,
@@ -128,6 +130,7 @@ def lambda_handler(event, _):
                     "page": 1,
                     "content": None,
                     "chromosome": None,
+                    "filters": FILTERS,
                 },
             )
     except ValueError:
