@@ -826,3 +826,35 @@ module "lambda-batchSubmit" {
     local.python_modules_layer,
   ]
 }
+
+#
+# batchStarter Lambda Function
+#
+module "lambda-batchStarter" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-batchStarter"
+  description         = "Scheduler for sVEP batch submissions"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-batchStarter.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/batchStarter"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    SVEP_BATCH_SUBMIT_QUEUE_URL = aws_sqs_queue.batch_submit_queue.url
+    INIT_QUERY_SNS_TOPIC_ARN    = aws_sns_topic.initQuery.arn
+    LAMBDA_CONCURRENCY_MARGIN   = 200
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}

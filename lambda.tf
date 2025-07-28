@@ -313,3 +313,14 @@ resource "aws_lambda_permission" "cloudwatch_delete_clinical_workflow_invoke_per
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.delete_clinical_trigger.arn
 }
+
+#
+# batchStarter Lambda Function
+#
+resource "aws_lambda_permission" "cloudwatch_batch_starter_invoke_permission" {
+  statement_id  = "CloudwatchBatchStarterAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-batchStarter.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.batch_starter_trigger.arn
+}
