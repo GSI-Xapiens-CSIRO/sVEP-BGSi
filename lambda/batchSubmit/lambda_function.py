@@ -14,6 +14,7 @@ from dynamodb import batch_check_duplicate_job_name
 DPORTAL_BUCKET = os.environ["DPORTAL_BUCKET"]
 SVEP_BATCH_SUBMIT_QUEUE_URL = os.environ["SVEP_BATCH_SUBMIT_QUEUE_URL"]
 DYNAMO_CLINIC_JOBS_TABLE = os.environ["DYNAMO_CLINIC_JOBS_TABLE"]
+MAX_JOBS_PER_SUBMISSION = 100
 
 sqs_client = LoggingClient("sqs")
 dynamodb_client = LoggingClient("dynamodb")
@@ -111,6 +112,9 @@ def lambda_handler(event, _):
         check_user_in_project(sub, project)
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
+
+    if len(jobs) > MAX_JOBS_PER_SUBMISSION:
+        return bad_request("Too many jobs submitted. Maximum is 100.")
 
     try:
         job_names = list(map(lambda x: x["jobName"], jobs))
