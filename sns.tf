@@ -1,3 +1,13 @@
+resource "aws_sns_topic" "initQuery" {
+  name = "svep-backend-initQuery"
+}
+
+resource "aws_sns_topic_subscription" "initQuery" {
+  topic_arn = aws_sns_topic.initQuery.arn
+  protocol  = "lambda"
+  endpoint  = module.lambda-initQuery.function_arn
+}
+
 resource "aws_sns_topic" "queryVCF" {
   name = "svep-backend-queryVCF"
 }

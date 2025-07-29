@@ -13,6 +13,14 @@ resource "aws_lambda_function_recursion_config" "init_query_recursion" {
   recursive_loop = "Allow"
 }
 
+resource "aws_lambda_permission" "initquery_invoke_permission_sns" {
+  statement_id  = "SNSInitQueryAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-initQuery.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.initQuery.arn
+}
+
 #
 # getResults Lambda Function
 #
@@ -22,6 +30,17 @@ resource "aws_lambda_permission" "get_results_invoke_permission" {
   function_name = module.lambda-getResultsURL.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.results.path_part}"
+}
+
+#
+# batchSubmit Lambda Function
+#
+resource "aws_lambda_permission" "batch_submit_invoke_permission" {
+  statement_id  = "APIBatchSubmitAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-batchSubmit.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.batch-submit.path_part}"
 }
 
 #
@@ -293,4 +312,15 @@ resource "aws_lambda_permission" "cloudwatch_delete_clinical_workflow_invoke_per
   function_name = module.lambda-deleteClinicalWorkflow.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.delete_clinical_trigger.arn
+}
+
+#
+# batchStarter Lambda Function
+#
+resource "aws_lambda_permission" "cloudwatch_batch_starter_invoke_permission" {
+  statement_id  = "CloudwatchBatchStarterAllowInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda-batchStarter.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.batch_starter_trigger.arn
 }

@@ -1280,6 +1280,84 @@ data "aws_iam_policy_document" "lambda-formatOutput" {
 
 
 #
+# batchSubmit Lambda Function
+#
+data "aws_iam_policy_document" "lambda-batchSubmit" {
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+    ]
+    resources = [
+      var.dynamo-project-users-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:Query",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+      "${var.dynamo-clinic-jobs-table-arn}/index/${local.clinic_jobs_project_name_index}",
+    ]
+  }
+  statement {
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+    ]
+    resources = [
+      var.dynamo-clinic-jobs-table-arn,
+    ]
+  }
+  statement {
+    actions = [
+      "sqs:SendMessage",
+      "sqs:SendMessageBatch",
+    ]
+    resources = [
+      aws_sqs_queue.batch_submit_queue.arn,
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "lambda-batchStarter" {
+  statement {
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+    ]
+    resources = [
+      aws_sqs_queue.batch_submit_queue.arn,
+    ]
+  }
+  statement {
+    actions = [
+      "sns:Publish",
+    ]
+    resources = [
+      aws_sns_topic.initQuery.arn,
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:GetAccountSettings",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+  statement {
+    actions = [
+      "cloudwatch:GetMetricStatistics",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+}
+
+#
 # vcfstatsGraphic Lambda Function
 #
 data "aws_iam_policy_document" "lambda-qcFigures" {

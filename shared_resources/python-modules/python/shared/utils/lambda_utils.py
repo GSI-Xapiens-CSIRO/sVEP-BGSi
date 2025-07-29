@@ -358,3 +358,26 @@ def s3_list_objects(bucket, prefix):
         continuation_token = response.get("NextContinuationToken")
         kwargs["ContinuationToken"] = continuation_token
     return keys
+
+
+def short_json(obj, max_length=MAX_PRINT_LENGTH):
+    return _truncate_string(json.dumps(obj, default=str), max_length)
+
+
+class LoggingClient:
+    def __init__(self, client):
+        self.client = boto3.client(client)
+        self.client_name = client
+
+    def __getattr__(self, function_name):
+        return lambda *args, **kwargs: self.aws_api_call(function_name, args, kwargs)
+
+    def aws_api_call(self, function_name, args, kwargs):
+        function = getattr(self.client, function_name)
+        call_name = f"{self.client_name}.{function_name}"
+        print(
+            f"Calling {call_name} with args: {short_json(args)} kwargs: {short_json(kwargs)}"
+        )
+        response = function(*args, **kwargs)
+        print(f"Received response from {call_name}: {short_json(response)}")
+        return response

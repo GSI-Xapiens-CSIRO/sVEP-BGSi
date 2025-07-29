@@ -792,3 +792,69 @@ module "lambda-deleteClinicalWorkflow" {
     local.python_modules_layer,
   ]
 }
+
+#
+# batchSubmit Lambda Function
+#
+module "lambda-batchSubmit" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-batchSubmit"
+  description         = "Batch submission of sVEP jobs"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-batchSubmit.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/batchSubmit"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    DPORTAL_BUCKET                       = var.data_portal_bucket_name
+    SVEP_BATCH_SUBMIT_QUEUE_URL          = aws_sqs_queue.batch_submit_queue.url
+    DYNAMO_PROJECT_USERS_TABLE           = var.dynamo-project-users-table
+    DYNAMO_CLINIC_JOBS_TABLE             = var.dynamo-clinic-jobs-table
+    CLINIC_JOBS_TABLE_PROJECT_NAME_INDEX = local.clinic_jobs_project_name_index
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
+
+#
+# batchStarter Lambda Function
+#
+module "lambda-batchStarter" {
+  source = "terraform-aws-modules/lambda/aws"
+
+  function_name       = "svep-backend-batchStarter"
+  description         = "Scheduler for sVEP batch submissions"
+  handler             = "lambda_function.lambda_handler"
+  runtime             = "python3.12"
+  memory_size         = 1792
+  timeout             = 28
+  attach_policy_jsons = true
+  policy_jsons = [
+    data.aws_iam_policy_document.lambda-batchStarter.json
+  ]
+  number_of_policy_jsons = 1
+  source_path            = "${path.module}/lambda/batchStarter"
+
+  tags = var.common-tags
+
+  environment_variables = {
+    SVEP_BATCH_SUBMIT_QUEUE_URL = aws_sqs_queue.batch_submit_queue.url
+    INIT_QUERY_SNS_TOPIC_ARN    = aws_sns_topic.initQuery.arn
+    LAMBDA_CONCURRENCY_MARGIN   = 200
+  }
+
+  layers = [
+    local.python_modules_layer,
+  ]
+}
