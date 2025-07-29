@@ -69,6 +69,7 @@ def parse_sns(event):
     try:
         for field in required_fields:
             result[field] = message[field]
+        result["success"] = True
     except KeyError as e:
         result["error"] = f"Missing expected field in SNS message: {str(e)}"
 
@@ -97,6 +98,7 @@ def parse_api_gateway(event):
     try:
         for field in required_fields:
             result[field] = body[field]
+        result["success"] = True
     except KeyError as e:
         result["error"] = f"Missing expected field in request body: {str(e)}"
 
@@ -141,7 +143,7 @@ def lambda_handler(event, _):
     sub = result["sub"]
     project = result["projectName"]
     job_name = result["jobName"]
-    location = result.get("location")
+    location = result["location"]
 
     try:
         check_user_in_project(sub, project)
