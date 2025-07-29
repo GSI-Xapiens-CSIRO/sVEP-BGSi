@@ -88,13 +88,16 @@ def parse_api_gateway(event):
     result = {
         "success": False,
         "requestId": event.get("requestContext", {}).get("requestId"),
-        "sub": event.get("requestContext", {}).get("authorizer", {}).get("sub"),
+        "sub": event.get("requestContext", {})
+        .get("authorizer", {})
+        .get("claims")
+        .get("sub"),
     }
     if not result["sub"]:
         result["error"] = "User not authenticated."
         return result
 
-    required_fields = ["sub", "projectName", "location", "jobName"]
+    required_fields = ["projectName", "location", "jobName"]
     try:
         for field in required_fields:
             result[field] = body[field]
