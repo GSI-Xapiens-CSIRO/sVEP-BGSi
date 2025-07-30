@@ -592,6 +592,7 @@ module "lambda-getResultsURL" {
       RESULT_SUFFIX              = local.result_suffix
       SVEP_RESULTS               = var.data_portal_bucket_name
       DYNAMO_PROJECT_USERS_TABLE = var.dynamo-project-users-table
+      FILTERS                    = jsonencode(var.filters)
     }
   }
 
