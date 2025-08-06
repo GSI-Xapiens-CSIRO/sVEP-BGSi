@@ -175,23 +175,23 @@ sub handle_failed_execution {
 
     # Check if item exists and job_status is already "failed"
     if (exists $query_json->{Item} && 
-        exists $query_json->{Item}->{job_status} && 
-        $query_json->{Item}->{job_status}->{S} eq "failed") {
+        exists $query_json->{Item}->{svep_status} && 
+        $query_json->{Item}->{svep_status}->{S} eq "failed") {
         return;
     }
 
 
     # Prepare the update expression
-    my $update_expression = "SET #job_status = :job_status, #failed_step = :failed_step, #error_message = :error_message";
+    my $update_expression = "SET #svep_status = :svep_status, #svep_failed_step = :svep_failed_step, #svep_error_message = :svep_error_message";
     my $expression_attribute_names = encode_json({
-        "#job_status"        => "job_status",
-        "#failed_step"   => "failed_step",
-        "#error_message" => "error_message"
+        "#svep_status"        => "svep_status",
+        "#svep_failed_step"   => "svep_failed_step",
+        "#svep_error_message" => "svep_error_message"
     });
     my $expression_attribute_values = encode_json({
-        ":job_status"        => { "S" => "failed" },
-        ":failed_step"   => { "S" => $failed_step },
-        ":error_message" => { "S" => $error_message }
+        ":svep_job_status"        => { "S" => "failed" },
+        ":svep_failed_step"   => { "S" => $failed_step },
+        ":svep_error_message" => { "S" => $error_message }
     });
 
     # Update the item in DynamoDB

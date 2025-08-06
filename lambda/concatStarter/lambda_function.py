@@ -46,7 +46,7 @@ def lambda_handler(event, _):
         if ready_for_concat(request_id):
             job = query_clinic_job(request_id)
             # do not start concatenation if the job has already failed
-            if job.get("job_status").get("S") == "failed":
+            if job.get("svep_status").get("S") == "failed":
                 print(f"Job failed. Aborting")
                 return
             print("All marker files removed, starting concatenation")

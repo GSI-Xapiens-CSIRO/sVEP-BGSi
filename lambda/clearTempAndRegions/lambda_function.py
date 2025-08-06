@@ -71,8 +71,8 @@ def lambda_handler(event, context):
         event = json.loads(sns_message)
     for record in event["Records"]:
         job_id = record["dynamodb"]["Keys"]["job_id"]["S"]
-        old_job_status = record["dynamodb"]["OldImage"].get("job_status", {}).get("S")
-        new_job_status = record["dynamodb"]["NewImage"].get("job_status", {}).get("S")
+        old_job_status = record["dynamodb"]["OldImage"].get("svep_status", {}).get("S")
+        new_job_status = record["dynamodb"]["NewImage"].get("svep_status", {}).get("S")
         if new_job_status != old_job_status and new_job_status in CLEAN_JOB_STATUS:
             print(f"Job {job_id} {new_job_status}. Cleaning regions in buckets.")
             try:

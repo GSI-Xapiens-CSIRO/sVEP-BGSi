@@ -80,7 +80,7 @@ def lambda_handler(event, _):
                 user_id = job.get("uid", {}).get("S")
                 project_name = job.get("project_name", {}).get("S")
                 input_vcf = job.get("input_vcf", {}).get("S")
-                job_status = job.get("job_status", {}).get("S")
+                job_status = job.get("svep_status", {}).get("S")
 
                 print(f"[Cron Jobs]: Cleaning bucket for job {job_id}.")
                 clean_with_retries(SVEP_TEMP, job_id)

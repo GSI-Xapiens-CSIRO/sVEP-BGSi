@@ -36,7 +36,7 @@ def scan_pending_jobs():
     while True:
         scan_kwargs = {
             "TableName": DYNAMO_CLINIC_JOBS_TABLE,
-            "FilterExpression": "job_status = :status AND created_at < :threshold",
+            "FilterExpression": "svep_status = :status AND created_at < :threshold",
             "ExpressionAttributeValues": {
                 ":status": {"S": "pending"},
                 ":threshold": {"S": threshold_time},
@@ -137,11 +137,9 @@ def update_clinic_job(
     reference_versions={},
     skip_email=False,
 ):
-    job_status = job_status if job_status is not None else "unknown"
-    update_fields = {
-        "job_status": {"S": job_status},
-    }
-
+    update_fields = {}
+    if job_status is not None:
+        update_fields["svep_status"] = {"S": job_status}
     if project_name is not None:
         update_fields["project_name"] = {"S": project_name}
     if job_name is not None:
@@ -153,9 +151,9 @@ def update_clinic_job(
     if input_vcf is not None:
         update_fields["input_vcf"] = {"S": input_vcf}
     if failed_step is not None:
-        update_fields["failed_step"] = {"S": failed_step}
+        update_fields["svep_failed_step"] = {"S": failed_step}
     if error_message is not None:
-        update_fields["error_message"] = {"S": error_message}
+        update_fields["svep_error_message"] = {"S": error_message}
     if user_id is not None:
         update_fields["uid"] = {"S": user_id}
     if reference_versions:

@@ -27,7 +27,7 @@ def lambda_handler(event, _):
     # in handle_failed_execution already queried the job using query_clinic_job
     job = (
         {
-            "job_status": {"S": job_status},
+            "svep_status": {"S": job_status},
             "project_name": {"S": project_name},
             "input_vcf": {"S": input_vcf},
         }
