@@ -8,6 +8,7 @@ class Classification(Enum):
     GERMLINE = "Germline"
     SOMATIC = "Somatic - Clinical impact"
     ONCOGENICITY = "Somatic - Oncogenicity"
+    NO_CLASSIFICATION = "No classification"
 
 
 def report(x, **kwargs):
@@ -118,6 +119,10 @@ def print_bed_lines(child, skipped, processed_produced):
             classification := base_classification.find("OncogenicityClassification")
         ) is not None:
             classification_type = Classification.ONCOGENICITY
+        elif (
+            classification := base_classification.find("NoClassification")
+        ) is not None:
+            classification_type = Classification.NO_CLASSIFICATION
         else:
             raise Exception("Unexpected classification")
         description = classification.find("Description")
@@ -128,6 +133,7 @@ def print_bed_lines(child, skipped, processed_produced):
             if classification_type in (
                 Classification.GERMLINE,
                 Classification.ONCOGENICITY,
+                Classification.NO_CLASSIFICATION,
             ):
                 this_clin_sig = description.text
             elif classification_type == Classification.SOMATIC:
