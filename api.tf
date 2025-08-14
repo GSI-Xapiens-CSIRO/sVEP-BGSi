@@ -104,7 +104,7 @@ resource "aws_api_gateway_integration" "submit-patch" {
   resource_id             = aws_api_gateway_method.submit-patch.resource_id
   http_method             = aws_api_gateway_method.submit-patch.http_method
   type                    = "AWS_PROXY"
-  uri                     = module.lambda-initQuery.function_invoke_arn
+  uri                     = module.lambda-initQuery.lambda_function_invoke_arn
   integration_http_method = "POST"
 }
 
@@ -149,7 +149,7 @@ resource "aws_api_gateway_integration" "submit-post" {
   resource_id             = aws_api_gateway_method.submit-post.resource_id
   http_method             = aws_api_gateway_method.submit-post.http_method
   type                    = "AWS_PROXY"
-  uri                     = module.lambda-initQuery.function_invoke_arn
+  uri                     = module.lambda-initQuery.lambda_function_invoke_arn
   integration_http_method = "POST"
 }
 
@@ -261,7 +261,7 @@ resource "aws_api_gateway_integration" "results-get" {
   resource_id             = aws_api_gateway_method.results-get.resource_id
   http_method             = aws_api_gateway_method.results-get.http_method
   type                    = "AWS_PROXY"
-  uri                     = module.lambda-getResultsURL.function_invoke_arn
+  uri                     = module.lambda-getResultsURL.lambda_function_invoke_arn
   integration_http_method = "POST"
 }
 

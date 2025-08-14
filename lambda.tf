@@ -4,19 +4,19 @@
 resource "aws_lambda_permission" "init_query_invoke_permission" {
   statement_id  = "APIInitQueryAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-initQuery.function_name
+  function_name = module.lambda-initQuery.lambda_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.submit.path_part}"
 }
 resource "aws_lambda_function_recursion_config" "init_query_recursion" {
-  function_name  = module.lambda-initQuery.function_name
+  function_name  = module.lambda-initQuery.lambda_function_name
   recursive_loop = "Allow"
 }
 
 resource "aws_lambda_permission" "initquery_invoke_permission_sns" {
   statement_id  = "SNSInitQueryAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-initQuery.function_name
+  function_name = module.lambda-initQuery.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.initQuery.arn
 }
@@ -27,7 +27,7 @@ resource "aws_lambda_permission" "initquery_invoke_permission_sns" {
 resource "aws_lambda_permission" "get_results_invoke_permission" {
   statement_id  = "APIGetResultsAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-getResultsURL.function_name
+  function_name = module.lambda-getResultsURL.lambda_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.VPApi.execution_arn}/*/*/${aws_api_gateway_resource.results.path_part}"
 }
@@ -49,12 +49,12 @@ resource "aws_lambda_permission" "batch_submit_invoke_permission" {
 resource "aws_lambda_permission" "query_vcf_invoke_permission" {
   statement_id  = "SNSQueryVCFAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-queryVCF.function_name
+  function_name = module.lambda-queryVCF.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.queryVCF.arn
 }
 resource "aws_lambda_function_recursion_config" "query_vcf_recursion" {
-  function_name  = module.lambda-queryVCF.function_name
+  function_name  = module.lambda-queryVCF.lambda_function_name
   recursive_loop = "Allow"
 }
 
@@ -64,7 +64,7 @@ resource "aws_lambda_function_recursion_config" "query_vcf_recursion" {
 resource "aws_lambda_permission" "query_vcf_submit_invoke_permission" {
   statement_id  = "SNSQueryVCFSubmitAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-queryVCFsubmit.function_name
+  function_name = module.lambda-queryVCFsubmit.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.queryVCFsubmit.arn
 }
@@ -75,12 +75,12 @@ resource "aws_lambda_permission" "query_vcf_submit_invoke_permission" {
 resource "aws_lambda_permission" "query_gtf_invoke_permission" {
   statement_id  = "SNSQueryGTFAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-queryGTF.function_name
+  function_name = module.lambda-queryGTF.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.queryGTF.arn
 }
 resource "aws_lambda_function_recursion_config" "query_gtf_recursion" {
-  function_name  = module.lambda-queryGTF.function_name
+  function_name  = module.lambda-queryGTF.lambda_function_name
   recursive_loop = "Allow"
 }
 
@@ -107,7 +107,7 @@ resource "aws_lambda_function_recursion_config" "plugin_consequence_recursion" {
 resource "aws_lambda_permission" "plugin_clinvar_invoke_permission" {
   statement_id  = "SNSPluginClinvarAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-pluginClinvar.function_name
+  function_name = module.lambda-pluginClinvar.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pluginClinvar.arn
 }
@@ -119,7 +119,7 @@ resource "aws_lambda_permission" "plugin_clinvar_invoke_permission" {
 resource "aws_lambda_permission" "concat_invoke_permission" {
   statement_id  = "SNSConcatAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-concat.function_name
+  function_name = module.lambda-concat.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.concat.arn
 }
@@ -130,12 +130,12 @@ resource "aws_lambda_permission" "concat_invoke_permission" {
 resource "aws_lambda_permission" "concat_starter_invoke_permission" {
   statement_id  = "SNSConcatStarterAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-concatStarter.function_name
+  function_name = module.lambda-concatStarter.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.concatStarter.arn
 }
 resource "aws_lambda_function_recursion_config" "concat_starter_recursion" {
-  function_name  = module.lambda-concatStarter.function_name
+  function_name  = module.lambda-concatStarter.lambda_function_name
   recursive_loop = "Allow"
 }
 
@@ -145,12 +145,12 @@ resource "aws_lambda_function_recursion_config" "concat_starter_recursion" {
 resource "aws_lambda_permission" "create_pages_invoke_permission" {
   statement_id  = "SNSCreatePagesAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-createPages.function_name
+  function_name = module.lambda-createPages.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.createPages.arn
 }
 resource "aws_lambda_function_recursion_config" "create_pages_recursion" {
-  function_name  = module.lambda-createPages.function_name
+  function_name  = module.lambda-createPages.lambda_function_name
   recursive_loop = "Allow"
 }
 
@@ -160,7 +160,7 @@ resource "aws_lambda_function_recursion_config" "create_pages_recursion" {
 resource "aws_lambda_permission" "concat_pages_invoke_permission" {
   statement_id  = "SNSConcatPagesAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-concatPages.function_name
+  function_name = module.lambda-concatPages.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.concatPages.arn
 }
@@ -220,7 +220,7 @@ resource "aws_lambda_permission" "clearTempAndRegions_invoke_permission" {
 resource "aws_lambda_permission" "plugin_send_job_email_invoke_permission" {
   statement_id  = "SNSSendJobEmailAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-sendJobEmail.function_name
+  function_name = module.lambda-sendJobEmail.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.sendJobEmail.arn
 }
@@ -231,7 +231,7 @@ resource "aws_lambda_permission" "plugin_send_job_email_invoke_permission" {
 resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
   statement_id  = "SNSPluginGnomadAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-pluginGnomad.function_name
+  function_name = module.lambda-pluginGnomad.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pluginGnomad.arn
 
@@ -242,7 +242,7 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_invoke_permission" {
 resource "aws_lambda_permission" "plugin_plugin_gnomad_one_kg_invoke_permission" {
   statement_id  = "SNSPluginGnomadAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-pluginGnomadOneKG.function_name
+  function_name = module.lambda-pluginGnomadOneKG.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pluginGnomadOneKG.arn
 
@@ -253,7 +253,7 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_one_kg_invoke_permission"
 resource "aws_lambda_permission" "plugin_plugin_gnomad_constraint_invoke_permission" {
   statement_id  = "SNSPluginGnomadAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-pluginGnomadConstraint.function_name
+  function_name = module.lambda-pluginGnomadConstraint.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.pluginGnomadConstraint.arn
 
@@ -265,7 +265,7 @@ resource "aws_lambda_permission" "plugin_plugin_gnomad_constraint_invoke_permiss
 resource "aws_lambda_permission" "formatOutput_invoke_permission" {
   statement_id  = "SNSformatOutputAllowInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda-formatOutput.function_name
+  function_name = module.lambda-formatOutput.lambda_function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.formatOutput.arn
 }
