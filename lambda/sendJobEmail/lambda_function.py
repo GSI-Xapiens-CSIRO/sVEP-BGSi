@@ -36,7 +36,7 @@ def lambda_handler(event, _):
     )
 
     if job:
-        job_status = job.get("job_status", {}).get("S", job_status)
+        job_status = job.get("svep_status", {}).get("S", job_status)
         project_name = job.get("project_name", {}).get("S", project_name)
         input_vcf = job.get("input_vcf", {}).get("S", input_vcf)
 
