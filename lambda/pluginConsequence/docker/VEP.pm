@@ -189,7 +189,7 @@ sub handle_failed_execution {
         "#svep_error_message" => "svep_error_message"
     });
     my $expression_attribute_values = encode_json({
-        ":svep_job_status"        => { "S" => "failed" },
+        ":svep_status"        => { "S" => "failed" },
         ":svep_failed_step"   => { "S" => $failed_step },
         ":svep_error_message" => { "S" => $error_message }
     });
