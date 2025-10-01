@@ -30,6 +30,10 @@ mapping_formula = {
         "title": "Genotype Quality",
         "image_title": f"GQ Score Histogram",
         "identifier": "gq-score-histogram",
+        "additional_args": [
+            "--macro",
+            "/var/task/gq_monkey_patch.py",
+        ],
     },
     "low_var": {
         "formula": "QUAL ~ DPs",
