@@ -2,7 +2,7 @@ from clinvar import update_clinvar
 from ensembl import process_ensembl_gtf, process_ensembl_fasta, update_ensembl
 from constraints import process_constraints, update_constraints
 from mirna import process_mirna_gff, update_mirna
-from shared.utils import get_sns_event
+from shared.utils import get_sns_event, clear_tmp
 from version_checks import (
     check_clinvar_version,
     check_ensembl_version,
@@ -12,6 +12,7 @@ from version_checks import (
 
 
 def lambda_handler(event, _):
+    clear_tmp()
     if event.get("source") == "aws.events":
         clinvar_outdated, clinvar_version = check_clinvar_version()
         ensembl_outdated, ensembl_version = check_ensembl_version()

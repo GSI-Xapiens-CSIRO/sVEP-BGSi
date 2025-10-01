@@ -7,6 +7,7 @@ from vcfstats.instance import Instance
 
 BIN_WIDTH = 0.01
 MAX_SAMPLES = 1000
+DECIMAL_PLACES = int(-math.log10(BIN_WIDTH))
 
 
 # This should show a violin plot of allele frequencies, which will have
@@ -20,7 +21,7 @@ old_instance_plot = Instance.plot
 def new_instance_plot(self, *args, **kwargs):
     contig_aafs = defaultdict(Counter)
     for aaf, contig in self.data:
-        contig_aafs[contig][aaf] += 1
+        contig_aafs[contig][round(aaf, DECIMAL_PLACES)] += 1
     for contig, aaf_counts in contig_aafs.items():
         total = aaf_counts.total()
         if total > MAX_SAMPLES:
