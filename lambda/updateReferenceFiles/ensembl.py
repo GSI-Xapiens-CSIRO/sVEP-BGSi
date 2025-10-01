@@ -58,6 +58,7 @@ def process_ensembl_gtf(gtf_url):
 
     filtered_gtf_file = prepend_tmp(f"filtered_{gtf_file}")
     _filter(gtf_file, filtered_gtf_file, "gene")
+    _remove(gtf_file)
 
     # GTF
     sorted_filtered_gtf_file = prepend_tmp(f"sorted_{filtered_gtf_file}")

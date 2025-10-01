@@ -8,6 +8,8 @@ import boto3
 from botocore.exceptions import ClientError
 
 DYNAMO_SVEP_REFERENCES_TABLE = os.environ.get("DYNAMO_SVEP_REFERENCES_TABLE")
+MAX_MEMORY = int(os.environ.get("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", 3008))
+
 
 s3 = boto3.resource("s3")
 dynamodb = boto3.client("dynamodb")
@@ -143,14 +145,15 @@ def _filter(input_file, output_file, keyword):
 
 
 def _sort(input_file, output_file):
-    command = f"sort -k1,1d -k4,4n -k5,5n {input_file} > {output_file}"
+    command = f"sort -k1,1d -k4,4n -k5,5n -S{MAX_MEMORY-512}M --compress-program=gzip {input_file} > {output_file}"
     execute_subprocess(command)
 
 
 def _bgzip(input_file, output_file):
     command = f"bgzip -c {input_file} > {output_file}"
     execute_subprocess(command)
-    
+
+
 def _gzip_dc(input_file):
     command = f"gzip -d {input_file}"
     execute_subprocess(command)
