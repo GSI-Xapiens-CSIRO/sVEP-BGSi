@@ -4,7 +4,7 @@ import boto3
 import json
 from uuid import uuid4
 from shared.apiutils import bad_request, bundle_response
-from shared.utils import get_sns_event, generate_presigned_get_url, _gzip_dc
+from shared.utils import get_sns_event, generate_presigned_get_url
 
 
 s3_client = boto3.client("s3")
