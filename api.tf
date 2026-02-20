@@ -64,7 +64,7 @@ resource "aws_api_gateway_integration_response" "submit-options" {
   status_code = aws_api_gateway_method_response.submit-options.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,x-permissions-token'"
     "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,PATCH,POST'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
@@ -221,7 +221,7 @@ resource "aws_api_gateway_integration_response" "results-options" {
   status_code = aws_api_gateway_method_response.results-options.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,x-permissions-token'"
     "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,GET'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
@@ -378,7 +378,7 @@ resource "aws_api_gateway_integration_response" "batch-submit-options" {
   status_code = aws_api_gateway_method_response.batch-submit-options.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,x-permissions-token'"
     "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,PATCH,POST'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
@@ -490,7 +490,7 @@ resource "aws_api_gateway_integration_response" "vcfstats-options" {
   status_code = aws_api_gateway_method_response.vcfstats-options.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,x-permissions-token'"
     "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,PATCH,POST'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
