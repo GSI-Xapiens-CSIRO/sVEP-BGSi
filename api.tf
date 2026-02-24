@@ -82,6 +82,11 @@ resource "aws_api_gateway_method" "submit-patch" {
   http_method   = "PATCH"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 
 resource "aws_api_gateway_method_response" "submit-patch" {
@@ -127,6 +132,11 @@ resource "aws_api_gateway_method" "submit-post" {
   http_method   = "POST"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 
 resource "aws_api_gateway_method_response" "submit-post" {
@@ -239,6 +249,11 @@ resource "aws_api_gateway_method" "results-get" {
   http_method   = "GET"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 
 resource "aws_api_gateway_method_response" "results-get" {
@@ -293,6 +308,11 @@ resource "aws_api_gateway_method" "batch-submit-post" {
   http_method   = "POST"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 
 resource "aws_api_gateway_method_response" "batch-submit-post" {
@@ -406,6 +426,11 @@ resource "aws_api_gateway_method" "vcfstats-post" {
   http_method   = "POST"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 resource "aws_api_gateway_method_response" "vcfstats-post" {
   rest_api_id = aws_api_gateway_method.vcfstats-post.rest_api_id
@@ -508,6 +533,11 @@ resource "aws_api_gateway_method" "vcfstats-patch" {
   http_method   = "PATCH"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+  
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 
 resource "aws_api_gateway_method_response" "vcfstats-patch" {

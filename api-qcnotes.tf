@@ -13,6 +13,11 @@ resource "aws_api_gateway_method" "qcnotes-post" {
   http_method   = "POST"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 
 resource "aws_api_gateway_method_response" "qcnotes-post" {
@@ -116,6 +121,11 @@ resource "aws_api_gateway_method" "qcnotes-get" {
   http_method   = "GET"
   authorization = "COGNITO_USER_POOLS"
   authorizer_id = aws_api_gateway_authorizer.svep_user_pool_authorizer.id
+  
+  request_parameters = {
+    "method.request.header.Authorization"       = true
+    "method.request.header.X-Permissions-Token" = true
+  }
 }
 
 resource "aws_api_gateway_method_response" "qcnotes-get" {
