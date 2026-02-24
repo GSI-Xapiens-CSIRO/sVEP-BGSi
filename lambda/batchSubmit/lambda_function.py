@@ -8,6 +8,7 @@ from uuid import uuid4 as uuid
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project, update_clinic_job
 from shared.utils import LoggingClient
+from shared.utils import require_permission, PermissionError
 from dynamodb import batch_check_duplicate_job_name
 
 
@@ -104,14 +105,35 @@ def lambda_handler(event, _):
     event_body = event.get("body")
     if not event_body:
         return bad_request("No body sent with request.")
+
     try:
         body_dict = json.loads(event_body)
         project = body_dict["projectName"]
         jobs = body_dict["jobs"]
+    except (ValueError, KeyError) as e:
+        return bad_request(f"Error parsing request body, Expected JSON with 'projectName' and 'jobs'. {str(e)}")
 
+    try:
         check_user_in_project(sub, project)
-    except ValueError:
-        return bad_request("Error parsing request body, Expected JSON.")
+    except AssertionError:
+        return bundle_response(
+            403,
+            {
+                "Success": False,
+                "Message": "User not authorised to access this project.",
+            },
+        )
+
+    try:
+        require_permission(event, "clinical_workflow_execution.create")
+    except PermissionError as e:
+        return bundle_response(
+            403,
+            {
+                "Success": False,
+                "Message": str(e),
+            },
+        )
 
     if len(jobs) > MAX_JOBS_PER_SUBMISSION:
         return bad_request("Too many jobs submitted. Maximum is 100.")

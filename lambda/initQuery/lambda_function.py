@@ -22,11 +22,16 @@ from shared.dynamodb import (
     update_clinic_job,
 )
 from dynamodb import does_clinic_job_exist_by_name
+from shared.utils import (
+    require_permission,
+    require_any_permission,
+    PermissionError,
+)
 
 # Environment variables
 CONCAT_STARTER_SNS_TOPIC_ARN = os.environ["CONCAT_STARTER_SNS_TOPIC_ARN"]
 SLICE_SIZE_MBP = int(os.environ["SLICE_SIZE_MBP"])
-os.environ["PATH"] += f':{os.environ["LAMBDA_TASK_ROOT"]}'
+os.environ["PATH"] += f":{os.environ['LAMBDA_TASK_ROOT']}"
 
 REGIONS = chrom_matching.get_regions(SLICE_SIZE_MBP)
 REFERENCE_IDS = ["clinvar_version", "ensembl_version", "gnomad_constraints_version"]
@@ -153,6 +158,25 @@ def lambda_handler(event, _):
     except Exception as e:
         result["error"] = f"Error checking user in project: {str(e)}"
         return handle_init_failure(result, is_batch_job)
+
+    # 🔐 Only enforce permission for API Gateway calls
+    if not is_batch_job:
+        try:
+            require_any_permission(
+                event,
+                [
+                    "clinical_workflow_execution.create",
+                    "clinical_workflow_execution.update",
+                ],
+            )
+        except PermissionError as e:
+            return bundle_response(
+                403,
+                {
+                    "Success": False,
+                    "Message": str(e),
+                },
+            )
 
     job_name_exists = (not is_batch_job) and does_clinic_job_exist_by_name(
         job_name.lower(), project

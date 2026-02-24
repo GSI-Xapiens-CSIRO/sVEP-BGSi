@@ -3,6 +3,7 @@ import os
 import boto3
 import json
 from shared.apiutils import bad_request, bundle_response
+from shared.utils import require_permission, PermissionError
 
 
 s3_client = boto3.client("s3")
@@ -53,16 +54,26 @@ def lambda_handler(event, context):
     try:
         match method:
             case "GET":
+                require_permission(event, "generate_report.read")
                 project_name = event["queryStringParameters"]["projectName"]
                 file_name = event["queryStringParameters"]["fileName"]
                 return get_notes(project_name, file_name)
 
             case "POST":
+                require_permission(event, "generate_report.update")
                 project_name = event["queryStringParameters"]["projectName"]
                 file_name = event["queryStringParameters"]["fileName"]
                 notes = json.loads(event["body"] or "\"\"")
                 return update_notes(project_name, file_name, notes)
 
+    except PermissionError as e:
+        return bundle_response(
+            403,
+            {
+                "success": False,
+                "error": str(e),
+            },
+        )
     except Exception as e:
         print(f"Error parsing request body: {str(e)}")
         return bundle_response(
