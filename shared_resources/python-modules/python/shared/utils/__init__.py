@@ -44,3 +44,8 @@ from .reference_utils import (
     _tabix_index,
 )
 from .cognito_utils import get_cognito_user_by_id
+from .auth import (
+    PermissionError,
+    require_permission,
+    require_any_permission
+)
