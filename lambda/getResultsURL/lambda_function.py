@@ -9,6 +9,8 @@ from shared.apiutils import bad_request, bundle_response
 from shared.utils import (
     print_event,
     generate_presigned_get_url,
+    require_permission, 
+    PermissionError
 )
 from shared.indexutils import search_index_entry, get_index_page
 from dynamodb import check_user_in_project
@@ -50,6 +52,7 @@ def lambda_handler(event, _):
     print_event(event, max_length=None)
 
     try:
+        require_permission(event, "clinic_workflow_result.read")
         sub = event["requestContext"]["authorizer"]["claims"]["sub"]
         request_id = event["queryStringParameters"]["request_id"]
         project_name = event["queryStringParameters"]["project_name"]
@@ -133,6 +136,14 @@ def lambda_handler(event, _):
                     "filters": FILTERS,
                 },
             )
+    except PermissionError as e:
+        return bundle_response(
+            403,
+            {
+                "success": False,
+                "error": str(e),
+            },
+        )
     except ValueError:
         return bad_request("Error parsing request body, Expected JSON.")
     except KeyError:
