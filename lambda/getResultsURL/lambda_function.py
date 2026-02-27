@@ -10,7 +10,7 @@ from shared.utils import (
     print_event,
     generate_presigned_get_url,
     require_permission, 
-    PermissionError
+    InsufficientPermissionError
 )
 from shared.indexutils import search_index_entry, get_index_page
 from dynamodb import check_user_in_project
@@ -136,7 +136,7 @@ def lambda_handler(event, _):
                     "filters": FILTERS,
                 },
             )
-    except PermissionError as e:
+    except InsufficientPermissionError as e:
         return bundle_response(
             403,
             {

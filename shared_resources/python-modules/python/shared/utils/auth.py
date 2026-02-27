@@ -6,7 +6,7 @@ import requests
 from functools import lru_cache
 
 
-class PermissionError(Exception):
+class InsufficientPermissionError(Exception):
     pass
 
 
@@ -17,7 +17,7 @@ def get_cognito_public_keys():
     user_pool_id = os.environ.get("COGNITO_USER_POOL_ID")
     
     if not user_pool_id:
-        raise PermissionError("COGNITO_USER_POOL_ID environment variable not set")
+        raise InsufficientPermissionError("COGNITO_USER_POOL_ID environment variable not set")
     
     jwks_url = f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
     response = requests.get(jwks_url, timeout=5)
@@ -34,7 +34,7 @@ def get_signing_key(token: str):
         if key["kid"] == unverified_header["kid"]:
             return jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key))
     
-    raise PermissionError("Unable to find matching signing key")
+    raise InsufficientPermissionError("Unable to find matching signing key")
 
 
 def decode_jwt(token: str) -> dict:
@@ -48,9 +48,9 @@ def decode_jwt(token: str) -> dict:
             options={"verify_aud": False}  # Cognito doesn't always set aud
         )
     except jwt.ExpiredSignatureError:
-        raise PermissionError("Token has expired")
+        raise InsufficientPermissionError("Token has expired")
     except jwt.InvalidTokenError as e:
-        raise PermissionError(f"Invalid token: {e}")
+        raise InsufficientPermissionError(f"Invalid token: {e}")
 
 
 # Keep for backward compatibility but mark as unsafe
@@ -62,7 +62,7 @@ def decode_jwt_no_verify(token: str) -> dict:
     """
     parts = token.split(".")
     if len(parts) < 2:
-        raise PermissionError("Invalid token format")
+        raise InsufficientPermissionError("Invalid token format")
 
     payload = parts[1]
     padding = "=" * (-len(payload) % 4)
@@ -76,14 +76,14 @@ def get_permissions_from_event(event: dict) -> list:
     token = headers.get("X-Permissions-Token") or headers.get("x-permissions-token")
 
     if not token:
-        raise PermissionError("Missing X-Permissions-Token header")
+        raise InsufficientPermissionError("Missing X-Permissions-Token header")
 
     # Use verified decoding
     payload = decode_jwt(token)
 
     permissions = payload.get("permissions")
     if not isinstance(permissions, list):
-        raise PermissionError("Invalid permissions format")
+        raise InsufficientPermissionError("Invalid permissions format")
 
     return permissions
 
@@ -92,7 +92,7 @@ def require_permission(event: dict, permission: str):
     permissions = get_permissions_from_event(event)
 
     if permission not in permissions:
-        raise PermissionError(f"Missing permission: {permission}")
+        raise InsufficientPermissionError(f"Missing permission: {permission}")
 
 
 def require_any_permission(event: dict, required_permissions: list):
@@ -100,6 +100,6 @@ def require_any_permission(event: dict, required_permissions: list):
     permissions = get_permissions_from_event(event)
 
     if not any(perm in permissions for perm in required_permissions):
-        raise PermissionError(
+        raise InsufficientPermissionError(
             f"Missing permission: {' or '.join(required_permissions)}"
         )

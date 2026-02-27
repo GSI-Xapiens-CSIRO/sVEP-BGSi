@@ -8,7 +8,7 @@ from uuid import uuid4 as uuid
 from shared.apiutils import bad_request, bundle_response
 from shared.dynamodb import check_user_in_project, update_clinic_job
 from shared.utils import LoggingClient
-from shared.utils import require_permission, PermissionError
+from shared.utils import require_permission, InsufficientPermissionError
 from dynamodb import batch_check_duplicate_job_name
 
 
@@ -126,7 +126,7 @@ def lambda_handler(event, _):
 
     try:
         require_permission(event, "clinical_workflow_execution.create")
-    except PermissionError as e:
+    except InsufficientPermissionError as e:
         return bundle_response(
             403,
             {
