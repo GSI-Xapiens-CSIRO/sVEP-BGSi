@@ -32,12 +32,28 @@ def overlap_feature(orc, all_coords, timer):
         loc = f"{orc.ref_chrom}:{pos}-{pos}"
         local_file = f"/tmp/{REFERENCE_GENOME}"
         args = ["tabix", local_file, loc]
+        
+        # Print tabix command
+        print(f"[DEBUG] Running tabix command: {' '.join(args)}")
+        print(f"[DEBUG] Query location: {loc}")
+        
         query_process = CheckedProcess(args)
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
         query_process.check()
+        
+        # Print complete main_data
+        print(f"[DEBUG] ===== MAIN_DATA COMPLETE OUTPUT ({len(main_data)} lines) =====")
+        for i, line in enumerate(main_data):
+            print(f"[DEBUG] main_data[{i}]: {line}")
+        print(f"[DEBUG] ===== END MAIN_DATA =====")
+        
+        # Print raw tabix output summary
+        print(f"[DEBUG] Raw tabix output summary: {len(main_data)} total lines")
+        
         records_processed += len(main_data)
         # Filter out lines that do not contain the gene name
         if FILTER_GENES:
+            print(f"[DEBUG] Filtering with genes: {FILTER_GENES}")
             main_data = [
                 line
                 for line in main_data
@@ -46,14 +62,30 @@ def overlap_feature(orc, all_coords, timer):
                     and (line[start : line.find('"', start)] in FILTER_GENES)
                 )
             ]
+            print(f"[DEBUG] After filtering: {len(main_data)} lines passed")
+        
         if main_data:
+            # Check for MANE_Select tag in any of the GTF lines
+            has_mane_select = any('tag "MANE_Select"' in line for line in main_data)
+            
             data["data"] = main_data
+            data["MANE_Select"] = has_mane_select
             records_passed += len(main_data)
             cur_size = len(json.dumps(data, separators=(",", ":"))) + 1
+            
+            # Print processed data info
+            print(f"[DEBUG] Data structure for position {pos}:")
+            print(f"  - Records passed: {len(main_data)}")
+            print(f"  - MANE_Select: {has_mane_select}")
+            print(f"  - Current size: {cur_size} bytes")
+            print(f"  - Total size so far: {tot_size} bytes")
+            print(f"  - First data entry: {main_data[0][:200] if main_data else 'None'}...")
+            
             tot_size += cur_size
             if tot_size < PAYLOAD_SIZE:
                 results.append(data)
             else:
+                print(f"[DEBUG] Payload size limit reached ({tot_size} >= {PAYLOAD_SIZE}), sending data to plugins")
                 send_data_to_plugins(orc, results)
                 results = [data]
                 tot_size = cur_size

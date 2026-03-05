@@ -25,6 +25,7 @@ locals {
     "codons",
     "strand",
     "transcriptSupportLevel",
+    "MANE_Select",
     "ref",
     "gt",
     "qual",
