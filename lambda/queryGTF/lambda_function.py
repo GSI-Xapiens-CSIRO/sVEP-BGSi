@@ -32,9 +32,12 @@ def overlap_feature(orc, all_coords, timer):
         loc = f"{orc.ref_chrom}:{pos}-{pos}"
         local_file = f"/tmp/{REFERENCE_GENOME}"
         args = ["tabix", local_file, loc]
+        
         query_process = CheckedProcess(args)
         main_data = query_process.stdout.read().rstrip("\n").split("\n")
         query_process.check()
+        
+        
         records_processed += len(main_data)
         # Filter out lines that do not contain the gene name
         if FILTER_GENES:
@@ -46,10 +49,12 @@ def overlap_feature(orc, all_coords, timer):
                     and (line[start : line.find('"', start)] in FILTER_GENES)
                 )
             ]
+        
         if main_data:
             data["data"] = main_data
             records_passed += len(main_data)
             cur_size = len(json.dumps(data, separators=(",", ":"))) + 1
+       
             tot_size += cur_size
             if tot_size < PAYLOAD_SIZE:
                 results.append(data)

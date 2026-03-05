@@ -25,6 +25,7 @@ locals {
     "codons",
     "strand",
     "transcriptSupportLevel",
+    "MANE_Select",
     "ref",
     "gt",
     "qual",
@@ -85,7 +86,14 @@ module "lambda-initQuery" {
     data.aws_iam_policy_document.lambda-initQuery.json
   ]
   number_of_policy_jsons = 1
-  source_path            = "${path.module}/lambda/initQuery"
+  
+  source_path = [
+    {
+      path             = "${path.module}/lambda/initQuery"
+      pip_requirements = true
+    }
+  ]
+  
   tags                   = var.common-tags
 
   environment_variables = {
