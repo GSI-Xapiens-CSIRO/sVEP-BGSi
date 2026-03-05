@@ -376,6 +376,8 @@ sub parse_vcf {
           $value =~ s/"//g;
           $info{$key} = $value;
       }
+      # Check for MANE_Select tag
+      my $has_mane_select = ($rows[8] =~ /tag "MANE_Select"/) ? 'True' : 'False';
       #print Dumper %info;
       foreach my $feature(@features){
         my @featurerows = (split /\t/, $feature, -1);
@@ -724,6 +726,7 @@ sub parse_vcf {
         codons => ($tv->{feature}{codons} || '-'),
         strand => $strand,
         transcriptSupportLevel => ($info{transcript_support_level}|| '-'),
+        MANE_Select => $has_mane_select,
         ref => $ref,
       );
       delete $record{"data"};  # This particular value is very large and no longer needed

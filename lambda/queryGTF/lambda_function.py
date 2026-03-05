@@ -65,18 +65,13 @@ def overlap_feature(orc, all_coords, timer):
             print(f"[DEBUG] After filtering: {len(main_data)} lines passed")
         
         if main_data:
-            # Check for MANE_Select tag in any of the GTF lines
-            has_mane_select = any('tag "MANE_Select"' in line for line in main_data)
-            
             data["data"] = main_data
-            data["MANE_Select"] = has_mane_select
             records_passed += len(main_data)
             cur_size = len(json.dumps(data, separators=(",", ":"))) + 1
             
             # Print processed data info
             print(f"[DEBUG] Data structure for position {pos}:")
             print(f"  - Records passed: {len(main_data)}")
-            print(f"  - MANE_Select: {has_mane_select}")
             print(f"  - Current size: {cur_size} bytes")
             print(f"  - Total size so far: {tot_size} bytes")
             print(f"  - First data entry: {main_data[0][:200] if main_data else 'None'}...")
